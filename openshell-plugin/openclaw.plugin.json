@@ -1,5 +1,5 @@
 {
-  "id": "@openclaw/openshell",
+  "id": "openshell",
   "name": "OpenShell Plugin",
   "version": "0.1.0",
   "description": "Migrate and run OpenClaw inside OpenShell with optional NIM-backed inference",
