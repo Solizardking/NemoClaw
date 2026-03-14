@@ -28,13 +28,13 @@ components:
         provider_type: "nvidia"
         provider_name: "nvidia-inference"
         endpoint: "https://integrate.api.nvidia.com/v1"
-        model: "nvidia/nemotron-3-super"
+        model: "nvidia/nemotron-3-super-120b-a12b"
 
       nim-local:
         provider_type: "openai"
         provider_name: "nim-local"
         endpoint: "http://nim-service.local:8000/v1"
-        model: "nvidia/nemotron-3-super"
+        model: "nvidia/nemotron-3-super-120b-a12b"
         credential_env: "NIM_API_KEY"
 
       ollama:

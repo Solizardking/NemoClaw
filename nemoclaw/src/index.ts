@@ -202,20 +202,26 @@ export default function register(api: OpenClawPluginApi): void {
     models: {
       chat: [
         {
+          id: "nvidia/nemotron-3-super-120b-a12b",
+          label: "Nemotron 3 Super 120B (March 2026)",
+          contextWindow: 131072,
+          maxOutput: 8192,
+        },
+        {
           id: "nvidia/llama-3.1-nemotron-ultra-253b-v1",
           label: "Nemotron Ultra 253B",
           contextWindow: 131072,
           maxOutput: 4096,
         },
         {
-          id: "nvidia/llama-3.1-nemotron-70b-instruct",
-          label: "Nemotron 70B Instruct",
+          id: "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+          label: "Nemotron Super 49B v1.5",
           contextWindow: 131072,
           maxOutput: 4096,
         },
         {
-          id: "meta/llama-3.3-70b-instruct",
-          label: "Llama 3.3 70B Instruct",
+          id: "nvidia/nemotron-3-nano-30b-a3b",
+          label: "Nemotron 3 Nano 30B",
           contextWindow: 131072,
           maxOutput: 4096,
         },
