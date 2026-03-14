@@ -6,16 +6,9 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "openclaw": {
-    "extensions": {
-      "commands": [
-        "openshell launch",
-        "openshell migrate",
-        "openshell connect",
-        "openshell status",
-        "openshell logs",
-        "openshell eject"
-      ]
-    }
+    "extensions": [
+      "./dist/index.js"
+    ]
   },
   "scripts": {
     "build": "tsc",
