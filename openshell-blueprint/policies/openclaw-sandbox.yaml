@@ -1,9 +1,17 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Conservative static baseline policy for the OpenClaw sandbox.
+# Strict baseline policy for the OpenClaw sandbox.
+# Principle: deny by default, allow only what's needed for core functionality.
 # Dynamic updates (network_policies, inference) can be applied post-creation
 # via `openshell policy set`. Static fields are effectively creation-locked.
+#
+# Policy tiers (future):
+#   strict  — this file. Minimum for onboard + basic agent operation.
+#   relaxed — adds third-party model providers, broader web access.
+#
+# To add endpoints: update this file and re-run `openclaw openshell migrate`
+# or apply dynamically via `openshell policy set`.
 
 filesystem_policy:
   include_workdir: true
@@ -77,6 +85,65 @@ network_policies:
           path: "/**"
       - allow:
           method: DELETE
+          path: "/**"
+
+  # ── OpenClaw "phone home" ────────────────────────────────────────────
+  # Minimum viable set for OpenClaw to authenticate, discover plugins,
+  # and reach ClawHub. Binary-restricted to openclaw only.
+  # Docs access is read-only (GET). ClawHub and openclaw.ai are
+  # restricted to GET+POST (auth flows, plugin discovery).
+
+  clawhub:
+    name: clawhub
+    endpoints:
+      - { host: clawhub.com, port: 443, protocol: rest, enforcement: enforce, tls: terminate }
+    binaries:
+      - { path: /usr/local/bin/openclaw }
+    rules:
+      - allow:
+          method: GET
+          path: "/**"
+      - allow:
+          method: POST
+          path: "/**"
+
+  openclaw_api:
+    name: openclaw_api
+    endpoints:
+      - { host: openclaw.ai, port: 443, protocol: rest, enforcement: enforce, tls: terminate }
+    binaries:
+      - { path: /usr/local/bin/openclaw }
+    rules:
+      - allow:
+          method: GET
+          path: "/**"
+      - allow:
+          method: POST
+          path: "/**"
+
+  openclaw_docs:
+    name: openclaw_docs
+    endpoints:
+      - { host: docs.openclaw.ai, port: 443, protocol: rest, enforcement: enforce, tls: terminate }
+    binaries:
+      - { path: /usr/local/bin/openclaw }
+    rules:
+      - allow:
+          method: GET
+          path: "/**"
+
+  # npm registry — needed for `openclaw plugins install`
+  # Restricted to openclaw and npm binaries, GET only (read/download).
+  npm_registry:
+    name: npm_registry
+    endpoints:
+      - { host: registry.npmjs.org, port: 443, protocol: rest, enforcement: enforce, tls: terminate }
+    binaries:
+      - { path: /usr/local/bin/openclaw }
+      - { path: /usr/local/bin/npm }
+    rules:
+      - allow:
+          method: GET
           path: "/**"
 
 inference:
