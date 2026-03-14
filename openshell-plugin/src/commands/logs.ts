@@ -33,7 +33,7 @@ export async function logs(ctx: CommandContext): Promise<void> {
         name: "blueprint",
         command: [
           "cat",
-          `${process.env.HOME ?? "/tmp"}/.nemoclaw/state/runs/${state.lastRunId}/output.log`,
+          `${process.env.HOME ?? "/tmp"}/.openshell-plugin/state/runs/${state.lastRunId}/output.log`,
         ],
       });
     }

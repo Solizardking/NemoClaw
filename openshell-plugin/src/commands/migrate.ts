@@ -67,7 +67,7 @@ export async function migrate(ctx: CommandContext): Promise<void> {
   const profile = (flags["profile"] as string) ?? "default";
   const skipBackup = flags["skip-backup"] as boolean;
 
-  api.log("info", "NemoClaw migrate: moving host OpenClaw into OpenShell sandbox");
+  api.log("info", "OpenShell Plugin migrate: moving host OpenClaw into OpenShell sandbox");
 
   // Step 1: Detect host OpenClaw state
   api.progress("Detecting host OpenClaw installation", 5);
@@ -75,7 +75,7 @@ export async function migrate(ctx: CommandContext): Promise<void> {
 
   if (!hostState.exists) {
     api.log("error", "No OpenClaw installation found at ~/.openclaw");
-    api.log("info", "Use 'openclaw nemoclaw launch' for a fresh install.");
+    api.log("info", "Use 'openclaw openshell launch' for a fresh install.");
     return;
   }
 
@@ -183,12 +183,12 @@ export async function migrate(ctx: CommandContext): Promise<void> {
   api.log("info", `Sandbox: ${config.sandboxName}`);
   api.log("info", "");
   api.log("info", "Next steps:");
-  api.log("info", "  openclaw nemoclaw connect    # Enter the sandbox");
-  api.log("info", "  openclaw nemoclaw status     # Verify everything is healthy");
+  api.log("info", "  openclaw openshell connect    # Enter the sandbox");
+  api.log("info", "  openclaw openshell status     # Verify everything is healthy");
   api.log("info", "  openshell term               # Monitor sandbox activity");
   api.log("info", "");
   api.log("info", "To rollback to your host installation:");
-  api.log("info", "  openclaw nemoclaw eject");
+  api.log("info", "  openclaw openshell eject");
 }
 
 function createSnapshot(
@@ -198,7 +198,7 @@ function createSnapshot(
   if (!hostState.configDir) return null;
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const snapshotDir = join(HOME, ".nemoclaw", "snapshots", timestamp);
+  const snapshotDir = join(HOME, ".openshell-plugin", "snapshots", timestamp);
 
   try {
     mkdirSync(snapshotDir, { recursive: true });

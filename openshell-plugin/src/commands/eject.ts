@@ -16,7 +16,7 @@ export async function eject(ctx: CommandContext): Promise<void> {
   const state = loadState();
 
   if (!state.lastAction) {
-    api.log("error", "No NemoClaw deployment found. Nothing to eject from.");
+    api.log("error", "No OpenShell Plugin deployment found. Nothing to eject from.");
     return;
   }
 
@@ -39,7 +39,7 @@ export async function eject(ctx: CommandContext): Promise<void> {
     api.log("info", "  1. Stop the OpenShell sandbox");
     api.log("info", "  2. Rollback blueprint state");
     api.log("info", `  3. Restore ~/.openclaw from snapshot: ${snapshotPath}`);
-    api.log("info", "  4. Clear NemoClaw state");
+    api.log("info", "  4. Clear OpenShell Plugin state");
     api.log("info", "");
     api.log("info", "Run with --confirm to proceed, or cancel now.");
     return;
@@ -50,7 +50,7 @@ export async function eject(ctx: CommandContext): Promise<void> {
     api.progress("Rolling back blueprint", 20);
     const blueprintPath = join(
       HOME,
-      ".nemoclaw",
+      ".openshell-plugin",
       "blueprints",
       state.blueprintVersion
     );
@@ -81,7 +81,7 @@ export async function eject(ctx: CommandContext): Promise<void> {
   try {
     // Archive current sandbox-managed config
     if (existsSync(currentConfigDir)) {
-      const archiveName = `${currentConfigDir}.nemoclaw-archived-${Date.now()}`;
+      const archiveName = `${currentConfigDir}.openshell-plugin-archived-${Date.now()}`;
       renameSync(currentConfigDir, archiveName);
       api.log("info", `Archived current config to ${archiveName}`);
     }
@@ -96,8 +96,8 @@ export async function eject(ctx: CommandContext): Promise<void> {
     return;
   }
 
-  // Step 3: Clear NemoClaw state
-  api.progress("Cleaning up NemoClaw state", 90);
+  // Step 3: Clear OpenShell Plugin state
+  api.progress("Cleaning up OpenShell Plugin state", 90);
   clearState();
 
   api.progress("Eject complete", 100);

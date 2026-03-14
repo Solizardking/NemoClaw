@@ -13,7 +13,7 @@ export async function launch(ctx: CommandContext): Promise<void> {
   const force = flags["force"] as boolean;
   const profile = (flags["profile"] as string) ?? "default";
 
-  api.log("info", "NemoClaw launch: setting up OpenClaw inside OpenShell");
+  api.log("info", "OpenShell Plugin launch: setting up OpenClaw inside OpenShell");
 
   // Check if there's an existing host OpenClaw installation
   const hostState = detectHostOpenClaw();
@@ -51,7 +51,7 @@ export async function launch(ctx: CommandContext): Promise<void> {
   if (hostState.exists && !force) {
     api.log(
       "info",
-      "Existing OpenClaw installation detected. Consider using 'openclaw nemoclaw migrate' instead."
+      "Existing OpenClaw installation detected. Consider using 'openclaw openshell migrate' instead."
     );
     api.log(
       "info",
@@ -137,8 +137,8 @@ export async function launch(ctx: CommandContext): Promise<void> {
   api.log("info", `Sandbox: ${config.sandboxName}`);
   api.log("info", "");
   api.log("info", "Next steps:");
-  api.log("info", "  openclaw nemoclaw connect    # Enter the sandbox");
-  api.log("info", "  openclaw nemoclaw status     # Check health");
+  api.log("info", "  openclaw openshell connect    # Enter the sandbox");
+  api.log("info", "  openclaw openshell status     # Check health");
   api.log("info", "  openshell term               # Monitor network egress");
 }
 

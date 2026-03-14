@@ -1,5 +1,5 @@
 {
-  "name": "@openclaw/nemoclaw",
+  "name": "@openclaw/openshell",
   "version": "0.1.0",
   "description": "Migrate and run OpenClaw inside OpenShell with optional NIM-backed inference",
   "license": "Apache-2.0",
@@ -8,12 +8,12 @@
   "openclaw": {
     "extensions": {
       "commands": [
-        "nemoclaw launch",
-        "nemoclaw migrate",
-        "nemoclaw connect",
-        "nemoclaw status",
-        "nemoclaw logs",
-        "nemoclaw eject"
+        "openshell launch",
+        "openshell migrate",
+        "openshell connect",
+        "openshell status",
+        "openshell logs",
+        "openshell eject"
       ]
     }
   },

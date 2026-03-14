@@ -11,7 +11,7 @@ export async function status(ctx: CommandContext): Promise<void> {
   const state = loadState();
 
   const statusData = {
-    nemoclaw: {
+    openshellPlugin: {
       lastAction: state.lastAction,
       lastRunId: state.lastRunId,
       blueprintVersion: state.blueprintVersion,
@@ -29,11 +29,11 @@ export async function status(ctx: CommandContext): Promise<void> {
   }
 
   // Human-readable output
-  api.log("info", "NemoClaw Status");
-  api.log("info", "===============");
+  api.log("info", "OpenShell Plugin Status");
+  api.log("info", "======================");
   api.log("info", "");
 
-  // NemoClaw state
+  // Plugin state
   api.log("info", "Plugin State:");
   if (state.lastAction) {
     api.log("info", `  Last action:      ${state.lastAction}`);
@@ -73,7 +73,7 @@ export async function status(ctx: CommandContext): Promise<void> {
     api.log("info", "");
     api.log("info", "Rollback:");
     api.log("info", `  Snapshot:  ${state.migrationSnapshot}`);
-    api.log("info", "  Run 'openclaw nemoclaw eject' to restore host installation.");
+    api.log("info", "  Run 'openclaw openshell eject' to restore host installation.");
   }
 }
 

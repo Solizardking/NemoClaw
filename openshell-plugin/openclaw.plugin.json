@@ -1,6 +1,6 @@
 {
-  "id": "@openclaw/nemoclaw",
-  "name": "NemoClaw",
+  "id": "@openclaw/openshell",
+  "name": "OpenShell Plugin",
   "version": "0.1.0",
   "description": "Migrate and run OpenClaw inside OpenShell with optional NIM-backed inference",
   "configSchema": {
@@ -14,7 +14,7 @@
       "blueprintRegistry": {
         "type": "string",
         "description": "OCI registry or GitHub release URL for blueprint artifacts",
-        "default": "ghcr.io/nvidia/nemoclaw-blueprint"
+        "default": "ghcr.io/nvidia/openshell-blueprint"
       },
       "sandboxName": {
         "type": "string",

@@ -8,7 +8,7 @@ import { status } from "./commands/status.js";
 import { logs } from "./commands/logs.js";
 import { eject } from "./commands/eject.js";
 
-export interface NemoClawConfig {
+export interface OpenShellPluginConfig {
   blueprintVersion: string;
   blueprintRegistry: string;
   sandboxName: string;
@@ -17,7 +17,7 @@ export interface NemoClawConfig {
 
 export interface PluginAPI {
   registerCommand(spec: CommandSpec): void;
-  getConfig(): NemoClawConfig;
+  getConfig(): OpenShellPluginConfig;
   log(level: "info" | "warn" | "error", message: string): void;
   progress(label: string, percent: number): void;
 }
@@ -46,13 +46,13 @@ export interface FlagSpec {
 export interface CommandContext {
   args: Record<string, string>;
   flags: Record<string, string | boolean | number>;
-  config: NemoClawConfig;
+  config: OpenShellPluginConfig;
   api: PluginAPI;
 }
 
-export default function nemoclawPlugin(api: PluginAPI): void {
+export default function openshellPlugin(api: PluginAPI): void {
   api.registerCommand({
-    name: "nemoclaw launch",
+    name: "openshell launch",
     description:
       "Fresh install: bootstrap OpenClaw inside OpenShell (prefers OpenShell-native flow for net-new users)",
     flags: [
@@ -73,7 +73,7 @@ export default function nemoclawPlugin(api: PluginAPI): void {
   });
 
   api.registerCommand({
-    name: "nemoclaw migrate",
+    name: "openshell migrate",
     description:
       "Migrate existing host OpenClaw installation into an OpenShell sandbox with snapshot/restore/cutover",
     flags: [
@@ -100,7 +100,7 @@ export default function nemoclawPlugin(api: PluginAPI): void {
   });
 
   api.registerCommand({
-    name: "nemoclaw connect",
+    name: "openshell connect",
     description: "Open an interactive shell inside the OpenClaw sandbox",
     flags: [
       {
@@ -114,7 +114,7 @@ export default function nemoclawPlugin(api: PluginAPI): void {
   });
 
   api.registerCommand({
-    name: "nemoclaw status",
+    name: "openshell status",
     description: "Show blueprint run state, sandbox health, and backend status",
     flags: [
       {
@@ -128,7 +128,7 @@ export default function nemoclawPlugin(api: PluginAPI): void {
   });
 
   api.registerCommand({
-    name: "nemoclaw logs",
+    name: "openshell logs",
     description: "Stream logs from the blueprint runner and sandbox",
     flags: [
       {
@@ -147,7 +147,7 @@ export default function nemoclawPlugin(api: PluginAPI): void {
   });
 
   api.registerCommand({
-    name: "nemoclaw eject",
+    name: "openshell eject",
     description: "Rollback from OpenShell and restore host OpenClaw installation from snapshot",
     flags: [
       {

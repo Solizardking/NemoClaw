@@ -1,13 +1,13 @@
-# NemoClaw — OpenClaw Plugin for OpenShell
+# OpenShell Plugin — OpenClaw Plugin for OpenShell
 
 Migrate and run OpenClaw inside OpenShell with optional NIM-backed inference.
 
 ## Architecture
 
 ```
-nemoclaw/                    # Thin TypeScript plugin (runs in-process with OpenClaw gateway)
+openshell-plugin/                # Thin TypeScript plugin (runs in-process with OpenClaw gateway)
   src/
-    index.ts                 # Plugin entry: registers all nemoclaw commands
+    index.ts                 # Plugin entry: registers all openshell commands
     commands/                # UX layer: argument handling, progress, guardrails
       launch.ts              # Fresh install (prefers OpenShell-native for net-new users)
       migrate.ts             # Primary value: migrate host OpenClaw into sandbox
@@ -21,7 +21,7 @@ nemoclaw/                    # Thin TypeScript plugin (runs in-process with Open
       exec.ts                # Subprocess execution of blueprint runner
       state.ts               # Persistent state (run IDs, snapshots)
 
-nemoclaw-blueprint/          # Versioned blueprint artifact (separate release stream)
+openshell-blueprint/             # Versioned blueprint artifact (separate release stream)
   blueprint.yaml             # Manifest: version, profiles, compatibility
   orchestrator/
     runner.py                # CLI runner: plan/apply/status/rollback
@@ -37,9 +37,9 @@ nemoclaw-blueprint/          # Versioned blueprint artifact (separate release st
 ### For existing OpenClaw users (primary path)
 
 ```bash
-openclaw plugins install ./nemoclaw
-openclaw nemoclaw migrate --profile ollama
-openclaw nemoclaw connect
+openclaw plugins install ./openshell-plugin
+openclaw openshell migrate --profile ollama
+openclaw openshell connect
 ```
 
 ### For net-new users (OpenShell-native preferred)
@@ -53,12 +53,12 @@ openshell sandbox connect openclaw
 
 | Command | Description |
 |---------|-------------|
-| `openclaw nemoclaw launch` | Fresh install into OpenShell (warns net-new users) |
-| `openclaw nemoclaw migrate` | Migrate host OpenClaw into sandbox (snapshot + cutover) |
-| `openclaw nemoclaw connect` | Interactive shell into the sandbox |
-| `openclaw nemoclaw status` | Blueprint state, sandbox health, inference config |
-| `openclaw nemoclaw logs` | Stream logs (sandbox, blueprint, inference) |
-| `openclaw nemoclaw eject` | Rollback to host installation from snapshot |
+| `openclaw openshell launch` | Fresh install into OpenShell (warns net-new users) |
+| `openclaw openshell migrate` | Migrate host OpenClaw into sandbox (snapshot + cutover) |
+| `openclaw openshell connect` | Interactive shell into the sandbox |
+| `openclaw openshell status` | Blueprint state, sandbox health, inference config |
+| `openclaw openshell logs` | Stream logs (sandbox, blueprint, inference) |
+| `openclaw openshell eject` | Rollback to host installation from snapshot |
 
 ## Inference Profiles
 
@@ -71,7 +71,7 @@ openshell sandbox connect openclaw
 ## Design Principles
 
 1. **Thin plugin, versioned blueprint** — Plugin stays small and stable; orchestration logic evolves independently
-2. **Respect CLI boundaries** — Plugin commands live under `nemoclaw` namespace, never override built-in OpenClaw commands
+2. **Respect CLI boundaries** — Plugin commands live under `openshell` namespace, never override built-in OpenClaw commands
 3. **Supply chain safety** — Immutable versioned artifacts with digest verification
 4. **OpenShell-native for net-new** — Don't force double-install; prefer `openshell sandbox create`
 5. **Snapshot everything** — Every migration creates a restorable backup

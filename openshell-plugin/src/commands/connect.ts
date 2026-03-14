@@ -22,7 +22,7 @@ export async function connect(ctx: CommandContext): Promise<void> {
     const msg = err instanceof Error ? err.message : String(err);
     if (msg.includes("not found")) {
       api.log("error", `Sandbox '${sandboxName}' not found.`);
-      api.log("info", "Run 'openclaw nemoclaw status' to check available sandboxes.");
+      api.log("info", "Run 'openclaw openshell status' to check available sandboxes.");
     } else {
       api.log("error", `Connection failed: ${msg}`);
     }

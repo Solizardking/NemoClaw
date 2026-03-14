@@ -4,9 +4,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-const STATE_DIR = join(process.env.HOME ?? "/tmp", ".nemoclaw", "state");
+const STATE_DIR = join(process.env.HOME ?? "/tmp", ".openshell-plugin", "state");
 
-export interface NemoClawState {
+export interface OpenShellPluginState {
   lastRunId: string | null;
   lastAction: string | null;
   blueprintVersion: string | null;
@@ -24,10 +24,10 @@ function ensureStateDir(): void {
 }
 
 function statePath(): string {
-  return join(STATE_DIR, "nemoclaw.json");
+  return join(STATE_DIR, "openshell-plugin.json");
 }
 
-export function loadState(): NemoClawState {
+export function loadState(): OpenShellPluginState {
   ensureStateDir();
   const path = statePath();
   if (!existsSync(path)) {
@@ -45,7 +45,7 @@ export function loadState(): NemoClawState {
   return JSON.parse(readFileSync(path, "utf-8"));
 }
 
-export function saveState(state: NemoClawState): void {
+export function saveState(state: OpenShellPluginState): void {
   ensureStateDir();
   state.updatedAt = new Date().toISOString();
   if (!state.createdAt) state.createdAt = state.updatedAt;
@@ -56,7 +56,7 @@ export function clearState(): void {
   ensureStateDir();
   const path = statePath();
   if (existsSync(path)) {
-    const blank: NemoClawState = {
+    const blank: OpenShellPluginState = {
       lastRunId: null,
       lastAction: null,
       blueprintVersion: null,

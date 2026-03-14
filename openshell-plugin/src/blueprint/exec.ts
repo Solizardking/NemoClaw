@@ -51,8 +51,8 @@ export async function execBlueprint(
       cwd: options.blueprintPath,
       env: {
         ...process.env,
-        NEMOCLAW_BLUEPRINT_PATH: options.blueprintPath,
-        NEMOCLAW_ACTION: options.action,
+        OPENSHELL_PLUGIN_BLUEPRINT_PATH: options.blueprintPath,
+        OPENSHELL_PLUGIN_ACTION: options.action,
       },
       stdio: ["pipe", "pipe", "pipe"],
     });

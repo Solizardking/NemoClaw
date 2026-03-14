@@ -21,8 +21,8 @@ from pathlib import Path
 
 HOME = Path.home()
 OPENCLAW_DIR = HOME / ".openclaw"
-NEMOCLAW_DIR = HOME / ".nemoclaw"
-SNAPSHOTS_DIR = NEMOCLAW_DIR / "snapshots"
+OPENSHELL_PLUGIN_DIR = HOME / ".openshell-plugin"
+SNAPSHOTS_DIR = OPENSHELL_PLUGIN_DIR / "snapshots"
 
 
 def create_snapshot() -> Path | None:
@@ -73,10 +73,10 @@ def cutover_host(snapshot_dir: Path) -> bool:
         return True  # Nothing to archive
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    archive_path = OPENCLAW_DIR.parent / f".openclaw.pre-nemoclaw.{timestamp}"
+    archive_path = OPENCLAW_DIR.parent / f".openclaw.pre-openshell-plugin.{timestamp}"
 
     try:
-        OPENCLAW_DIR.rename(archive_path)
+        shutil.move(str(OPENCLAW_DIR), str(archive_path))
         return True
     except OSError:
         return False
@@ -91,8 +91,8 @@ def rollback_from_snapshot(snapshot_dir: Path) -> bool:
     # Remove current config if it exists
     if OPENCLAW_DIR.exists():
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-        archive_path = OPENCLAW_DIR.parent / f".openclaw.nemoclaw-archived.{timestamp}"
-        OPENCLAW_DIR.rename(archive_path)
+        archive_path = OPENCLAW_DIR.parent / f".openclaw.openshell-plugin-archived.{timestamp}"
+        shutil.move(str(OPENCLAW_DIR), str(archive_path))
 
     # Restore from snapshot
     shutil.copytree(source, OPENCLAW_DIR)
