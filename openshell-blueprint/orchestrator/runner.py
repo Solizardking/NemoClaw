@@ -17,11 +17,13 @@ Protocol:
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -34,27 +36,31 @@ def progress(pct: int, label: str) -> None:
     print(f"PROGRESS:{pct}:{label}", flush=True)
 
 
-def run_id() -> str:
-    rid = f"nc-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:8]}"
+def emit_run_id() -> str:
+    rid = f"nc-{datetime.now(UTC).strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:8]}"
     print(f"RUN_ID:{rid}", flush=True)
     return rid
 
 
-def load_blueprint() -> dict:
+def load_blueprint() -> dict[str, Any]:
     blueprint_path = Path(os.environ.get("OPENSHELL_PLUGIN_BLUEPRINT_PATH", "."))
     bp_file = blueprint_path / "blueprint.yaml"
     if not bp_file.exists():
         log(f"ERROR: blueprint.yaml not found at {bp_file}")
         sys.exit(1)
-    with open(bp_file) as f:
+    with bp_file.open() as f:
         return yaml.safe_load(f)
 
 
-def shell(cmd: str, check: bool = True, capture: bool = False) -> subprocess.CompletedProcess:
-    """Run a shell command, optionally capturing output."""
+def run_cmd(
+    args: list[str],
+    *,
+    check: bool = True,
+    capture: bool = False,
+) -> subprocess.CompletedProcess[str]:
+    """Run a command as an argv list (never shell=True)."""
     return subprocess.run(
-        cmd,
-        shell=True,
+        args,
         check=check,
         capture_output=capture,
         text=True,
@@ -63,8 +69,7 @@ def shell(cmd: str, check: bool = True, capture: bool = False) -> subprocess.Com
 
 def openshell_available() -> bool:
     """Check if openshell CLI is available."""
-    result = shell("which openshell", check=False, capture=True)
-    return result.returncode == 0
+    return shutil.which("openshell") is not None
 
 
 # ---------------------------------------------------------------------------
@@ -72,12 +77,19 @@ def openshell_available() -> bool:
 # ---------------------------------------------------------------------------
 
 
-def action_plan(profile: str, blueprint: dict, dry_run: bool = False) -> dict:
+def action_plan(
+    profile: str,
+    blueprint: dict[str, Any],
+    *,
+    dry_run: bool = False,
+) -> dict[str, Any]:
     """Plan the deployment: validate inputs, resolve profile, check prerequisites."""
-    rid = run_id()
+    rid = emit_run_id()
     progress(10, "Validating blueprint")
 
-    inference_profiles = blueprint.get("components", {}).get("inference", {}).get("profiles", {})
+    inference_profiles: dict[str, Any] = (
+        blueprint.get("components", {}).get("inference", {}).get("profiles", {})
+    )
     if profile not in inference_profiles:
         available = ", ".join(inference_profiles.keys())
         log(f"ERROR: Profile '{profile}' not found. Available: {available}")
@@ -89,10 +101,10 @@ def action_plan(profile: str, blueprint: dict, dry_run: bool = False) -> dict:
         log("  See: https://github.com/NVIDIA/OpenShell")
         sys.exit(1)
 
-    sandbox_cfg = blueprint.get("components", {}).get("sandbox", {})
-    inference_cfg = inference_profiles[profile]
+    sandbox_cfg: dict[str, Any] = blueprint.get("components", {}).get("sandbox", {})
+    inference_cfg: dict[str, Any] = inference_profiles[profile]
 
-    plan = {
+    plan: dict[str, Any] = {
         "run_id": rid,
         "profile": profile,
         "sandbox": {
@@ -107,7 +119,9 @@ def action_plan(profile: str, blueprint: dict, dry_run: bool = False) -> dict:
             "model": inference_cfg.get("model"),
             "credential_env": inference_cfg.get("credential_env"),
         },
-        "policy_additions": blueprint.get("components", {}).get("policy", {}).get("additions", {}),
+        "policy_additions": (
+            blueprint.get("components", {}).get("policy", {}).get("additions", {})
+        ),
         "dry_run": dry_run,
     }
 
@@ -116,31 +130,44 @@ def action_plan(profile: str, blueprint: dict, dry_run: bool = False) -> dict:
     return plan
 
 
-def action_apply(profile: str, blueprint: dict, plan_path: str | None = None) -> None:
+def action_apply(
+    profile: str,
+    blueprint: dict[str, Any],
+    plan_path: str | None = None,
+) -> None:
     """Apply the plan: create sandbox, configure provider, set inference route."""
-    rid = run_id()
+    rid = emit_run_id()
 
     # Load plan if provided, otherwise generate one
     if plan_path:
         # In a real implementation, load the saved plan
         pass
 
-    inference_profiles = blueprint.get("components", {}).get("inference", {}).get("profiles", {})
-    inference_cfg = inference_profiles.get(profile, {})
-    sandbox_cfg = blueprint.get("components", {}).get("sandbox", {})
+    inference_profiles: dict[str, Any] = (
+        blueprint.get("components", {}).get("inference", {}).get("profiles", {})
+    )
+    inference_cfg: dict[str, Any] = inference_profiles.get(profile, {})
+    sandbox_cfg: dict[str, Any] = blueprint.get("components", {}).get("sandbox", {})
 
-    sandbox_name = sandbox_cfg.get("name", "openclaw")
-    sandbox_image = sandbox_cfg.get("image", "openclaw")
-    forward_ports = sandbox_cfg.get("forward_ports", [18789])
+    sandbox_name: str = sandbox_cfg.get("name", "openclaw")
+    sandbox_image: str = sandbox_cfg.get("image", "openclaw")
+    forward_ports: list[int] = sandbox_cfg.get("forward_ports", [18789])
 
     # Step 1: Create sandbox
     progress(20, "Creating OpenClaw sandbox")
-    port_flags = " ".join(f"--forward {p}" for p in forward_ports)
-    result = shell(
-        f"openshell sandbox create --from {sandbox_image} --name {sandbox_name} {port_flags}",
-        check=False,
-        capture=True,
-    )
+    create_args = [
+        "openshell",
+        "sandbox",
+        "create",
+        "--from",
+        sandbox_image,
+        "--name",
+        sandbox_name,
+    ]
+    for port in forward_ports:
+        create_args.extend(["--forward", str(port)])
+
+    result = run_cmd(create_args, check=False, capture=True)
     if result.returncode != 0:
         if "already exists" in (result.stderr or ""):
             log(f"Sandbox '{sandbox_name}' already exists, reusing.")
@@ -150,37 +177,38 @@ def action_apply(profile: str, blueprint: dict, plan_path: str | None = None) ->
 
     # Step 2: Configure inference provider
     progress(50, "Configuring inference provider")
-    provider_name = inference_cfg.get("provider_name", "default")
-    provider_type = inference_cfg.get("provider_type", "openai")
-    endpoint = inference_cfg.get("endpoint", "")
-    model = inference_cfg.get("model", "")
+    provider_name: str = inference_cfg.get("provider_name", "default")
+    provider_type: str = inference_cfg.get("provider_type", "openai")
+    endpoint: str = inference_cfg.get("endpoint", "")
+    model: str = inference_cfg.get("model", "")
 
-    # Resolve credential
+    # Resolve credential from environment
     credential_env = inference_cfg.get("credential_env")
-    credential_default = inference_cfg.get("credential_default", "")
+    credential_default: str = inference_cfg.get("credential_default", "")
     credential = ""
     if credential_env:
         credential = os.environ.get(credential_env, credential_default)
 
-    credential_flag = ""
+    provider_args = [
+        "openshell",
+        "provider",
+        "create",
+        "--name",
+        provider_name,
+        "--type",
+        provider_type,
+    ]
     if credential:
-        credential_flag = f"--credential OPENAI_API_KEY={credential}"
-
-    config_flag = ""
+        provider_args.extend(["--credential", f"OPENAI_API_KEY={credential}"])
     if endpoint:
-        config_flag = f"--config OPENAI_BASE_URL={endpoint}"
+        provider_args.extend(["--config", f"OPENAI_BASE_URL={endpoint}"])
 
-    shell(
-        f"openshell provider create --name {provider_name} --type {provider_type} "
-        f"{credential_flag} {config_flag}",
-        check=False,
-        capture=True,
-    )
+    run_cmd(provider_args, check=False, capture=True)
 
     # Step 3: Set inference route
     progress(70, "Setting inference route")
-    shell(
-        f"openshell inference set --provider {provider_name} --model {model}",
+    run_cmd(
+        ["openshell", "inference", "set", "--provider", provider_name, "--model", model],
         check=False,
         capture=True,
     )
@@ -189,13 +217,18 @@ def action_apply(profile: str, blueprint: dict, plan_path: str | None = None) ->
     progress(85, "Saving run state")
     state_dir = Path.home() / ".openshell-plugin" / "state" / "runs" / rid
     state_dir.mkdir(parents=True, exist_ok=True)
-    (state_dir / "plan.json").write_text(json.dumps({
-        "run_id": rid,
-        "profile": profile,
-        "sandbox_name": sandbox_name,
-        "inference": inference_cfg,
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-    }, indent=2))
+    (state_dir / "plan.json").write_text(
+        json.dumps(
+            {
+                "run_id": rid,
+                "profile": profile,
+                "sandbox_name": sandbox_name,
+                "inference": inference_cfg,
+                "timestamp": datetime.now(UTC).isoformat(),
+            },
+            indent=2,
+        )
+    )
 
     progress(100, "Apply complete")
     log(f"Sandbox '{sandbox_name}' is ready.")
@@ -204,13 +237,12 @@ def action_apply(profile: str, blueprint: dict, plan_path: str | None = None) ->
 
 def action_status(rid: str | None = None) -> None:
     """Report current state of the most recent (or specified) run."""
-    run_id()
+    emit_run_id()
     state_dir = Path.home() / ".openshell-plugin" / "state" / "runs"
 
     if rid:
         run_dir = state_dir / rid
     else:
-        # Find most recent run
         if not state_dir.exists():
             log("No runs found.")
             sys.exit(0)
@@ -229,7 +261,7 @@ def action_status(rid: str | None = None) -> None:
 
 def action_rollback(rid: str) -> None:
     """Rollback a specific run: stop sandbox, remove provider config."""
-    run_id()
+    emit_run_id()
 
     state_dir = Path.home() / ".openshell-plugin" / "state" / "runs" / rid
     if not state_dir.exists():
@@ -242,14 +274,21 @@ def action_rollback(rid: str) -> None:
         sandbox_name = plan.get("sandbox_name", "openclaw")
 
         progress(30, f"Stopping sandbox {sandbox_name}")
-        shell(f"openshell sandbox stop {sandbox_name}", check=False, capture=True)
+        run_cmd(
+            ["openshell", "sandbox", "stop", sandbox_name],
+            check=False,
+            capture=True,
+        )
 
         progress(60, f"Removing sandbox {sandbox_name}")
-        shell(f"openshell sandbox remove {sandbox_name}", check=False, capture=True)
+        run_cmd(
+            ["openshell", "sandbox", "remove", sandbox_name],
+            check=False,
+            capture=True,
+        )
 
     progress(90, "Cleaning up run state")
-    # Mark run as rolled back
-    (state_dir / "rolled_back").write_text(datetime.now(timezone.utc).isoformat())
+    (state_dir / "rolled_back").write_text(datetime.now(UTC).isoformat())
 
     progress(100, "Rollback complete")
 

@@ -15,6 +15,14 @@ export interface OpenShellPluginConfig {
   inferenceProvider: string;
 }
 
+/**
+ * Draft interface — pending alignment with OpenClaw's actual plugin API.
+ *
+ * This mirrors what we *expect* the OpenClaw plugin host to provide based on
+ * public docs and the extension model described in the OpenClaw RFC. Once the
+ * real SDK ships, this interface should be replaced with the canonical type
+ * from `@openclaw/plugin-sdk` (or similar).
+ */
 export interface PluginAPI {
   registerCommand(spec: CommandSpec): void;
   getConfig(): OpenShellPluginConfig;

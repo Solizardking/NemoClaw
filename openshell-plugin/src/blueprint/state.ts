@@ -17,32 +17,40 @@ export interface OpenShellPluginState {
   updatedAt: string;
 }
 
+let stateDirCreated = false;
+
 function ensureStateDir(): void {
+  if (stateDirCreated) return;
   if (!existsSync(STATE_DIR)) {
     mkdirSync(STATE_DIR, { recursive: true });
   }
+  stateDirCreated = true;
 }
 
 function statePath(): string {
   return join(STATE_DIR, "openshell-plugin.json");
 }
 
+function blankState(): OpenShellPluginState {
+  return {
+    lastRunId: null,
+    lastAction: null,
+    blueprintVersion: null,
+    sandboxName: null,
+    migrationSnapshot: null,
+    hostBackupPath: null,
+    createdAt: null,
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 export function loadState(): OpenShellPluginState {
   ensureStateDir();
   const path = statePath();
   if (!existsSync(path)) {
-    return {
-      lastRunId: null,
-      lastAction: null,
-      blueprintVersion: null,
-      sandboxName: null,
-      migrationSnapshot: null,
-      hostBackupPath: null,
-      createdAt: null,
-      updatedAt: new Date().toISOString(),
-    };
+    return blankState();
   }
-  return JSON.parse(readFileSync(path, "utf-8"));
+  return JSON.parse(readFileSync(path, "utf-8")) as OpenShellPluginState;
 }
 
 export function saveState(state: OpenShellPluginState): void {
@@ -56,16 +64,6 @@ export function clearState(): void {
   ensureStateDir();
   const path = statePath();
   if (existsSync(path)) {
-    const blank: OpenShellPluginState = {
-      lastRunId: null,
-      lastAction: null,
-      blueprintVersion: null,
-      sandboxName: null,
-      migrationSnapshot: null,
-      hostBackupPath: null,
-      createdAt: null,
-      updatedAt: new Date().toISOString(),
-    };
-    writeFileSync(path, JSON.stringify(blank, null, 2));
+    writeFileSync(path, JSON.stringify(blankState(), null, 2));
   }
 }

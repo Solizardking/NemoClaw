@@ -9,6 +9,12 @@ export async function status(ctx: CommandContext): Promise<void> {
   const { api, flags } = ctx;
   const jsonOutput = flags["json"] as boolean;
   const state = loadState();
+  const sandboxName = state.sandboxName ?? "openclaw";
+
+  const [sandbox, inference] = await Promise.all([
+    getSandboxStatus(sandboxName),
+    getInferenceStatus(),
+  ]);
 
   const statusData = {
     openshellPlugin: {
@@ -19,8 +25,8 @@ export async function status(ctx: CommandContext): Promise<void> {
       migrationSnapshot: state.migrationSnapshot,
       updatedAt: state.updatedAt,
     },
-    sandbox: await getSandboxStatus(state.sandboxName ?? "openclaw"),
-    inference: await getInferenceStatus(),
+    sandbox,
+    inference,
   };
 
   if (jsonOutput) {
@@ -28,12 +34,10 @@ export async function status(ctx: CommandContext): Promise<void> {
     return;
   }
 
-  // Human-readable output
   api.log("info", "OpenShell Plugin Status");
   api.log("info", "======================");
   api.log("info", "");
 
-  // Plugin state
   api.log("info", "Plugin State:");
   if (state.lastAction) {
     api.log("info", `  Last action:      ${state.lastAction}`);
@@ -45,21 +49,17 @@ export async function status(ctx: CommandContext): Promise<void> {
   }
   api.log("info", "");
 
-  // Sandbox state
   api.log("info", "Sandbox:");
-  const sandbox = statusData.sandbox;
   if (sandbox.running) {
     api.log("info", `  Name:    ${sandbox.name}`);
-    api.log("info", `  Status:  running`);
+    api.log("info", "  Status:  running");
     api.log("info", `  Uptime:  ${sandbox.uptime ?? "unknown"}`);
   } else {
-    api.log("info", `  Status:  not running`);
+    api.log("info", "  Status:  not running");
   }
   api.log("info", "");
 
-  // Inference state
   api.log("info", "Inference:");
-  const inference = statusData.inference;
   if (inference.configured) {
     api.log("info", `  Provider:  ${inference.provider ?? "unknown"}`);
     api.log("info", `  Model:     ${inference.model ?? "unknown"}`);
@@ -68,7 +68,6 @@ export async function status(ctx: CommandContext): Promise<void> {
     api.log("info", "  Not configured");
   }
 
-  // Snapshot info
   if (state.migrationSnapshot) {
     api.log("info", "");
     api.log("info", "Rollback:");
@@ -83,13 +82,18 @@ interface SandboxStatus {
   uptime: string | null;
 }
 
-async function getSandboxStatus(sandboxName: string): Promise<SandboxStatus> {
+interface SandboxStatusResponse {
+  state?: string;
+  uptime?: string;
+}
+
+function getSandboxStatus(sandboxName: string): SandboxStatus {
   try {
     const output = execSync(`openshell sandbox status ${sandboxName} --json`, {
       encoding: "utf-8",
       timeout: 5000,
     });
-    const parsed = JSON.parse(output);
+    const parsed = JSON.parse(output) as SandboxStatusResponse;
     return {
       name: sandboxName,
       running: parsed.state === "running",
@@ -107,13 +111,19 @@ interface InferenceStatus {
   endpoint: string | null;
 }
 
-async function getInferenceStatus(): Promise<InferenceStatus> {
+interface InferenceStatusResponse {
+  provider?: string;
+  model?: string;
+  endpoint?: string;
+}
+
+function getInferenceStatus(): InferenceStatus {
   try {
     const output = execSync("openshell inference get --json", {
       encoding: "utf-8",
       timeout: 5000,
     });
-    const parsed = JSON.parse(output);
+    const parsed = JSON.parse(output) as InferenceStatusResponse;
     return {
       configured: true,
       provider: parsed.provider ?? null,

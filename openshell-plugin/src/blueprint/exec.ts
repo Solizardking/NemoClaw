@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { PluginAPI } from "../index.js";
 
@@ -25,18 +26,23 @@ export interface BlueprintRunResult {
   exitCode: number;
 }
 
+function failResult(action: BlueprintAction, message: string): BlueprintRunResult {
+  return { success: false, runId: "error", action, output: message, exitCode: 1 };
+}
+
 export async function execBlueprint(
   options: BlueprintRunOptions,
-  api: PluginAPI
+  api: PluginAPI,
 ): Promise<BlueprintRunResult> {
   const runnerPath = join(options.blueprintPath, "orchestrator", "runner.py");
 
-  const args: string[] = [
-    runnerPath,
-    options.action,
-    "--profile",
-    options.profile,
-  ];
+  if (!existsSync(runnerPath)) {
+    const msg = `Blueprint runner not found at ${runnerPath}. Is the blueprint installed correctly?`;
+    api.log("error", msg);
+    return failResult(options.action, msg);
+  }
+
+  const args: string[] = [runnerPath, options.action, "--profile", options.profile];
 
   if (options.jsonOutput) args.push("--json");
   if (options.planPath) args.push("--plan", options.planPath);
@@ -60,7 +66,6 @@ export async function execBlueprint(
     proc.stdout.on("data", (data: Buffer) => {
       const line = data.toString();
       chunks.push(line);
-      // Parse progress lines from blueprint runner
       const progressMatch = line.match(/^PROGRESS:(\d+):(.+)$/m);
       if (progressMatch) {
         api.progress(progressMatch[2], parseInt(progressMatch[1], 10));
@@ -85,13 +90,11 @@ export async function execBlueprint(
     });
 
     proc.on("error", (err) => {
-      resolve({
-        success: false,
-        runId: "error",
-        action: options.action,
-        output: err.message,
-        exitCode: 1,
-      });
+      const msg = err.message.includes("ENOENT")
+        ? "python3 not found. The blueprint runner requires Python 3.11+."
+        : `Failed to start blueprint runner: ${err.message}`;
+      api.log("error", msg);
+      resolve(failResult(options.action, msg));
     });
   });
 }

@@ -15,15 +15,13 @@ export interface VerificationResult {
 
 export function verifyBlueprintDigest(
   blueprintPath: string,
-  manifest: BlueprintManifest
+  manifest: BlueprintManifest,
 ): VerificationResult {
   const errors: string[] = [];
   const actualDigest = computeDirectoryDigest(blueprintPath);
 
   if (manifest.digest && manifest.digest !== actualDigest) {
-    errors.push(
-      `Digest mismatch: expected ${manifest.digest}, got ${actualDigest}`
-    );
+    errors.push(`Digest mismatch: expected ${manifest.digest}, got ${actualDigest}`);
   }
 
   return {
@@ -37,7 +35,7 @@ export function verifyBlueprintDigest(
 export function checkCompatibility(
   manifest: BlueprintManifest,
   openshellVersion: string,
-  openclawVersion: string
+  openclawVersion: string,
 ): string[] {
   const errors: string[] = [];
 
@@ -45,18 +43,14 @@ export function checkCompatibility(
     manifest.minOpenShellVersion &&
     !satisfiesMinVersion(openshellVersion, manifest.minOpenShellVersion)
   ) {
-    errors.push(
-      `OpenShell version ${openshellVersion} < required ${manifest.minOpenShellVersion}`
-    );
+    errors.push(`OpenShell version ${openshellVersion} < required ${manifest.minOpenShellVersion}`);
   }
 
   if (
     manifest.minOpenClawVersion &&
     !satisfiesMinVersion(openclawVersion, manifest.minOpenClawVersion)
   ) {
-    errors.push(
-      `OpenClaw version ${openclawVersion} < required ${manifest.minOpenClawVersion}`
-    );
+    errors.push(`OpenClaw version ${openclawVersion} < required ${manifest.minOpenClawVersion}`);
   }
 
   return errors;

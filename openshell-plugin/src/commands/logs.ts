@@ -17,13 +17,7 @@ export async function logs(ctx: CommandContext): Promise<void> {
   if (!component || component === "sandbox") {
     logSources.push({
       name: "sandbox",
-      command: [
-        "openshell",
-        "sandbox",
-        "logs",
-        sandboxName,
-        ...(follow ? ["--follow"] : []),
-      ],
+      command: ["openshell", "sandbox", "logs", sandboxName, ...(follow ? ["--follow"] : [])],
     });
   }
 
@@ -42,12 +36,7 @@ export async function logs(ctx: CommandContext): Promise<void> {
   if (!component || component === "inference") {
     logSources.push({
       name: "inference",
-      command: [
-        "openshell",
-        "inference",
-        "logs",
-        ...(follow ? ["--follow"] : []),
-      ],
+      command: ["openshell", "inference", "logs", ...(follow ? ["--follow"] : [])],
     });
   }
 

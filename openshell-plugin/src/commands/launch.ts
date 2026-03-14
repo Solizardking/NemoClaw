@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { execSync } from "node:child_process";
 import { CommandContext } from "../index.js";
 import { resolveBlueprint } from "../blueprint/resolve.js";
 import { verifyBlueprintDigest, checkCompatibility } from "../blueprint/verify.js";
@@ -20,42 +21,30 @@ export async function launch(ctx: CommandContext): Promise<void> {
 
   if (!hostState.exists && !force) {
     api.log("info", "");
-    api.log(
-      "info",
-      "No existing OpenClaw installation detected on this host."
-    );
+    api.log("info", "No existing OpenClaw installation detected on this host.");
     api.log("info", "");
-    api.log(
-      "info",
-      "For net-new users, the recommended path is OpenShell-native setup:"
-    );
+    api.log("info", "For net-new users, the recommended path is OpenShell-native setup:");
     api.log("info", "");
-    api.log(
-      "info",
-      "  openshell sandbox create --from openclaw --name openclaw"
-    );
+    api.log("info", "  openshell sandbox create --from openclaw --name openclaw");
     api.log("info", "  openshell sandbox connect openclaw");
     api.log("info", "");
     api.log(
       "info",
-      "This avoids installing OpenClaw on the host only to redeploy it inside OpenShell."
+      "This avoids installing OpenClaw on the host only to redeploy it inside OpenShell.",
     );
     api.log("info", "");
-    api.log(
-      "info",
-      "To proceed with plugin-driven bootstrap anyway, use --force."
-    );
+    api.log("info", "To proceed with plugin-driven bootstrap anyway, use --force.");
     return;
   }
 
   if (hostState.exists && !force) {
     api.log(
       "info",
-      "Existing OpenClaw installation detected. Consider using 'openclaw openshell migrate' instead."
+      "Existing OpenClaw installation detected. Consider using 'openclaw openshell migrate' instead.",
     );
     api.log(
       "info",
-      "Use --force to proceed with a fresh launch (existing config will not be migrated)."
+      "Use --force to proceed with a fresh launch (existing config will not be migrated).",
     );
     return;
   }
@@ -65,23 +54,16 @@ export async function launch(ctx: CommandContext): Promise<void> {
   const blueprint = await resolveBlueprint(config);
 
   api.progress("Verifying blueprint integrity", 20);
-  const verification = verifyBlueprintDigest(
-    blueprint.localPath,
-    blueprint.manifest
-  );
+  const verification = verifyBlueprintDigest(blueprint.localPath, blueprint.manifest);
   if (!verification.valid) {
     api.log("error", `Blueprint verification failed: ${verification.errors.join(", ")}`);
     return;
   }
 
   // Check version compatibility
-  const openshellVersion = await getOpenshellVersion();
-  const openclawVersion = await getOpenclawVersion();
-  const compat = checkCompatibility(
-    blueprint.manifest,
-    openshellVersion,
-    openclawVersion
-  );
+  const openshellVersion = getOpenshellVersion();
+  const openclawVersion = getOpenclawVersion();
+  const compat = checkCompatibility(blueprint.manifest, openshellVersion, openclawVersion);
   if (compat.length > 0) {
     api.log("error", `Compatibility check failed:\n  ${compat.join("\n  ")}`);
     return;
@@ -96,7 +78,7 @@ export async function launch(ctx: CommandContext): Promise<void> {
       profile,
       jsonOutput: true,
     },
-    api
+    api,
   );
 
   if (!planResult.success) {
@@ -114,7 +96,7 @@ export async function launch(ctx: CommandContext): Promise<void> {
       planPath: planResult.runId,
       jsonOutput: true,
     },
-    api
+    api,
   );
 
   if (!applyResult.success) {
@@ -142,18 +124,16 @@ export async function launch(ctx: CommandContext): Promise<void> {
   api.log("info", "  openshell term               # Monitor network egress");
 }
 
-async function getOpenshellVersion(): Promise<string> {
+function getOpenshellVersion(): string {
   try {
-    const { execSync } = await import("node:child_process");
     return execSync("openshell --version", { encoding: "utf-8" }).trim();
   } catch {
     return "0.0.0";
   }
 }
 
-async function getOpenclawVersion(): Promise<string> {
+function getOpenclawVersion(): string {
   try {
-    const { execSync } = await import("node:child_process");
     return execSync("openclaw --version", { encoding: "utf-8" }).trim();
   } catch {
     return "0.0.0";

@@ -48,12 +48,7 @@ export async function eject(ctx: CommandContext): Promise<void> {
   // Step 1: Rollback blueprint
   if (state.lastRunId && state.blueprintVersion) {
     api.progress("Rolling back blueprint", 20);
-    const blueprintPath = join(
-      HOME,
-      ".openshell-plugin",
-      "blueprints",
-      state.blueprintVersion
-    );
+    const blueprintPath = join(HOME, ".openshell-plugin", "blueprints", state.blueprintVersion);
 
     if (existsSync(blueprintPath)) {
       const rollbackResult = await execBlueprint(
@@ -64,7 +59,7 @@ export async function eject(ctx: CommandContext): Promise<void> {
           runId: runId ?? state.lastRunId,
           jsonOutput: true,
         },
-        api
+        api,
       );
 
       if (!rollbackResult.success) {
@@ -90,8 +85,9 @@ export async function eject(ctx: CommandContext): Promise<void> {
     mkdirSync(currentConfigDir, { recursive: true });
     cpSync(snapshotOpenClawDir, currentConfigDir, { recursive: true });
     api.log("info", "Host OpenClaw configuration restored.");
-  } catch (err) {
-    api.log("error", `Restoration failed: ${err}`);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    api.log("error", `Restoration failed: ${msg}`);
     api.log("info", `Manual restore available at: ${snapshotOpenClawDir}`);
     return;
   }

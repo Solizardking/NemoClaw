@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { existsSync, mkdirSync, cpSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, cpSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { CommandContext } from "../index.js";
+import { CommandContext, PluginAPI } from "../index.js";
 import { resolveBlueprint } from "../blueprint/resolve.js";
 import { verifyBlueprintDigest } from "../blueprint/verify.js";
 import { execBlueprint } from "../blueprint/exec.js";
@@ -47,9 +47,7 @@ export function detectHostOpenClaw(): HostOpenClawState {
     ? join(configDir, "extensions")
     : null;
 
-  const skillsDir = existsSync(join(configDir, "skills"))
-    ? join(configDir, "skills")
-    : null;
+  const skillsDir = existsSync(join(configDir, "skills")) ? join(configDir, "skills") : null;
 
   return {
     exists: true,
@@ -115,10 +113,7 @@ export async function migrate(ctx: CommandContext): Promise<void> {
   const blueprint = await resolveBlueprint(config);
 
   api.progress("Verifying blueprint", 30);
-  const verification = verifyBlueprintDigest(
-    blueprint.localPath,
-    blueprint.manifest
-  );
+  const verification = verifyBlueprintDigest(blueprint.localPath, blueprint.manifest);
   if (!verification.valid) {
     api.log("error", `Blueprint verification failed: ${verification.errors.join(", ")}`);
     return;
@@ -133,7 +128,7 @@ export async function migrate(ctx: CommandContext): Promise<void> {
       profile,
       jsonOutput: true,
     },
-    api
+    api,
   );
 
   if (!planResult.success) {
@@ -155,7 +150,7 @@ export async function migrate(ctx: CommandContext): Promise<void> {
       planPath: planResult.runId,
       jsonOutput: true,
     },
-    api
+    api,
   );
 
   if (!applyResult.success) {
@@ -191,10 +186,7 @@ export async function migrate(ctx: CommandContext): Promise<void> {
   api.log("info", "  openclaw openshell eject");
 }
 
-function createSnapshot(
-  hostState: HostOpenClawState,
-  api: PluginAPI
-): string | null {
+function createSnapshot(hostState: HostOpenClawState, api: PluginAPI): string | null {
   if (!hostState.configDir) return null;
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -212,18 +204,12 @@ function createSnapshot(
       source: hostState.configDir,
       contents: readdirSync(join(snapshotDir, "openclaw")),
     };
-    const { writeFileSync } = require("node:fs");
-    writeFileSync(
-      join(snapshotDir, "snapshot.json"),
-      JSON.stringify(manifest, null, 2)
-    );
+    writeFileSync(join(snapshotDir, "snapshot.json"), JSON.stringify(manifest, null, 2));
 
     return snapshotDir;
-  } catch (err) {
-    api.log("error", `Snapshot failed: ${err}`);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    api.log("error", `Snapshot failed: ${msg}`);
     return null;
   }
 }
-
-// Re-export for use by launch command
-import type { PluginAPI } from "../index.js";
