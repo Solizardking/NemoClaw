@@ -1,154 +1,77 @@
-# __NVIDIA_OSS__ Standard Repo Template
+# NemoClaw — OpenClaw Plugin for OpenShell
 
-This README file is from the NVIDIA_OSS standard repo template of [PLC-OSS-Template](https://github.com/NVIDIA-GitHub-Management/PLC-OSS-Template?tab=readme-ov-file). It provides a list of files in the PLC-OSS-Template and guidelines on how to use (clone and customize) them.
+Migrate and run OpenClaw inside OpenShell with optional NIM-backed inference.
 
-**Upon completing the customization for the project repo, the repo admin should replace this README template with the project specific README file.**
+## Architecture
 
-- Files (org-wide templates in the NVIDIA .github org repo; per-repo overrides allowed) in [PLC-OSS-Template](https://github.com/NVIDIA-GitHub-Management/PLC-OSS-Template?tab=readme-ov-file)
-
-   - Root 
-     - README.md skeleton (CTA + Quickstart + Support/Security/Governance links) 
-     - LICENSE (Apache 2.0 by default)
-        - For other licenses, see the [Confluence page](https://confluence.nvidia.com/pages/viewpage.action?pageId=788418816) for other licenses
-        - CLA.md file (delete if not using MIT or BSD licenses)
-     - CODE_OF_CONDUCT.md 
-     - SECURITY.md (vuln reporting path) 
-     - CONTRIBUTING.md (base; repo can add specifics)
-     - SUPPORT.md (Support levels/channels)
-     - GOVERNANCE.md (baseline; repo may extend)
-     - CITATION.md (for projects that need citation)
-
-   - .github/ 
-     - ISSUE_TEMPLATE/ (<https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/configuring-issue-templates-for-your-repository>)
-       - bug.yml, feature.yml, task.yml, config.yml 
-     - PULL_REQUEST_TEMPLATE.md (<https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/creating-a-pull-request-template-for-your-repository>)
-     - workflows/
-     - Note: workflow-templates/ for starter workflows should live in the org-level .github repo, not per-repo
-
-   - Repo-specific (not org-template, maintained by the team)
-     - CODEOWNERS (place at .github/CODEOWNERS or repo root)
-     - CHANGELOG.md (or RELEASE.md) 
-     - ROADMAP.md 
-     - MAINTAINERS.md 
-     - NOTICE or THIRD_PARTY_NOTICES / THIRD_PARTY_LICENSES (dependency specific)
-     - Build/package files (CMake, pyproject, Dockerfile, etc.)
-
-   - Recommended structure and hygiene
-     - docs/
-     - examples/
-     - tests/
-     - scripts/
-     - Container/dev env: Dockerfile, docker/, .devcontainer/ (optional)
-     - Build/package (language-specific):
-       - Python: pyproject.toml, setup.cfg/setup.py, requirements.txt, environment.yml
-       - C++: CMakeLists.txt, cmake/, vcpkg.json
-     - Repo hygiene: .gitignore, .gitattributes, .editorconfig, .pre-commit-config.yaml, .clang-format
-
-
-## Usage of [PLC-OSS-Template](https://github.com/NVIDIA-GitHub-Management/PLC-OSS-Template?tab=readme-ov-file) for NEW NVIDIA OSS repos
-
-1. Clone the [PLC-OSS-Template](https://github.com/NVIDIA-GitHub-Management/PLC-OSS-Template?tab=readme-ov-file)
-2. Find/replace all in the clone of `___PROJECT___` and `__PROJECT_NAME__` with the name of the specific project.
-3. Inspect all files to make sure all replacements work and update text as needed
-
-
-**What you can reuse immediately**
-- CODE_OF_CONDUCT.md
-- SECURITY.md
-- CONTRIBUTING.md (base)
-- .github/ISSUE_TEMPLATE/.yml (bug/feature/task + config.yml)
-- .github/PULL_REQUEST_TEMPLATE.md
-- Reusable workflows 
-
-**What you must customize per repo**
-- README.md: copy the skeleton and fill in product-specific details (Quickstart, Requirements, Usage, Support level, links)
-- LICENSE: check file is correct, update year, consult Confluence for alternatives https://confluence.nvidia.com/pages/viewpage.action?pageId=788418816, add CLA.md only if your license/process requires it
-- CODEOWNERS: replace <TEAM> with your GitHub team handle(s). Place at .github/CODEOWNERS (or repo root)
-- MAINTAINERS.md: list maintainers names/roles, escalation path
-- CHANGELOG.md (or RELEASE.md): track releases/changes
-- SUPPORT.md: Update for your project
-- ROADMAP.md (optional): upcoming milestones
-- NOTICE / THIRD_PARTY_NOTICES (if you ship third‑party content)
-- Build/package files (CMake/pyproject/Dockerfile/etc.), tests/, docs/, examples/, scripts/ as appropriate
-- Workflows: Edit if you need custom behavior 
-
-
-4. Change git origin to point to new repo and push
-5. Remove the line break below and everything above it
-
-## Usage for existing NVIDIA OSS repos
-
-1. Follow the steps above, but add the files to your existing repo and merge
-
-<!-- REMOVE THE LINE BELOW AND EVERYTHING ABOVE -->
------------------------------------------
-# [Project Title]
-One-sentence value proposition for users. Who is it for, and why it matters. 
-
-# Overview
-What the project does? Why the project is useful?
-Provide a brief overview, highlighting key features or problem-solving capabilities.
-
-# Getting Started
-Guide users on how they can get started with the project. This should include basic installation step, quick-start examples 
-```bash
-# Option A: Package manager (pip/conda/npm/etc.)
-<copy-paste install>
-
-# Option B: Container
-docker run <image> <args>
-
-# Verify (hello world)
-<one-liner or ~10-line example>
 ```
-# Requirements
-Include a list of pre-requisites. 
-- OS/Arch: <summary or link to full matrix>
-- Runtime/Compiler: <versions>
-- GPU/Drivers (if applicable): CUDA <ver>, driver <ver>, etc.
+nemoclaw/                    # Thin TypeScript plugin (runs in-process with OpenClaw gateway)
+  src/
+    index.ts                 # Plugin entry: registers all nemoclaw commands
+    commands/                # UX layer: argument handling, progress, guardrails
+      launch.ts              # Fresh install (prefers OpenShell-native for net-new users)
+      migrate.ts             # Primary value: migrate host OpenClaw into sandbox
+      connect.ts             # Interactive shell into sandbox
+      status.ts              # Blueprint run state + sandbox health
+      logs.ts                # Stream logs from blueprint/sandbox/inference
+      eject.ts               # Rollback to host installation from snapshot
+    blueprint/               # Blueprint resolution + execution
+      resolve.ts             # Version resolution, cache management
+      verify.ts              # Digest verification, compatibility checks
+      exec.ts                # Subprocess execution of blueprint runner
+      state.ts               # Persistent state (run IDs, snapshots)
 
-# Usage
-```bash
-# Minimal runnable snippet (≤20 lines)
-<code>
+nemoclaw-blueprint/          # Versioned blueprint artifact (separate release stream)
+  blueprint.yaml             # Manifest: version, profiles, compatibility
+  orchestrator/
+    runner.py                # CLI runner: plan/apply/status/rollback
+  policies/
+    openclaw-sandbox.yaml    # Conservative static baseline policy
+  migrations/
+    snapshot.py              # Snapshot/restore/cutover/rollback logic
+  iac/                       # (future) Declarative infrastructure modules
 ```
-- More examples/tutorials: <link>
-- API reference: <link>
 
-# Performance (Optional)
-Summary of benchmarks; link to detailed results and hardware used.
+## Quick Start
 
-## Releases & Roadmap 
-- Releases/Changelog: <link>
-- (Optional) Next milestones or link to `ROADMAP.md`.
-  
-# Contribution Guidelines
-- Start here: `CONTRIBUTING.md`
-- Code of Conduct: `CODE_OF_CONDUCT.md`
-- Development quickstart (build/test):
+### For existing OpenClaw users (primary path)
+
 ```bash
-<clone> && <deps> && <build/test>
+openclaw plugins install ./nemoclaw
+openclaw nemoclaw migrate --profile ollama
+openclaw nemoclaw connect
 ```
-## Governance & Maintainers
-- Governance: `GOVERNANCE.md`
-- Maintainers: <team/handles>
-- Labeling/triage policy: <link>
 
-## Security
-- Vulnerability disclosure: `SECURITY.md`
-- Do not file public issues for security reports.
+### For net-new users (OpenShell-native preferred)
 
-## Support
-- Level: <Experimental | Maintained | Stable>
-- How to get help: Issues/Discussions/<channel link>
-- Response expectations (if any).
+```bash
+openshell sandbox create --from openclaw --name openclaw
+openshell sandbox connect openclaw
+```
 
-# Community
-Provide the channel for community communications.
+## Commands
 
-# References
-Provide a list of related references
+| Command | Description |
+|---------|-------------|
+| `openclaw nemoclaw launch` | Fresh install into OpenShell (warns net-new users) |
+| `openclaw nemoclaw migrate` | Migrate host OpenClaw into sandbox (snapshot + cutover) |
+| `openclaw nemoclaw connect` | Interactive shell into the sandbox |
+| `openclaw nemoclaw status` | Blueprint state, sandbox health, inference config |
+| `openclaw nemoclaw logs` | Stream logs (sandbox, blueprint, inference) |
+| `openclaw nemoclaw eject` | Rollback to host installation from snapshot |
 
-# License
-This project is licensed under the [NAME HERE] License - see the LICENSE.md file for details
-- License: <link>
+## Inference Profiles
+
+| Profile | Provider | Model | Use Case |
+|---------|----------|-------|----------|
+| `default` | NVIDIA cloud | nemotron-3-super | Production, requires API key |
+| `nim-local` | Local NIM service | nemotron-3-super | On-prem, NIM deployed as pod |
+| `ollama` | Ollama | llama3.1:8b | Local development, no API key |
+
+## Design Principles
+
+1. **Thin plugin, versioned blueprint** — Plugin stays small and stable; orchestration logic evolves independently
+2. **Respect CLI boundaries** — Plugin commands live under `nemoclaw` namespace, never override built-in OpenClaw commands
+3. **Supply chain safety** — Immutable versioned artifacts with digest verification
+4. **OpenShell-native for net-new** — Don't force double-install; prefer `openshell sandbox create`
+5. **Snapshot everything** — Every migration creates a restorable backup

@@ -1,0 +1,84 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Conservative static baseline policy for the OpenClaw sandbox.
+# Dynamic updates (network_policies, inference) can be applied post-creation
+# via `openshell policy set`. Static fields are effectively creation-locked.
+
+filesystem_policy:
+  include_workdir: true
+  read_only:
+    - /usr
+    - /lib
+    - /proc
+    - /dev/urandom
+    - /app
+    - /etc
+    - /var/log
+  read_write:
+    - /sandbox
+    - /tmp
+    - /dev/null
+
+landlock:
+  compatibility: best_effort
+
+process:
+  run_as_user: sandbox
+  run_as_group: sandbox
+
+network_policies:
+  claude_code:
+    name: claude_code
+    endpoints:
+      - { host: api.anthropic.com, port: 443, protocol: rest, enforcement: enforce, tls: terminate }
+      - { host: statsig.anthropic.com, port: 443 }
+      - { host: sentry.io, port: 443 }
+    binaries:
+      - { path: /usr/local/bin/claude }
+
+  nvidia:
+    name: nvidia
+    endpoints:
+      - { host: integrate.api.nvidia.com, port: 443, protocol: rest, enforcement: enforce, tls: terminate }
+    binaries:
+      - { path: /usr/local/bin/claude }
+
+  github:
+    name: github
+    endpoints:
+      - { host: github.com, port: 443, protocol: rest, enforcement: enforce, tls: terminate }
+    binaries:
+      - { path: /usr/bin/gh }
+      - { path: /usr/bin/git }
+    rules:
+      - allow:
+          method: "*"
+          path: "/**"
+
+  github_rest_api:
+    name: github_rest_api
+    endpoints:
+      - { host: api.github.com, port: 443, protocol: rest, enforcement: enforce, tls: terminate }
+    binaries:
+      - { path: /usr/bin/gh }
+    rules:
+      - allow:
+          method: GET
+          path: "/**"
+      - allow:
+          method: POST
+          path: "/**"
+      - allow:
+          method: PATCH
+          path: "/**"
+      - allow:
+          method: PUT
+          path: "/**"
+      - allow:
+          method: DELETE
+          path: "/**"
+
+inference:
+  allowed_routes:
+    - local

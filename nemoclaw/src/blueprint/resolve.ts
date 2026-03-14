@@ -1,0 +1,110 @@
+// SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+import { NemoClawConfig } from "../index.js";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+
+export interface BlueprintManifest {
+  version: string;
+  minOpenShellVersion: string;
+  minOpenClawVersion: string;
+  profiles: string[];
+  digest: string;
+}
+
+export interface ResolvedBlueprint {
+  version: string;
+  localPath: string;
+  manifest: BlueprintManifest;
+  cached: boolean;
+}
+
+const CACHE_DIR = join(
+  process.env.HOME ?? "/tmp",
+  ".nemoclaw",
+  "blueprints"
+);
+
+export function getCacheDir(): string {
+  return CACHE_DIR;
+}
+
+export function getCachedBlueprintPath(version: string): string {
+  return join(CACHE_DIR, version);
+}
+
+export function isCached(version: string): boolean {
+  const manifestPath = join(getCachedBlueprintPath(version), "blueprint.yaml");
+  return existsSync(manifestPath);
+}
+
+export function readCachedManifest(version: string): BlueprintManifest | null {
+  const manifestPath = join(
+    getCachedBlueprintPath(version),
+    "blueprint.yaml"
+  );
+  if (!existsSync(manifestPath)) return null;
+  const raw = readFileSync(manifestPath, "utf-8");
+  // Minimal YAML parsing for the manifest header
+  return parseManifestHeader(raw);
+}
+
+function parseManifestHeader(raw: string): BlueprintManifest {
+  const get = (key: string): string => {
+    const match = raw.match(new RegExp(`^${key}:\\s*(.+)$`, "m"));
+    return match?.[1]?.trim() ?? "";
+  };
+  const profiles = get("profiles");
+  return {
+    version: get("version"),
+    minOpenShellVersion: get("min_openshell_version"),
+    minOpenClawVersion: get("min_openclaw_version"),
+    profiles: profiles ? profiles.split(",").map((p) => p.trim()) : ["default"],
+    digest: get("digest"),
+  };
+}
+
+export async function resolveBlueprint(
+  config: NemoClawConfig
+): Promise<ResolvedBlueprint> {
+  const version = config.blueprintVersion;
+
+  // Check local cache first
+  if (version !== "latest" && isCached(version)) {
+    const manifest = readCachedManifest(version);
+    if (manifest) {
+      return {
+        version,
+        localPath: getCachedBlueprintPath(version),
+        manifest,
+        cached: true,
+      };
+    }
+  }
+
+  // Fetch from registry
+  const fetched = await fetchBlueprint(config.blueprintRegistry, version);
+  return fetched;
+}
+
+async function fetchBlueprint(
+  registry: string,
+  version: string
+): Promise<ResolvedBlueprint> {
+  // TODO: Implement OCI registry fetch with digest verification
+  // For MVP, support local filesystem path and GitHub releases
+  //
+  // The flow should be:
+  // 1. Resolve "latest" to a concrete version tag
+  // 2. Download the artifact (tarball)
+  // 3. Verify digest (SHA-256)
+  // 4. Check compatibility metadata (OpenShell/OpenClaw versions)
+  // 5. Extract to cache dir
+  // 6. Return resolved blueprint
+  throw new Error(
+    `Blueprint fetch not yet implemented. ` +
+      `Registry: ${registry}, Version: ${version}. ` +
+      `For local development, place blueprint files in ${getCacheDir()}/<version>/`
+  );
+}

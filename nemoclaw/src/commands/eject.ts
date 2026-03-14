@@ -1,0 +1,107 @@
+// SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+import { existsSync, cpSync, renameSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
+import { CommandContext } from "../index.js";
+import { execBlueprint } from "../blueprint/exec.js";
+import { loadState, clearState } from "../blueprint/state.js";
+
+const HOME = process.env.HOME ?? "/tmp";
+
+export async function eject(ctx: CommandContext): Promise<void> {
+  const { api, flags } = ctx;
+  const confirm = flags["confirm"] as boolean;
+  const runId = flags["run-id"] as string | undefined;
+  const state = loadState();
+
+  if (!state.lastAction) {
+    api.log("error", "No NemoClaw deployment found. Nothing to eject from.");
+    return;
+  }
+
+  if (!state.migrationSnapshot && !state.hostBackupPath) {
+    api.log("error", "No migration snapshot found. Cannot restore host installation.");
+    api.log("info", "If you used --skip-backup during migrate, manual restoration is required.");
+    return;
+  }
+
+  const snapshotPath = state.migrationSnapshot ?? state.hostBackupPath!;
+  const snapshotOpenClawDir = join(snapshotPath, "openclaw");
+
+  if (!existsSync(snapshotOpenClawDir)) {
+    api.log("error", `Snapshot directory not found: ${snapshotOpenClawDir}`);
+    return;
+  }
+
+  if (!confirm) {
+    api.log("info", "Eject will:");
+    api.log("info", "  1. Stop the OpenShell sandbox");
+    api.log("info", "  2. Rollback blueprint state");
+    api.log("info", `  3. Restore ~/.openclaw from snapshot: ${snapshotPath}`);
+    api.log("info", "  4. Clear NemoClaw state");
+    api.log("info", "");
+    api.log("info", "Run with --confirm to proceed, or cancel now.");
+    return;
+  }
+
+  // Step 1: Rollback blueprint
+  if (state.lastRunId && state.blueprintVersion) {
+    api.progress("Rolling back blueprint", 20);
+    const blueprintPath = join(
+      HOME,
+      ".nemoclaw",
+      "blueprints",
+      state.blueprintVersion
+    );
+
+    if (existsSync(blueprintPath)) {
+      const rollbackResult = await execBlueprint(
+        {
+          blueprintPath,
+          action: "rollback",
+          profile: "default",
+          runId: runId ?? state.lastRunId,
+          jsonOutput: true,
+        },
+        api
+      );
+
+      if (!rollbackResult.success) {
+        api.log("warn", `Blueprint rollback returned errors: ${rollbackResult.output}`);
+        api.log("info", "Continuing with host restoration...");
+      }
+    }
+  }
+
+  // Step 2: Restore host ~/.openclaw from snapshot
+  api.progress("Restoring host OpenClaw", 60);
+  const currentConfigDir = join(HOME, ".openclaw");
+
+  try {
+    // Archive current sandbox-managed config
+    if (existsSync(currentConfigDir)) {
+      const archiveName = `${currentConfigDir}.nemoclaw-archived-${Date.now()}`;
+      renameSync(currentConfigDir, archiveName);
+      api.log("info", `Archived current config to ${archiveName}`);
+    }
+
+    // Restore from snapshot
+    mkdirSync(currentConfigDir, { recursive: true });
+    cpSync(snapshotOpenClawDir, currentConfigDir, { recursive: true });
+    api.log("info", "Host OpenClaw configuration restored.");
+  } catch (err) {
+    api.log("error", `Restoration failed: ${err}`);
+    api.log("info", `Manual restore available at: ${snapshotOpenClawDir}`);
+    return;
+  }
+
+  // Step 3: Clear NemoClaw state
+  api.progress("Cleaning up NemoClaw state", 90);
+  clearState();
+
+  api.progress("Eject complete", 100);
+  api.log("info", "");
+  api.log("info", "Eject complete. Host OpenClaw installation has been restored.");
+  api.log("info", "You can now run 'openclaw' directly on your host.");
+}
