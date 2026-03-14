@@ -28,7 +28,7 @@ COPY nemoclaw-blueprint/ /opt/nemoclaw-blueprint/
 
 # Build the TS plugin inside the container
 WORKDIR /opt/nemoclaw
-RUN npm install && npx tsc
+RUN npm install && rm -rf dist && npx tsc
 
 # Patch OpenClaw's nvidia provider to replace Meta Llama 3.3 70B with
 # Nemotron 3 Super 120B. OpenClaw's embedded agent has a hardcoded model

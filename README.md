@@ -13,7 +13,6 @@ nemoclaw/                           Thin TypeScript plugin (in-process with Open
 │   │   ├── migrate.ts              Migrate host OpenClaw into sandbox
 │   │   ├── connect.ts              Interactive shell into sandbox
 │   │   ├── status.ts               Blueprint run state + sandbox health
-│   │   ├── logs.ts                 Stream logs from blueprint/sandbox/inference
 │   │   └── eject.ts                Rollback to host install from snapshot
 │   └── blueprint/
 │       ├── resolve.ts              Version resolution, cache management
@@ -59,15 +58,15 @@ openshell sandbox connect openclaw
 | `openclaw nemoclaw migrate` | Migrate host OpenClaw into sandbox (snapshot + cutover) |
 | `openclaw nemoclaw connect` | Interactive shell into the sandbox |
 | `openclaw nemoclaw status` | Blueprint state, sandbox health, inference config |
-| `openclaw nemoclaw logs` | Stream logs (sandbox, blueprint, inference) |
 | `openclaw nemoclaw eject` | Rollback to host installation from snapshot |
+| `/nemoclaw` | Slash command in chat (status, eject) |
 
 ## Inference Profiles
 
 | Profile | Provider | Model | Use Case |
 |---------|----------|-------|----------|
-| `default` | NVIDIA cloud | nemotron-3-super | Production, requires API key |
-| `nim-local` | Local NIM service | nemotron-3-super | On-prem, NIM deployed as pod |
+| `default` | NVIDIA cloud | nemotron-3-super-120b-a12b | Production, requires API key |
+| `nim-local` | Local NIM service | nemotron-3-super-120b-a12b | On-prem, NIM deployed as pod |
 | `ollama` | Ollama | llama3.1:8b | Local development, no API key |
 
 ## Design Principles
