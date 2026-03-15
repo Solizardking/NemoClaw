@@ -2,76 +2,29 @@
 
 Run OpenClaw inside an OpenShell sandbox with NVIDIA inference (Nemotron 3 Super 120B via [build.nvidia.com](https://build.nvidia.com), or local Ollama).
 
-## Installation
-
-### Requirements
-
-All platforms need:
-
-- `NVIDIA_API_KEY` — get one from [build.nvidia.com](https://build.nvidia.com)
-- A GitHub token with `read:packages` scope (for pulling OpenShell container images)
-
-### macOS (Colima or Docker Desktop)
+## Quick Start
 
 ```bash
-# Install dependencies
-brew install colima docker gh
-pip install 'openshell @ git+https://github.com/NVIDIA/OpenShell.git'
-
-# Start Docker runtime
-colima start        # or use Docker Desktop
-
-# Clone and run
-git clone https://github.com/NVIDIA/openshell-openclaw-plugin.git
-cd openshell-openclaw-plugin
-export NVIDIA_API_KEY=nvapi-...
-./scripts/setup.sh
+npm install nemoclaw
+npx nemoclaw setup
 ```
 
-### Linux (native Docker)
+That's it. First run prompts for your NVIDIA API Key (get one from [build.nvidia.com](https://build.nvidia.com)) and saves it to `~/.nemoclaw/credentials.json`.
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) 18+
+- Docker running ([Colima](https://github.com/abiosoft/colima), Docker Desktop, or native)
+- [OpenShell CLI](https://github.com/NVIDIA/OpenShell) — `pip install 'openshell @ git+https://github.com/NVIDIA/OpenShell.git'`
+
+### Deploy to a cloud VM
 
 ```bash
-# Install dependencies
-sudo apt-get install -y docker.io
-pip install 'openshell @ git+https://github.com/NVIDIA/OpenShell.git'
-
-# If you have an NVIDIA GPU, install the container toolkit:
-# https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html
-
-# Clone and run
-git clone https://github.com/NVIDIA/openshell-openclaw-plugin.git
-cd openshell-openclaw-plugin
-export NVIDIA_API_KEY=nvapi-...
-./scripts/setup.sh
+npx nemoclaw deploy            # creates a Brev VM and sets up everything
+npx nemoclaw deploy my-gpu-box # custom instance name
 ```
 
-### Brev
-
-For Brev VMs, a bootstrap script handles all prerequisite installation (Docker, NVIDIA Container Toolkit, openshell CLI binary, GHCR auth):
-
-```bash
-# Create a Brev instance (GPU optional — inference is cloud-hosted)
-brev create nemoclaw --gpu "a2-highgpu-1g:nvidia-tesla-a100:1"
-brev shell nemoclaw
-
-# On the Brev VM:
-git clone https://github.com/NVIDIA/openshell-openclaw-plugin.git
-cd openshell-openclaw-plugin
-export NVIDIA_API_KEY=nvapi-...
-export GITHUB_TOKEN=ghp_...    # needs read:packages scope
-./scripts/brev-setup.sh
-```
-
-`brev-setup.sh` installs Docker, the NVIDIA Container Toolkit (if GPU present), the `openshell` CLI from a pre-built binary, authenticates with `ghcr.io`, then runs `setup.sh` automatically.
-
-### Other cloud VMs (EC2, GCE, Azure)
-
-Any Ubuntu 22.04+ VM with Docker works. The Brev bootstrap script is a good reference — the same steps apply:
-
-1. Install Docker and (optionally) the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
-2. Install the `openshell` CLI — either `pip install 'openshell @ git+https://github.com/NVIDIA/OpenShell.git'` or download the binary from [GitHub releases](https://github.com/NVIDIA/OpenShell/releases)
-3. Authenticate Docker with `ghcr.io` (`docker login ghcr.io`)
-4. Clone this repo and run `./scripts/setup.sh`
+Requires the [Brev CLI](https://brev.nvidia.com). The deploy script installs Docker, NVIDIA Container Toolkit (if GPU present), and OpenShell on the VM automatically.
 
 ## Usage
 

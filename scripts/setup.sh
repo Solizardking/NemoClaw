@@ -7,7 +7,6 @@
 # Prerequisites:
 #   - Docker running (Colima, Docker Desktop, or native)
 #   - openshell CLI installed (pip install openshell @ git+https://github.com/NVIDIA/OpenShell.git)
-#   - gh CLI authenticated with read:packages scope
 #   - NVIDIA_API_KEY set in environment (from build.nvidia.com)
 #
 # Usage:
@@ -56,9 +55,7 @@ if openshell status 2>&1 | grep -q "Connected"; then
   info "Gateway already running"
 else
   info "Starting OpenShell gateway..."
-  REGISTRY_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-$(gh auth token 2>/dev/null || echo "")}}"
   GATEWAY_ARGS=(--name nemoclaw)
-  [ -n "$REGISTRY_TOKEN" ] && GATEWAY_ARGS+=(--registry-token "$REGISTRY_TOKEN")
   command -v nvidia-smi > /dev/null 2>&1 && GATEWAY_ARGS+=(--gpu)
   openshell gateway start "${GATEWAY_ARGS[@]}" 2>&1 | tail -5
 fi
@@ -113,7 +110,7 @@ echo "  │                                                     │"
 echo "  │  Provider:  nvidia-nim (build.nvidia.com)           │"
 echo "  │  Model:     nvidia/nemotron-3-super-120b-a12b       │"
 echo "  │             Nemotron 3 Super 120B                   │"
-echo "  │  Routing:   inference.local → NVIDIA cloud          │"
+echo "  │  Routing:   inference.local -> NVIDIA cloud         │"
 echo "  │  Sandbox:   nemoclaw                                │"
 echo "  └─────────────────────────────────────────────────────┘"
 echo ""

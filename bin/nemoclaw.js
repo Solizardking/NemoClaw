@@ -64,14 +64,14 @@ async function ensureApiKey() {
   }
 
   console.log("");
-  console.log("  ┌─────────────────────────────────────────────────────┐");
-  console.log("  │  NVIDIA API Key required                           │");
-  console.log("  │                                                     │");
-  console.log("  │  1. Go to https://build.nvidia.com                 │");
-  console.log("  │  2. Sign in with your NVIDIA account               │");
-  console.log("  │  3. Click any model → 'Get API Key'                │");
-  console.log("  │  4. Paste the key below (starts with nvapi-)       │");
-  console.log("  └─────────────────────────────────────────────────────┘");
+  console.log("  ┌───────────────────────────────────────────────┐");
+  console.log("  │  NVIDIA API Key required                      │");
+  console.log("  │                                               │");
+  console.log("  │  1. Go to https://build.nvidia.com            │");
+  console.log("  │  2. Sign in with your NVIDIA account          │");
+  console.log("  │  3. Click any model -> 'Get API Key'          │");
+  console.log("  │  4. Paste the key below (starts with nvapi-)  │");
+  console.log("  └───────────────────────────────────────────────┘");
   console.log("");
 
   key = await prompt("  NVIDIA API Key: ");
@@ -86,6 +86,16 @@ async function ensureApiKey() {
   console.log("");
   console.log("  Key saved to ~/.nemoclaw/credentials.json (mode 600)");
   console.log("");
+}
+
+function isRepoPrivate(repo) {
+  try {
+    const json = execSync(`gh api repos/${repo} --jq .private 2>/dev/null`, { encoding: "utf-8" }).trim();
+    return json === "true";
+  } catch {
+    // If gh CLI isn't available or API fails, assume public
+    return false;
+  }
 }
 
 async function ensureGithubToken() {
@@ -105,18 +115,18 @@ async function ensureGithubToken() {
   } catch {}
 
   console.log("");
-  console.log("  ┌─────────────────────────────────────────────────────┐");
-  console.log("  │  GitHub token required (for container images)      │");
-  console.log("  │                                                     │");
-  console.log("  │  Option A: gh auth login (if you have gh CLI)      │");
-  console.log("  │  Option B: Paste a PAT with read:packages scope    │");
-  console.log("  └─────────────────────────────────────────────────────┘");
+  console.log("  ┌──────────────────────────────────────────────────┐");
+  console.log("  │  GitHub token required (private repo detected)   │");
+  console.log("  │                                                  │");
+  console.log("  │  Option A: gh auth login (if you have gh CLI)    │");
+  console.log("  │  Option B: Paste a PAT with read:packages scope  │");
+  console.log("  └──────────────────────────────────────────────────┘");
   console.log("");
 
   token = await prompt("  GitHub Token: ");
 
   if (!token) {
-    console.error("  Token required for deploy.");
+    console.error("  Token required for deploy (repo is private).");
     process.exit(1);
   }
 
@@ -136,8 +146,9 @@ async function setup() {
 
 async function deploy(instanceName) {
   await ensureApiKey();
-  await ensureGithubToken();
-
+  if (isRepoPrivate("NVIDIA/OpenShell")) {
+    await ensureGithubToken();
+  }
   const name = instanceName || "nemoclaw";
   const gpu = process.env.NEMOCLAW_GPU || "a2-highgpu-1g:nvidia-tesla-a100:1";
 
@@ -172,7 +183,8 @@ async function deploy(instanceName) {
   run(`brev copy ${name} "${ROOT}" --dest /home/ubuntu/nemoclaw`);
 
   console.log("  Running brev-setup.sh...");
-  run(`brev shell ${name} -- bash -c 'cd /home/ubuntu/nemoclaw && NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY}" GITHUB_TOKEN="${process.env.GITHUB_TOKEN}" bash scripts/brev-setup.sh'`);
+  const ghTokenEnv = process.env.GITHUB_TOKEN ? ` GITHUB_TOKEN="${process.env.GITHUB_TOKEN}"` : "";
+  run(`brev shell ${name} -- bash -c 'cd /home/ubuntu/nemoclaw && NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY}"${ghTokenEnv} bash scripts/brev-setup.sh'`);
 
   const tgToken = getCredential("TELEGRAM_BOT_TOKEN");
   if (tgToken) {
