@@ -1,3 +1,18 @@
+---
+title:
+  page: "Set Up a Local NIM Service for NemoClaw On-Premises Inference"
+  nav: "Set Up Local NIM"
+description: "Route NemoClaw inference to an NVIDIA NIM container on your network."
+keywords: ["nemoclaw local nim setup", "on-premises nim inference nemoclaw"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "nim", "inference_routing", "containers"]
+content:
+  type: how_to
+  difficulty: intermediate
+  audience: ["developer", "engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0

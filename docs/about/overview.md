@@ -1,3 +1,18 @@
+---
+title:
+  page: "NemoClaw Overview — What It Does and How It Fits Together"
+  nav: "Overview"
+description: "NemoClaw sandboxes OpenClaw with NVIDIA inference and declarative policy."
+keywords: ["nemoclaw overview", "openclaw openshell sandbox plugin"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "sandboxing", "inference_routing", "blueprints"]
+content:
+  type: concept
+  difficulty: technical_beginner
+  audience: ["developer", "engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0

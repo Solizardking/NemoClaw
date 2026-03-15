@@ -24,7 +24,8 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_design",
     "sphinxcontrib.mermaid",
-    "sphinx_llm.txt"
+    "sphinx_llm.txt",
+    "json_output",
 ]
 
 autodoc_default_options = {

@@ -1,3 +1,18 @@
+---
+title:
+  page: "Roll Back a NemoClaw Migration to Restore Host OpenClaw"
+  nav: "Roll Back Migration"
+description: "Restore the host OpenClaw installation from a pre-migration snapshot."
+keywords: ["nemoclaw rollback migration", "eject nemoclaw restore openclaw"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "sandboxing", "migration", "nemoclaw"]
+content:
+  type: how_to
+  difficulty: intermediate
+  audience: ["developer", "engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0

@@ -1,3 +1,18 @@
+---
+title:
+  page: "Set Up the NemoClaw Telegram Bridge for Remote Agent Chat"
+  nav: "Set Up Telegram Bridge"
+description: "Forward messages between Telegram and the sandboxed OpenClaw agent."
+keywords: ["nemoclaw telegram bridge", "telegram bot openclaw agent"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "telegram", "deployment", "nemoclaw"]
+content:
+  type: how_to
+  difficulty: intermediate
+  audience: ["developer", "engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0

@@ -1,3 +1,18 @@
+---
+title:
+  page: "NemoClaw Inference Profiles — NVIDIA Cloud, NIM, and vLLM"
+  nav: "Inference Profiles"
+description: "Configuration reference for NVIDIA cloud, local NIM, and vLLM profiles."
+keywords: ["nemoclaw inference profiles", "nemoclaw nvidia nim vllm provider"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "inference_routing", "nim", "vllm", "llms"]
+content:
+  type: reference
+  difficulty: intermediate
+  audience: ["developer", "engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0

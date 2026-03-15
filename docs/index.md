@@ -1,20 +1,16 @@
 ---
 title:
-  page: NVIDIA NemoClaw Developer Guide
-  nav: Get Started
-  card: NVIDIA NemoClaw
-description: NemoClaw is the OpenClaw plugin for OpenShell. Run OpenClaw inside sandboxed environments with NVIDIA inference routing, strict network policies, and one-command setup.
-topics:
-- Generative AI
-- AI Agents
-tags:
-- OpenClaw
-- OpenShell
-- Sandboxing
-- Inference Routing
-- NemoClaw
+  page: "NVIDIA NemoClaw Developer Guide"
+  nav: "NemoClaw"
+description: "Sandbox OpenClaw with NVIDIA inference routing and strict network policies."
+keywords: ["nemoclaw sandboxed ai agent", "openclaw openshell plugin"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "sandboxing", "inference_routing", "nemoclaw"]
 content:
-  type: index
+  type: get_started
+  difficulty: technical_beginner
+  audience: ["developer", "engineer"]
+status: published
 ---
 
 <!--

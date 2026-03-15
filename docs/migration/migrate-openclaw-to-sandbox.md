@@ -1,3 +1,18 @@
+---
+title:
+  page: "Migrate an Existing OpenClaw Installation to a NemoClaw Sandbox"
+  nav: "Migrate to Sandbox"
+description: "Move a host-installed OpenClaw into an OpenShell sandbox with rollback."
+keywords: ["migrate openclaw to sandbox", "nemoclaw migration guide"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "sandboxing", "migration", "nemoclaw"]
+content:
+  type: how_to
+  difficulty: intermediate
+  audience: ["developer", "engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0

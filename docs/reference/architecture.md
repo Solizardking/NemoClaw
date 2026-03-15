@@ -1,3 +1,18 @@
+---
+title:
+  page: "NemoClaw Architecture — Plugin, Blueprint, and Sandbox Structure"
+  nav: "Architecture"
+description: "Plugin structure, blueprint lifecycle, sandbox environment, and inference routing."
+keywords: ["nemoclaw architecture", "nemoclaw plugin blueprint structure"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "sandboxing", "blueprints", "inference_routing"]
+content:
+  type: reference
+  difficulty: intermediate
+  audience: ["developer", "engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0
