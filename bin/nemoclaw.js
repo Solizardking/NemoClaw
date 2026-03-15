@@ -196,7 +196,7 @@ async function deploy(instanceName) {
   console.log("  Syncing NemoClaw to VM...");
   run(`brev copy "${ROOT}/" ${name}:/home/ubuntu/nemoclaw/`);
 
-  console.log("  Running brev-setup.sh...");
+  console.log("  Running setup...");
   const ghTokenEnv = process.env.GITHUB_TOKEN ? ` GITHUB_TOKEN="${process.env.GITHUB_TOKEN}"` : "";
   run(`ssh ${name} 'cd /home/ubuntu/nemoclaw && NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY}"${ghTokenEnv} bash scripts/brev-setup.sh'`);
 
@@ -207,9 +207,9 @@ async function deploy(instanceName) {
   }
 
   console.log("");
-  console.log("  Deploy complete. Connect:");
-  console.log(`    brev shell ${name}`);
+  console.log("  Connecting to sandbox...");
   console.log("");
+  run(`ssh ${name} 'NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY}" openshell sandbox connect nemoclaw'`);
 }
 
 async function start() {
