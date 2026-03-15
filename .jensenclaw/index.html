@@ -7,11 +7,6 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  @font-face {
-    font-family: 'Terminal';
-    src: local('Courier New'), local('Consolas'), local('monospace');
-  }
-
   body {
     font-family: 'Courier New', Consolas, monospace;
     background: #0a0a0a;
@@ -69,72 +64,10 @@
 
   .header-bar .right { font-weight: normal; }
 
-  #main {
-    flex: 1;
-    display: flex;
-    overflow: hidden;
-  }
-
-  #jensen-panel {
-    width: 320px;
-    flex-shrink: 0;
-    border-right: 1px solid #1a5a1a;
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    overflow: hidden;
-    position: relative;
-  }
-
-  #jensen-ascii {
-    font-size: 6px;
-    line-height: 1.0;
-    letter-spacing: 0px;
-    white-space: pre;
-    color: #33ff33;
-    text-align: center;
-    margin-top: 4px;
-  }
-
-  #jensen-status {
-    margin-top: 12px;
-    font-size: 12px;
-    color: #1aaa1a;
-    text-align: center;
-  }
-
-  #claw-anim {
-    font-size: 9px;
-    line-height: 1.1;
-    white-space: pre;
-    color: #ff2222;
-    text-shadow: 0 0 8px rgba(255, 34, 34, 0.6);
-    text-align: center;
-    margin-top: 8px;
-    min-height: 60px;
-    display: none;
-  }
-
-  #chat-panel {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  #chat-header {
-    padding: 4px 12px;
-    font-size: 12px;
-    color: #1a8a1a;
-    border-bottom: 1px solid #1a5a1a;
-    flex-shrink: 0;
-  }
-
   #chat {
     flex: 1;
     overflow-y: auto;
-    padding: 8px 12px;
+    padding: 12px 16px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -146,7 +79,7 @@
 
   .msg {
     animation: typeIn 0.1s ease;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.5;
   }
 
@@ -155,11 +88,8 @@
     to { opacity: 1; }
   }
 
-  .msg .prefix {
-    font-weight: bold;
-  }
-
-  .msg.user .prefix { color: #33aaff; }
+  .msg .prefix { font-weight: bold; }
+  .msg.user .prefix { color: #33aaff; text-shadow: 0 0 5px rgba(51, 170, 255, 0.5); }
   .msg.assistant .prefix { color: #33ff33; }
 
   .msg .text {
@@ -172,17 +102,16 @@
     font-style: italic;
   }
 
-  .cursor-blink {
-    animation: blink 1s step-end infinite;
-  }
-
-  @keyframes blink {
-    0%, 50% { opacity: 1; }
-    51%, 100% { opacity: 0; }
+  #thinking {
+    color: #1aaa1a;
+    font-size: 13px;
+    padding: 0 16px;
+    min-height: 20px;
+    flex-shrink: 0;
   }
 
   #input-area {
-    padding: 4px 12px 8px;
+    padding: 6px 16px 10px;
     border-top: 1px solid #1a5a1a;
     display: flex;
     gap: 0;
@@ -192,7 +121,7 @@
 
   #input-prompt {
     color: #33ff33;
-    font-size: 13px;
+    font-size: 14px;
     font-family: inherit;
     white-space: pre;
   }
@@ -202,7 +131,7 @@
     background: transparent;
     border: none;
     color: #33ff33;
-    font-size: 13px;
+    font-size: 14px;
     font-family: 'Courier New', Consolas, monospace;
     outline: none;
     caret-color: #33ff33;
@@ -220,23 +149,6 @@
     justify-content: space-between;
     flex-shrink: 0;
   }
-
-  /* Matrix rain background on jensen panel */
-  .matrix-col {
-    position: absolute;
-    top: 0;
-    font-size: 12px;
-    line-height: 1;
-    color: rgba(51, 255, 51, 0.08);
-    writing-mode: vertical-lr;
-    animation: rain linear infinite;
-    pointer-events: none;
-  }
-
-  @keyframes rain {
-    0% { transform: translateY(-100%); }
-    100% { transform: translateY(100vh); }
-  }
 </style>
 </head>
 <body>
@@ -246,56 +158,16 @@
   <span class="right">NEMOTRON-3-SUPER-120B | NVIDIA INFERENCE</span>
 </div>
 
-<div id="main">
-  <div id="jensen-panel">
-    <pre id="jensen-ascii">
-█████████████████████████████████████████████
-██████████████████████████████▓▓▓▓▓▓████████
-████████████████████████▓▓▓▓╬╬╬╠╠╬▓▓▓██████
-██████████████████████▓▓╬╬╬╬╬╬╬╬╬╬╬╬▓▓█████
-████████████████████▓▓╬╬╬╬╠╠╠╬╬╬╬╬╬╬╬▓█████
-██████████████████▓▓╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬▓▓████
-████████████████▓▓╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬▓████
-██████████████▓▓╬╬╠╠▒▒░░░▒▒╠╠▒░░░▒╠╠╬╬▓████
-█████████████▓▓╬╬╠▒▒▒▒╠╬╬╬╬╬╬╬╬╠▒▒▒╠╬╬▓████
-████████████▓╬╬╬░░╠╬╣▓▓▓╬╬╬╬▓▓▓╬╠░░╬╬╬╬████
-████████████▓╬╬▒░╬╣██▓▓╬╬╬╬╬▓▓██╣╬░▒╬╬▓████
-████████████▓╬╬▒▒╬╣▓▓▓╬╬╬╬╬╬╬▓▓▓╣╬▒▒╬╬▓████
-████████████▓▓╬╬▒▒╠╬╬╬╬╬╬╬╬╬╬╬╬╬╠▒▒╬╬▓▓████
-█████████████▓╬╬╬▒▒╠╠╬╬╣╬╬╬╬╣╬╬╠▒▒╬╬╬▓█████
-█████████████▓▓╬╬╬╠▒▒▒╠╠╬╬╬╬╠╠▒▒▒╠╬╬▓▓█████
-██████████████▓╬╬╬╬╠╠╠╠╠▒▒▒▒╠╠╠╠╬╬╬╬▓██████
-██████████████▓▓╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬▓▓██████
-███████████████▓╬╬╣╬╬╬╣▓▓▓▓▓▓╣╬╬╬╣╬╬▓██████
-███████████████▓▓╬╣▓▓████████████▓▓╣╬▓██████
-██████████████▓╬╬╣╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╣╬╬▓█████
-█████████████▓▓╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬▓█████
-█████████████▓╬╬╣╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╣╬╬▓████
-████████████▓╬╬╬╬╬╬╬╬╬╬╬╣▓▓╬╬╬╬╬╬╬╬╬╬╬╬▓███
-███████████▓╬╬╬╬╬╬╬╬╣╣▓▓████▓▓╣╬╬╬╬╬╬╬╬╬▓██
-██████████▓▓╬╬╬╬╬▓▓████████████▓▓╬╬╬╬╬╬▓▓██
-██████████▓╬╬╬╣▓▓██████████████▓▓▓╣╬╬╬╬╬▓██
-█████████▓▓╬╬╬╬╬╬╬╬╬╬╬╣╣╣╣╬╬╬╬╬╬╬╬╬╬╬╬▓▓██
-█████████▓╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬▓██
-████████▓▓╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬▓▓██
-████████▓▓╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬╬▓███
-████████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓████
-█████████████████████████████████████████████</pre>
-    <div id="jensen-status">[ ONLINE ] Awaiting input...</div>
-    <pre id="claw-anim"></pre>
-  </div>
+<div id="chat">
+  <div class="msg system">System initialized. RoboJensen online.</div>
+  <div class="msg system">Type a message below. He's enthusiastic. He cannot be stopped.</div>
+</div>
 
-  <div id="chat-panel">
-    <div id="chat-header">--- ROBOJENSEN CHAT LOG ---</div>
-    <div id="chat">
-      <div class="msg system">System initialized. RoboJensen online.</div>
-      <div class="msg system">Type a message below. He's enthusiastic. He cannot be stopped.</div>
-    </div>
-    <div id="input-area">
-      <span id="input-prompt">you&gt; </span>
-      <input type="text" id="input" placeholder="talk to robojensen..." autocomplete="off" autofocus>
-    </div>
-  </div>
+<div id="thinking"></div>
+
+<div id="input-area">
+  <span id="input-prompt">you&gt; </span>
+  <input type="text" id="input" placeholder="talk to robojensen..." autocomplete="off" autofocus>
 </div>
 
 <div class="footer-bar">
@@ -306,8 +178,7 @@
 <script>
 const chat = document.getElementById('chat');
 const input = document.getElementById('input');
-const jensenStatus = document.getElementById('jensen-status');
-const clawAnim = document.getElementById('claw-anim');
+const thinking = document.getElementById('thinking');
 const clock = document.getElementById('clock');
 
 let messages = [];
@@ -318,90 +189,6 @@ setInterval(() => {
   const d = new Date();
   clock.textContent = d.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
 }, 1000);
-
-// Matrix rain on jensen panel
-const panel = document.getElementById('jensen-panel');
-const chars = 'NVIDIA GPU CUDA TENSOR CORE NEMOTRON CLAW'.split('');
-for (let i = 0; i < 8; i++) {
-  const col = document.createElement('div');
-  col.className = 'matrix-col';
-  col.style.left = (i * 40 + 10) + 'px';
-  col.style.animationDuration = (8 + Math.random() * 12) + 's';
-  col.style.animationDelay = (-Math.random() * 10) + 's';
-  let text = '';
-  for (let j = 0; j < 50; j++) {
-    text += chars[Math.floor(Math.random() * chars.length)] + '\n';
-  }
-  col.textContent = text;
-  panel.appendChild(col);
-}
-
-// Claw scratch chin animation frames (red claws reaching up)
-const clawFrames = [
-  [
-    "            ",
-    "            ",
-    "            ",
-    "    \\\\||//  ",
-    "     \\||/   ",
-    "      ||    ",
-    "     /||\\   ",
-    "    //||\\\\  ",
-  ],
-  [
-    "            ",
-    "            ",
-    "    \\\\||//  ",
-    "     \\||/   ",
-    "      ||    ",
-    "      ||    ",
-    "     /||\\   ",
-    "    //||\\\\  ",
-  ],
-  [
-    "            ",
-    "    \\\\||//  ",
-    "     \\||/   ",
-    "      \\/    ",
-    "      ||    ",
-    "      ||    ",
-    "     /||\\   ",
-    "    //||\\\\  ",
-  ],
-  [
-    "    \\\\||//  ",
-    "     \\~~/ * ",
-    "      \\/  * ",
-    "      ||    ",
-    "      ||    ",
-    "      ||    ",
-    "     /||\\   ",
-    "    //||\\\\  ",
-  ],
-  [
-    "     \\~~/   ",
-    "    \\\\**//  ",
-    "      \\/    ",
-    "      ||    ",
-    "      ||    ",
-    "      ||    ",
-    "     /||\\   ",
-    "    //||\\\\  ",
-  ],
-];
-
-function showClawScratch() {
-  clawAnim.style.display = 'block';
-  let frame = 0;
-  const interval = setInterval(() => {
-    clawAnim.textContent = clawFrames[frame % clawFrames.length].join('\n');
-    frame++;
-    if (frame >= clawFrames.length * 3) {
-      clearInterval(interval);
-      clawAnim.style.display = 'none';
-    }
-  }, 200);
-}
 
 function addMsg(role, text) {
   const div = document.createElement('div');
@@ -436,8 +223,7 @@ async function sendMessage() {
   addMsg('user', text);
 
   streaming = true;
-  jensenStatus.textContent = '[ THINKING ] Processing...';
-  showClawScratch();
+  thinking.textContent = '[ THINKING ] ...';
 
   try {
     const res = await fetch('/api/chat', {
@@ -448,12 +234,12 @@ async function sendMessage() {
 
     if (!res.ok) {
       const err = await res.json();
-      jensenStatus.textContent = '[ ERROR ] Connection failed';
+      thinking.textContent = '';
       addMsg('system', `ERROR: ${err.error || res.statusText}`);
       return;
     }
 
-    jensenStatus.textContent = '[ SPEAKING ] Streaming response...';
+    thinking.textContent = '[ STREAMING ] ...';
 
     const msgDiv = addMsg('assistant', '');
     const textSpan = msgDiv.querySelector('.text');
@@ -492,10 +278,9 @@ async function sendMessage() {
     messages.push({ role: 'assistant', content: fullText });
   } catch (err) {
     addMsg('system', `CONNECTION ERROR: ${err.message}`);
-    jensenStatus.textContent = '[ ERROR ] Connection lost';
   } finally {
     streaming = false;
-    jensenStatus.textContent = '[ ONLINE ] Awaiting input...';
+    thinking.textContent = '';
     input.focus();
   }
 }
