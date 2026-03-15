@@ -7,14 +7,16 @@
     "nemoclaw": "./bin/nemoclaw.js"
   },
   "scripts": {
-    "postinstall": "cd nemoclaw && npm install --ignore-scripts && npm run build 2>/dev/null; echo ''; echo '  NemoClaw installed. Run: nemoclaw setup'; echo ''"
+    "prepublishOnly": "cd nemoclaw && npm install --ignore-scripts && npm run build"
   },
   "dependencies": {
     "openclaw": "2026.3.11"
   },
   "files": [
     "bin/",
-    "nemoclaw/",
+    "nemoclaw/dist/",
+    "nemoclaw/openclaw.plugin.json",
+    "nemoclaw/package.json",
     "nemoclaw-blueprint/",
     "scripts/",
     ".jensenclaw/",
