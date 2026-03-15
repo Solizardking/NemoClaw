@@ -95,4 +95,4 @@ Use this option only if you are certain that you do not need a rollback.
 
 - [Roll Back a Migration](roll-back-migration.md) to restore the pre-migration state.
 - [Commands](../reference/commands.md) for the full `migrate` command reference.
-- [Architecture](../about/architecture.md) for details on the blueprint lifecycle.
+- [Architecture](../reference/architecture.md) for details on the blueprint lifecycle.

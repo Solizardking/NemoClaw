@@ -138,14 +138,24 @@ Switch between NVIDIA cloud, local NIM, and vLLM inference backends.
 {bdg-secondary}`Reference`
 :::
 
+:::{grid-item-card} How It Works
+:link: about/how-it-works
+:link-type: doc
+
+High-level overview of the plugin, blueprint, sandbox, and inference routing.
+
++++
+{bdg-secondary}`Concept`
+:::
+
 :::{grid-item-card} Architecture
-:link: about/architecture
+:link: reference/architecture
 :link-type: doc
 
 Plugin structure, blueprint system, and sandbox lifecycle.
 
 +++
-{bdg-secondary}`Concept`
+{bdg-secondary}`Reference`
 :::
 
 :::{grid-item-card} Network Policies
@@ -181,7 +191,7 @@ Home <self>
 :hidden:
 
 Overview <about/overview>
-Architecture <about/architecture>
+How It Works <about/how-it-works>
 Release Notes <about/release-notes>
 ```
 
@@ -236,6 +246,7 @@ Monitor Sandbox Activity <monitoring/monitor-sandbox-activity>
 :caption: Reference
 :hidden:
 
+Architecture <reference/architecture>
 Commands <reference/commands>
 Inference Profiles <reference/inference-profiles>
 Network Policies <reference/network-policies>

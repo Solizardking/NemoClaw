@@ -114,6 +114,6 @@ $ nemoclaw connect my-gpu-box
 
 ## Next Steps
 
-- Read about the [Architecture](../about/architecture.md) to understand the plugin and blueprint system.
+- Read about the [Architecture](../reference/architecture.md) to understand the plugin and blueprint system.
 - Refer to the [Commands](../reference/commands.md) reference for all available CLI options.
 - Review [Network Policies](../reference/network-policies.md) to understand the sandbox security model.
