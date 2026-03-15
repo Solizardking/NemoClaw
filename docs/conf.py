@@ -90,6 +90,7 @@ html_extra_path = ["project.json"]
 highlight_language = "console"
 
 html_theme_options = {
+    "public_docs_features": True,
     "icon_links": [
         {
             "name": "GitHub",
