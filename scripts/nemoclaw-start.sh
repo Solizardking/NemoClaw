@@ -25,7 +25,7 @@ echo "Setting up NemoClaw..."
 openclaw doctor --fix > /dev/null 2>&1 || true
 
 # Set Nemotron 3 Super as the default model
-openclaw models set nvidia/nvidia/nemotron-3-super-120b-a12b > /dev/null 2>&1
+openclaw models set nvidia/nemotron-3-super-120b-a12b > /dev/null 2>&1
 
 # Write auth profile so the nvidia provider is activated
 python3 -c "

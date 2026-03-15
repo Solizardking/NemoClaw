@@ -59,7 +59,7 @@ RUN openclaw doctor --fix > /dev/null 2>&1 || true \
     && openclaw plugins install /opt/nemoclaw > /dev/null 2>&1 || true
 
 # Set default model
-RUN openclaw models set nvidia/nvidia/nemotron-3-super-120b-a12b > /dev/null 2>&1 || true
+RUN openclaw models set nvidia/nemotron-3-super-120b-a12b > /dev/null 2>&1 || true
 
 ENTRYPOINT ["/bin/bash"]
 CMD []
