@@ -36,9 +36,9 @@ sudo usermod -aG docker $USER
 newgrp docker
 
 # OpenShell CLI (binary from GitHub releases)
-curl -fsSL https://github.com/NVIDIA/OpenShell/releases/latest/download/openshell-x86_64-unknown-linux-musl.tar.gz | tar xz
-sudo install -m 755 openshell /usr/local/bin/openshell
-rm -f openshell
+ARCH=$(uname -m); [ "$ARCH" = "aarch64" ] && ARCH="aarch64" || ARCH="x86_64"
+curl -fsSL "https://github.com/NVIDIA/OpenShell/releases/latest/download/openshell-${ARCH}-unknown-linux-musl.tar.gz" | tar xz
+sudo install -m 755 openshell /usr/local/bin/openshell && rm -f openshell
 
 # NVIDIA Container Toolkit (if you have a GPU)
 curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
