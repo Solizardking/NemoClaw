@@ -42,20 +42,26 @@ RUN chmod +x /usr/local/bin/nemoclaw-start
 WORKDIR /sandbox
 USER sandbox
 
-# Pre-create OpenClaw directories and bake in auth + model config
-# so the sandbox is ready the moment you connect (no entrypoint needed)
+# Pre-create OpenClaw directories
 RUN mkdir -p /sandbox/.openclaw/agents/main/agent \
     && chmod 700 /sandbox/.openclaw
 
-# Auth profile: use NVIDIA provider, read API key from env at runtime
-# Model config: route through inference.local (OpenShell gateway proxy)
+# Write openclaw.json: set nvidia as default provider, route through
+# inference.local (OpenShell gateway proxy), read API key from env
 RUN python3 -c "\
 import json, os; \
-agent_dir = os.path.expanduser('~/.openclaw/agents/main/agent'); \
-os.makedirs(agent_dir, exist_ok=True); \
-json.dump({'nvidia:manual': {'type': 'api_key', 'provider': 'nvidia', 'keyRef': {'source': 'env', 'id': 'NVIDIA_API_KEY'}, 'profileId': 'nvidia:manual'}}, open(os.path.join(agent_dir, 'auth-profiles.json'), 'w')); \
-os.chmod(os.path.join(agent_dir, 'auth-profiles.json'), 0o600); \
-json.dump({'default': 'nvidia/nemotron-3-super-120b-a12b', 'providers': {'nvidia': {'baseUrl': 'https://inference.local/v1', 'models': {'nemotron-3-super-120b-a12b': {'id': 'nvidia/nemotron-3-super-120b-a12b', 'label': 'Nemotron 3 Super 120B'}}}}}, open(os.path.join(agent_dir, 'models.json'), 'w'), indent=2)"
+config = { \
+    'agents': {'defaults': {'model': {'primary': 'nvidia/nemotron-3-super-120b-a12b'}}}, \
+    'models': {'mode': 'merge', 'providers': {'nvidia': { \
+        'baseUrl': 'https://inference.local/v1', \
+        'apiKey': '\${NVIDIA_API_KEY}', \
+        'api': 'openai-completions', \
+        'models': [{'id': 'nemotron-3-super-120b-a12b', 'name': 'NVIDIA Nemotron 3 Super 120B', 'reasoning': False, 'input': ['text'], 'cost': {'input': 0, 'output': 0, 'cacheRead': 0, 'cacheWrite': 0}, 'contextWindow': 131072, 'maxTokens': 4096}] \
+    }}} \
+}; \
+path = os.path.expanduser('~/.openclaw/openclaw.json'); \
+json.dump(config, open(path, 'w'), indent=2); \
+os.chmod(path, 0o600)"
 
 # Install NemoClaw plugin into OpenClaw
 RUN openclaw doctor --fix > /dev/null 2>&1 || true \
