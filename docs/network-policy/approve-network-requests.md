@@ -1,3 +1,18 @@
+---
+title:
+  page: "Approve or Deny NemoClaw Agent Network Requests"
+  nav: "Approve Network Requests"
+description: "Review and approve blocked agent network requests in the TUI."
+keywords: ["nemoclaw approve network requests", "sandbox egress approval tui"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "network_policy", "security", "nemoclaw"]
+content:
+  type: how_to
+  difficulty: technical_beginner
+  audience: ["developer", "engineer", "security_engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0

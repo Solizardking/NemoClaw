@@ -1,3 +1,18 @@
+---
+title:
+  page: "NemoClaw Release Notes"
+  nav: "Release Notes"
+description: "Changelog and feature history for NemoClaw releases."
+keywords: ["nemoclaw release notes", "nemoclaw changelog"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["nemoclaw", "releases"]
+content:
+  type: reference
+  difficulty: technical_beginner
+  audience: ["developer", "engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0

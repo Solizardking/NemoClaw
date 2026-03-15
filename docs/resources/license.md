@@ -1,3 +1,18 @@
+---
+title:
+  page: "NemoClaw License — Apache 2.0"
+  nav: "License"
+description: "Apache 2.0 license for the NemoClaw project."
+keywords: ["nemoclaw license", "nemoclaw apache 2.0"]
+topics: ["generative_ai"]
+tags: ["nemoclaw", "licensing"]
+content:
+  type: reference
+  difficulty: technical_beginner
+  audience: ["developer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0

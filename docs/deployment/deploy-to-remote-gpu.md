@@ -1,3 +1,18 @@
+---
+title:
+  page: "Deploy NemoClaw to a Remote GPU Instance with Brev"
+  nav: "Deploy to Remote GPU"
+description: "Provision a remote GPU VM with NemoClaw using Brev deployment."
+keywords: ["deploy nemoclaw remote gpu", "nemoclaw brev cloud deployment"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "deployment", "gpu", "nemoclaw"]
+content:
+  type: how_to
+  difficulty: intermediate
+  audience: ["developer", "engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0

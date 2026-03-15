@@ -1,3 +1,18 @@
+---
+title:
+  page: "NemoClaw Network Policies — Baseline Rules and Operator Approval"
+  nav: "Network Policies"
+description: "Baseline network policy, filesystem rules, and operator approval flow."
+keywords: ["nemoclaw network policy", "sandbox egress control operator approval"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "sandboxing", "network_policy", "security"]
+content:
+  type: reference
+  difficulty: intermediate
+  audience: ["developer", "engineer", "security_engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0

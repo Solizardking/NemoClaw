@@ -1,3 +1,18 @@
+---
+title:
+  page: "Switch NemoClaw Inference Providers at Runtime"
+  nav: "Switch Inference Providers"
+description: "Change the active inference provider without restarting the sandbox."
+keywords: ["switch nemoclaw inference provider", "change inference runtime"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "inference_routing", "nim", "vllm"]
+content:
+  type: how_to
+  difficulty: technical_beginner
+  audience: ["developer", "engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0

@@ -1,3 +1,18 @@
+---
+title:
+  page: "Monitor NemoClaw Sandbox Activity and Debug Issues"
+  nav: "Monitor Sandbox Activity"
+description: "Inspect sandbox health, trace agent behavior, and diagnose problems."
+keywords: ["monitor nemoclaw sandbox", "debug nemoclaw agent issues"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "monitoring", "troubleshooting", "nemoclaw"]
+content:
+  type: how_to
+  difficulty: technical_beginner
+  audience: ["developer", "engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0

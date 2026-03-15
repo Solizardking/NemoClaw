@@ -1,3 +1,18 @@
+---
+title:
+  page: "How NemoClaw Works — Plugin, Blueprint, and Sandbox Lifecycle"
+  nav: "How It Works"
+description: "Plugin, blueprint, sandbox creation, inference routing, and rollback concepts."
+keywords: ["how nemoclaw works", "nemoclaw sandbox lifecycle blueprint"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "sandboxing", "inference_routing", "blueprints", "network_policy"]
+content:
+  type: concept
+  difficulty: technical_beginner
+  audience: ["developer", "engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0
@@ -36,9 +51,9 @@ Inference requests from the agent never leave the sandbox directly.
 OpenShell intercepts every inference call and routes it to the configured provider.
 NemoClaw ships with three inference profiles:
 
-- **NVIDIA cloud.** Routes to Nemotron 3 Super 120B through [build.nvidia.com](https://build.nvidia.com).
-- **Local NIM.** Routes to a NIM container on your local network.
-- **Local vLLM.** Routes to a vLLM server on localhost for offline development.
+- NVIDIA cloud, which routes to Nemotron 3 Super 120B through [build.nvidia.com](https://build.nvidia.com).
+- Local NIM, which routes to a NIM container on your local network.
+- Local vLLM, which routes to a vLLM server on localhost for offline development.
 
 You can switch providers at runtime without restarting the sandbox.
 
@@ -47,9 +62,9 @@ You can switch providers at runtime without restarting the sandbox.
 The sandbox starts with a strict baseline policy defined in `openclaw-sandbox.yaml`.
 This policy controls which network endpoints the agent can reach and which filesystem paths it can access.
 
-- **Network.** Only endpoints listed in the policy are allowed.
+- For network, only endpoints listed in the policy are allowed.
   When the agent tries to reach an unlisted host, OpenShell blocks the request and surfaces it in the TUI for operator approval.
-- **Filesystem.** The agent can write to `/sandbox` and `/tmp`.
+- For filesystem, the agent can write to `/sandbox` and `/tmp`.
   All other system paths are read-only.
 
 Approved endpoints persist for the current session but are not saved to the baseline policy file.

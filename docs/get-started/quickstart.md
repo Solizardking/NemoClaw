@@ -1,3 +1,18 @@
+---
+title:
+  page: "NemoClaw Quickstart — Install, Launch, and Run Your First Agent"
+  nav: "Quickstart"
+description: "Install NemoClaw, launch a sandbox, and run your first agent prompt."
+keywords: ["nemoclaw quickstart", "install nemoclaw openclaw sandbox"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "sandboxing", "inference_routing", "nemoclaw"]
+content:
+  type: get_started
+  difficulty: technical_beginner
+  audience: ["developer", "engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0
@@ -9,12 +24,16 @@ This guide walks you through installing NemoClaw, creating a sandboxed OpenClaw 
 
 ## Prerequisites
 
-- Node.js 20+
-- Docker or [Colima](https://github.com/abiosoft/colima) on macOS
+You need the following prerequisites to get started:
+
+- Node.js 20 or later
+- Docker or [Colima](https://github.com/abiosoft/colima)
 - [OpenShell CLI](https://github.com/NVIDIA/OpenShell/releases) installed and on your `PATH`
 - NVIDIA API Key from [build.nvidia.com](https://build.nvidia.com) for cloud inference
 
 ## Install NemoClaw
+
+Install NemoClaw from npm:
 
 ```console
 $ npm install -g nemoclaw
@@ -28,7 +47,17 @@ $ cd openshell-openclaw-plugin
 $ sudo npm install -g .
 ```
 
+Test the installation:
+
+```console
+$ nemoclaw --help
+```
+
+This should display the help message for the NemoClaw CLI.
+
 ## Run Setup
+
+Run the setup command to create an OpenShell gateway, register inference providers, and launch the sandbox by running:
 
 ```console
 $ nemoclaw setup
@@ -38,6 +67,8 @@ The first run prompts for your NVIDIA API Key and saves it to `~/.nemoclaw/crede
 Setup creates an OpenShell gateway, registers inference providers, and launches the sandbox.
 
 ## Connect to the Sandbox
+
+Connect to the sandbox by running:
 
 ```console
 $ nemoclaw connect
@@ -111,9 +142,3 @@ Then connect remotely:
 ```console
 $ nemoclaw connect my-gpu-box
 ```
-
-## Next Steps
-
-- Read about the [Architecture](../reference/architecture.md) to understand the plugin and blueprint system.
-- Refer to the [Commands](../reference/commands.md) reference for all available CLI options.
-- Review [Network Policies](../reference/network-policies.md) to understand the sandbox security model.

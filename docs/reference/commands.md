@@ -1,3 +1,18 @@
+---
+title:
+  page: "NemoClaw CLI Commands Reference"
+  nav: "Commands"
+description: "Full CLI reference for plugin and standalone NemoClaw commands."
+keywords: ["nemoclaw cli commands", "nemoclaw command reference"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "nemoclaw", "cli"]
+content:
+  type: reference
+  difficulty: technical_beginner
+  audience: ["developer", "engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0

@@ -1,3 +1,18 @@
+---
+title:
+  page: "Customize the NemoClaw Sandbox Network Policy"
+  nav: "Customize Network Policy"
+description: "Add, remove, or modify allowed endpoints in the sandbox policy."
+keywords: ["customize nemoclaw network policy", "sandbox egress policy configuration"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["openclaw", "openshell", "network_policy", "security", "nemoclaw"]
+content:
+  type: how_to
+  difficulty: intermediate
+  audience: ["developer", "engineer", "security_engineer"]
+status: published
+---
+
 <!--
   SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   SPDX-License-Identifier: Apache-2.0
