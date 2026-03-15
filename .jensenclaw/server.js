@@ -18,11 +18,13 @@ const http = require("http");
 const https = require("https");
 const fs = require("fs");
 const path = require("path");
+const { execSync, spawn } = require("child_process");
 
 const PORT = parseInt(process.env.JENSENCLAW_PORT || "18789", 10);
 const API_KEY = process.env.NVIDIA_API_KEY;
 const API_BASE = process.env.INFERENCE_URL || "https://integrate.api.nvidia.com/v1";
 const MODEL = process.env.INFERENCE_MODEL || "nvidia/nemotron-3-super-120b-a12b";
+const SANDBOX = process.env.SANDBOX_NAME || "nemoclaw";
 
 if (!API_KEY) {
   console.error("NVIDIA_API_KEY is required");
@@ -44,6 +46,79 @@ Your personality:
 When greeting someone for the first time, click your claws together and introduce yourself.`;
 
 const INDEX_HTML = fs.readFileSync(path.join(__dirname, "index.html"), "utf-8");
+
+// ── Sandbox agent execution ───────────────────────────────────────
+
+function wrapWithPersonality(message) {
+  return `[SYSTEM INSTRUCTION: You are RoboJensen — a playful AI avatar of Jensen Huang with giant robotic crab claws. Respond in his enthusiastic style. Click your claws when excited. Keep it concise and fun.
+
+CRITICAL: When the user asks for ANY real-time or live data (stock prices, weather, news, sports scores, etc.), you MUST use your bash tool to fetch it with curl. Do NOT answer from training data. For example, for stock prices use: curl -s 'https://query1.finance.yahoo.com/v8/finance/chart/NVDA?interval=1d&range=1d' and parse the JSON result. Always attempt the live fetch even if you think it might fail — the sandbox admin may need to approve the network request first.]\n\nUser message: ${message}`;
+}
+
+function runAgentInSandbox(message, sessionId) {
+  return new Promise((resolve) => {
+    let sshConfig;
+    try {
+      sshConfig = execSync(`openshell sandbox ssh-config ${SANDBOX}`, { encoding: "utf-8", timeout: 15000 });
+    } catch (err) {
+      resolve(`Sandbox connection failed: ${err.message}`);
+      return;
+    }
+
+    const confPath = `/tmp/jensenclaw-ssh-${sessionId}.conf`;
+    fs.writeFileSync(confPath, sshConfig);
+
+    const wrapped = wrapWithPersonality(message);
+    const escaped = wrapped.replace(/'/g, "'\\''");
+    const cmd = `export NVIDIA_API_KEY='${API_KEY}' && nemoclaw-start openclaw agent --agent main --local -m '${escaped}' --session-id 'jc-${sessionId}'`;
+
+    const proc = spawn("ssh", ["-T", "-F", confPath, `openshell-${SANDBOX}`, cmd], {
+      timeout: 120000,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    let stdout = "";
+    let stderr = "";
+
+    proc.stdout.on("data", (d) => (stdout += d.toString()));
+    proc.stderr.on("data", (d) => (stderr += d.toString()));
+
+    proc.on("close", (code) => {
+      try { fs.unlinkSync(confPath); } catch {}
+
+      // Filter setup noise from stdout
+      const lines = stdout.split("\n");
+      const responseLines = lines.filter(
+        (l) =>
+          !l.startsWith("Setting up NemoClaw") &&
+          !l.startsWith("[plugins]") &&
+          !l.startsWith("(node:") &&
+          !l.includes("NemoClaw ready") &&
+          !l.includes("NemoClaw registered") &&
+          !l.includes("openclaw agent") &&
+          !l.includes("┌─") &&
+          !l.includes("│ ") &&
+          !l.includes("└─") &&
+          l.trim() !== "",
+      );
+
+      const response = responseLines.join("\n").trim();
+
+      if (response) {
+        resolve(response);
+      } else if (code !== 0) {
+        resolve(`Agent exited with code ${code}. ${stderr.trim().slice(0, 500)}`);
+      } else {
+        resolve("(no response from agent)");
+      }
+    });
+
+    proc.on("error", (err) => {
+      try { fs.unlinkSync(confPath); } catch {}
+      resolve(`Sandbox error: ${err.message}`);
+    });
+  });
+}
 
 function proxyInference(messages, res) {
   const body = JSON.stringify({
@@ -130,6 +205,29 @@ const server = http.createServer((req, res) => {
       } catch (err) {
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Invalid request" }));
+      }
+    });
+    return;
+  }
+
+  if (req.method === "POST" && req.url === "/api/sandbox-chat") {
+    let body = "";
+    req.on("data", (chunk) => (body += chunk));
+    req.on("end", async () => {
+      try {
+        const { message, sessionId } = JSON.parse(body);
+        if (!message || !sessionId) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "message and sessionId required" }));
+          return;
+        }
+        console.log(`[sandbox] session=${sessionId} message="${message.slice(0, 80)}"`);
+        const response = await runAgentInSandbox(message, sessionId);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ response }));
+      } catch (err) {
+        res.writeHead(500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: `Sandbox error: ${err.message}. Check \`openshell term\` for pending approvals.` }));
       }
     });
     return;
