@@ -48,18 +48,18 @@ RUN mkdir -p /sandbox/.openclaw/agents/main/agent \
     && chmod 700 /sandbox/.openclaw
 
 # Auth profile: use NVIDIA provider, read API key from env at runtime
+# Model config: route through inference.local (OpenShell gateway proxy)
 RUN python3 -c "\
 import json, os; \
-path = os.path.expanduser('~/.openclaw/agents/main/agent/auth-profiles.json'); \
-json.dump({'nvidia:manual': {'type': 'api_key', 'provider': 'nvidia', 'keyRef': {'source': 'env', 'id': 'NVIDIA_API_KEY'}, 'profileId': 'nvidia:manual'}}, open(path, 'w')); \
-os.chmod(path, 0o600)"
+agent_dir = os.path.expanduser('~/.openclaw/agents/main/agent'); \
+os.makedirs(agent_dir, exist_ok=True); \
+json.dump({'nvidia:manual': {'type': 'api_key', 'provider': 'nvidia', 'keyRef': {'source': 'env', 'id': 'NVIDIA_API_KEY'}, 'profileId': 'nvidia:manual'}}, open(os.path.join(agent_dir, 'auth-profiles.json'), 'w')); \
+os.chmod(os.path.join(agent_dir, 'auth-profiles.json'), 0o600); \
+json.dump({'default': 'nvidia/nemotron-3-super-120b-a12b', 'providers': {'nvidia': {'baseUrl': 'https://inference.local/v1', 'models': {'nemotron-3-super-120b-a12b': {'id': 'nvidia/nemotron-3-super-120b-a12b', 'label': 'Nemotron 3 Super 120B'}}}}}, open(os.path.join(agent_dir, 'models.json'), 'w'), indent=2)"
 
 # Install NemoClaw plugin into OpenClaw
 RUN openclaw doctor --fix > /dev/null 2>&1 || true \
     && openclaw plugins install /opt/nemoclaw > /dev/null 2>&1 || true
-
-# Set default model
-RUN openclaw models set nvidia/nemotron-3-super-120b-a12b > /dev/null 2>&1 || true
 
 ENTRYPOINT ["/bin/bash"]
 CMD []
