@@ -88,12 +88,13 @@
   }
 
   #jensen-ascii {
-    font-size: 10px;
-    line-height: 1.15;
+    font-size: 7px;
+    line-height: 1.05;
+    letter-spacing: 0.5px;
     white-space: pre;
     color: #33ff33;
     text-align: center;
-    margin-top: 8px;
+    margin-top: 4px;
   }
 
   #jensen-status {
@@ -104,10 +105,11 @@
   }
 
   #claw-anim {
-    font-size: 11px;
-    line-height: 1.2;
+    font-size: 9px;
+    line-height: 1.1;
     white-space: pre;
-    color: #33ff33;
+    color: #ff2222;
+    text-shadow: 0 0 8px rgba(255, 34, 34, 0.6);
     text-align: center;
     margin-top: 8px;
     min-height: 60px;
@@ -247,31 +249,34 @@
 <div id="main">
   <div id="jensen-panel">
     <pre id="jensen-ascii">
-        ___________
-       /           \
-      /  .---. .---.  \
-     |  ( o )   ( o )  |
-     |      / _ \      |
-      \    | (_) |    /
-       \   '.___.`   /
-        \  _______  /
-    __.--'|       |'--.__
-   /  __  | NVIDIA|  __  \
-  | /  \ |_______|/  \ |
-  ||\__/  ___   ___  \__/||
-  ||     |   | |   |     ||
-  ||     |___| |___|     ||
-   \    _____________    /
-    \  |  _________  |  /
-     \_| |         | |_/
-       | | LEATHER | |
-       | | JACKET  | |
-       | |_________| |
-       |_____________|
-          ||     ||
-         _||_   _||_
-        |claw| |claw|
-        '----' '----'</pre>
+          .::::::::::.
+        :##############:
+      :%################%:
+     %######%%####%%######%
+    %#####%:.  ##  .:######%
+   %#####:    :##:    :#####%
+   %####:  @@  ##  @@  :####%
+   %####:  @@  ..  @@  :####%
+   %#####:    ....    :#####%
+    %#####%:........:%#####%
+    .%###  :########:  ###%.
+     .%#  ####:.:####  #%.
+      .%  :###:.###:  %.
+       :   .########.   :
+       %  :.::::::::.:  %
+      :%  %%%%%%%%%%%%  %:
+      %# .%%%%%.%%%%%. #%
+     .##  %%%%%.%%%%%  ##.
+     :##: .%%%.  .%%%. :##:
+     %###  %%%.  .%%%  ###%
+     %###: .%%.  .%%. :###%
+     %####  :%.  .%:  ####%
+     %####:  :.  .:  :####%
+     :####%    ..    %####:
+      %####%:.    .:%####%
+       %################%
+        :%############%:
+          :%%######%%:</pre>
     <div id="jensen-status">[ ONLINE ] Awaiting input...</div>
     <pre id="claw-anim"></pre>
   </div>
@@ -280,8 +285,7 @@
     <div id="chat-header">--- ROBOJENSEN CHAT LOG ---</div>
     <div id="chat">
       <div class="msg system">System initialized. RoboJensen online.</div>
-      <div class="msg system">Type a message to speak with RoboJensen.</div>
-      <div class="msg system">He has claws. He is enthusiastic. He cannot be stopped.</div>
+      <div class="msg system">Type a message below. He's enthusiastic. He cannot be stopped.</div>
     </div>
     <div id="input-area">
       <span id="input-prompt">you&gt; </span>
@@ -328,47 +332,57 @@ for (let i = 0; i < 8; i++) {
   panel.appendChild(col);
 }
 
-// Claw scratch chin animation frames
+// Claw scratch chin animation frames (red claws reaching up)
 const clawFrames = [
   [
-    "        ,---.",
-    "       /  *  \\",
-    "      | \\___/ |",
-    "       \\_____/",
-    "          |     ",
-    "    /\\_/\\_|     ",
-    "   ( claw )     ",
-    "    \\_____/     ",
+    "            ",
+    "            ",
+    "            ",
+    "    \\\\||//  ",
+    "     \\||/   ",
+    "      ||    ",
+    "     /||\\   ",
+    "    //||\\\\  ",
   ],
   [
-    "        ,---.",
-    "       /  *  \\",
-    "  __  | \\___/ |",
-    "  \\ \\  \\_____/",
-    "   \\ \\    |    ",
-    "    \\_\\---|    ",
-    "   ( claw )    ",
-    "    \\_____/    ",
+    "            ",
+    "            ",
+    "    \\\\||//  ",
+    "     \\||/   ",
+    "      ||    ",
+    "      ||    ",
+    "     /||\\   ",
+    "    //||\\\\  ",
   ],
   [
-    "        ,---.",
-    "   __  /  *  \\",
-    "   \\ \\| \\___/ |",
-    "    \\_|\\_____/",
-    "      |   |    ",
-    "      '---|    ",
-    "   ( claw )    ",
-    "    \\_____/    ",
+    "            ",
+    "    \\\\||//  ",
+    "     \\||/   ",
+    "      \\/    ",
+    "      ||    ",
+    "      ||    ",
+    "     /||\\   ",
+    "    //||\\\\  ",
   ],
   [
-    "    ___,---.",
-    "   /  /  *  \\",
-    "  (  | \\___/ |",
-    "   \\_|\\_____/",
-    "     \\   |    ",
-    "      ---|    ",
-    "   ( claw )   ",
-    "    \\_____/   ",
+    "    \\\\||//  ",
+    "     \\~~/ * ",
+    "      \\/  * ",
+    "      ||    ",
+    "      ||    ",
+    "      ||    ",
+    "     /||\\   ",
+    "    //||\\\\  ",
+  ],
+  [
+    "     \\~~/   ",
+    "    \\\\**//  ",
+    "      \\/    ",
+    "      ||    ",
+    "      ||    ",
+    "      ||    ",
+    "     /||\\   ",
+    "    //||\\\\  ",
   ],
 ];
 
@@ -418,7 +432,7 @@ async function sendMessage() {
   addMsg('user', text);
 
   streaming = true;
-  jensenStatus.textContent = '[ THINKING ] *scratches chin with claw*';
+  jensenStatus.textContent = '[ THINKING ] Processing...';
   showClawScratch();
 
   try {
@@ -474,7 +488,7 @@ async function sendMessage() {
     messages.push({ role: 'assistant', content: fullText });
   } catch (err) {
     addMsg('system', `CONNECTION ERROR: ${err.message}`);
-    jensenStatus.textContent = '[ ERROR ] *claws droop*';
+    jensenStatus.textContent = '[ ERROR ] Connection lost';
   } finally {
     streaming = false;
     jensenStatus.textContent = '[ ONLINE ] Awaiting input...';
