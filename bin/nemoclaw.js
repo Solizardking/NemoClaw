@@ -226,8 +226,8 @@ function help() {
   in ~/.nemoclaw/credentials.json (mode 600).
 
   Quick start:
-    npm install nemoclaw
-    npx nemoclaw setup
+    npm install -g nemoclaw
+    nemoclaw setup
 `);
 }
 

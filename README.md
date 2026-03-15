@@ -5,8 +5,8 @@ Run OpenClaw inside an OpenShell sandbox with NVIDIA inference (Nemotron 3 Super
 ## Quick Start
 
 ```bash
-npm install nemoclaw
-npx nemoclaw setup
+npm install -g nemoclaw
+nemoclaw setup
 ```
 
 That's it. First run prompts for your NVIDIA API Key (get one from [build.nvidia.com](https://build.nvidia.com)) and saves it to `~/.nemoclaw/credentials.json`.
@@ -20,8 +20,8 @@ That's it. First run prompts for your NVIDIA API Key (get one from [build.nvidia
 ### Deploy to a cloud VM
 
 ```bash
-npx nemoclaw deploy            # creates a Brev VM and sets up everything
-npx nemoclaw deploy my-gpu-box # custom instance name
+nemoclaw deploy            # creates a Brev VM and sets up everything
+nemoclaw deploy my-gpu-box # custom instance name
 ```
 
 Requires the [Brev CLI](https://brev.nvidia.com). The deploy script installs Docker, NVIDIA Container Toolkit (if GPU present), and OpenShell on the VM automatically.
