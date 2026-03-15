@@ -9,9 +9,9 @@ Run OpenClaw inside an OpenShell sandbox with NVIDIA inference (Nemotron 3 Super
 # npm install -g nemoclaw
 
 # Pre-publish: install from git
-git clone https://github.com/NVIDIA/openshell-openclaw-plugin.git
+git clone git@github.com:NVIDIA/openshell-openclaw-plugin.git
 cd openshell-openclaw-plugin
-npm install -g .
+sudo npm install -g .
 nemoclaw setup
 ```
 
@@ -52,7 +52,7 @@ sudo systemctl restart docker
 # NemoClaw (pre-publish: install from git)
 git clone https://github.com/NVIDIA/openshell-openclaw-plugin.git
 cd openshell-openclaw-plugin
-npm install -g .
+sudo npm install -g .
 nemoclaw setup
 ```
 
@@ -66,7 +66,7 @@ pip install 'openshell @ git+https://github.com/NVIDIA/OpenShell.git'
 # NemoClaw (pre-publish: install from git)
 git clone https://github.com/NVIDIA/openshell-openclaw-plugin.git
 cd openshell-openclaw-plugin
-npm install -g .
+sudo npm install -g .
 nemoclaw setup
 ```
 
