@@ -184,20 +184,17 @@ async function deploy(instanceName) {
     console.log(`  Brev instance '${name}' already exists.`);
   }
 
-  console.log("  Waiting for SSH...");
-  run(`brev shell ${name} -- echo ready`, { stdio: "ignore" });
-
   console.log("  Syncing NemoClaw to VM...");
-  run(`brev copy ${name} "${ROOT}" --dest /home/ubuntu/nemoclaw`);
+  run(`brev copy "${ROOT}/" ${name}:/home/ubuntu/nemoclaw/`);
 
   console.log("  Running brev-setup.sh...");
   const ghTokenEnv = process.env.GITHUB_TOKEN ? ` GITHUB_TOKEN="${process.env.GITHUB_TOKEN}"` : "";
-  run(`brev shell ${name} -- bash -c 'cd /home/ubuntu/nemoclaw && NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY}"${ghTokenEnv} bash scripts/brev-setup.sh'`);
+  run(`ssh ${name} 'cd /home/ubuntu/nemoclaw && NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY}"${ghTokenEnv} bash scripts/brev-setup.sh'`);
 
   const tgToken = getCredential("TELEGRAM_BOT_TOKEN");
   if (tgToken) {
     console.log("  Starting services...");
-    run(`brev shell ${name} -- bash -c 'cd /home/ubuntu/nemoclaw && NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY}" TELEGRAM_BOT_TOKEN="${tgToken}" bash scripts/start-services.sh'`);
+    run(`ssh ${name} 'cd /home/ubuntu/nemoclaw && NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY}" TELEGRAM_BOT_TOKEN="${tgToken}" bash scripts/start-services.sh'`);
   }
 
   console.log("");
