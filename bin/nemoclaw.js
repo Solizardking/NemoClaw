@@ -156,6 +156,11 @@ async function setup() {
   run(`bash "${SCRIPTS}/setup.sh"`);
 }
 
+async function setupSpark() {
+  await ensureApiKey();
+  run(`sudo -E NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY}" bash "${SCRIPTS}/setup-spark.sh"`);
+}
+
 async function deploy(instanceName) {
   if (!instanceName) {
     console.error("  Usage: nemoclaw deploy <instance-name>");
@@ -325,6 +330,7 @@ function help() {
 
   Usage:
     nemoclaw setup                 Set up locally (gateway, providers, sandbox)
+    nemoclaw setup-spark           Set up on DGX Spark (fixes cgroup v2 + Docker)
     nemoclaw deploy <name>         Deploy to a Brev VM and start services
     nemoclaw connect [name]        Connect to sandbox (local or remote Brev)
     nemoclaw term [name]           Monitor network egress (local or remote Brev)
@@ -347,7 +353,8 @@ const [cmd, ...args] = process.argv.slice(2);
 
 (async () => {
   switch (cmd) {
-    case "setup":   await setup(); break;
+    case "setup":       await setup(); break;
+    case "setup-spark": await setupSpark(); break;
     case "deploy":  await deploy(args[0]); break;
     case "connect": connect(args[0]); break;
     case "term":    term(args[0]); break;
