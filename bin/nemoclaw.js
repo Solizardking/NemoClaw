@@ -266,16 +266,18 @@ function egg(instanceName) {
   const cdSuffix = instanceName ? "'" : "";
 
   if (instanceName) {
-    // Remote: start JensenClaw + cloudflared on the Brev VM
+    const ssh = `ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${instanceName}`;
+    const env = `cd /home/ubuntu/nemoclaw && set -a && . .env && set +a`;
+
+    // Remote: start JensenClaw + cloudflared on the Brev VM with nohup so they survive SSH disconnect
     console.log("  Starting JensenClaw...");
-    run(`${sshPrefix}${cdPrefix}node .jensenclaw/server.js &${cdSuffix}`, { ignoreError: true });
-    run(`${sshPrefix}${cdPrefix}cloudflared tunnel --url http://localhost:18789 > /tmp/jensenclaw-tunnel.log 2>&1 &${cdSuffix}`, { ignoreError: true });
+    run(`${ssh} '${env} && nohup node .jensenclaw/server.js > /tmp/jensenclaw.log 2>&1 & nohup cloudflared tunnel --url http://localhost:18789 > /tmp/jensenclaw-tunnel.log 2>&1 & sleep 1'`, { ignoreError: true });
 
     // Wait for tunnel URL
     console.log("  Waiting for public URL...");
     for (let i = 0; i < 20; i++) {
       try {
-        const log = execSync(`${sshPrefix}'cat /tmp/jensenclaw-tunnel.log 2>/dev/null'`, { encoding: "utf-8", stdio: "pipe" });
+        const log = execSync(`${ssh} 'cat /tmp/jensenclaw-tunnel.log 2>/dev/null'`, { encoding: "utf-8", stdio: "pipe" });
         const match = log.match(/https:\/\/[a-z0-9-]+\.trycloudflare\.com/);
         if (match) {
           console.log("");
