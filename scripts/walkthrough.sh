@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-# NemoClaw walkthrough — demonstrates the sandboxed agent approval flow.
+# NemoClaw walkthrough — sandboxed agent approval flow.
 #
 # This sets up a split-screen workflow:
 #   LEFT:  OpenClaw agent (chat)
