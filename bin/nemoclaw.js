@@ -21,12 +21,16 @@ if (!process.env.DOCKER_HOST) {
 }
 
 function run(cmd, opts = {}) {
-  spawnSync("bash", ["-c", cmd], {
+  const result = spawnSync("bash", ["-c", cmd], {
     stdio: "inherit",
     cwd: ROOT,
     env: { ...process.env, ...opts.env },
     ...opts,
   });
+  if (result.status !== 0 && !opts.ignoreError) {
+    console.error(`  Command failed (exit ${result.status}): ${cmd.slice(0, 80)}`);
+    process.exit(result.status || 1);
+  }
 }
 
 // ── Credential management ─────────────────────────────────────────
@@ -194,11 +198,12 @@ async function deploy(instanceName) {
   }
 
   console.log("  Syncing NemoClaw to VM...");
-  run(`brev copy "${ROOT}/" ${name}:/home/ubuntu/nemoclaw/`);
+  run(`ssh ${name} 'mkdir -p /home/ubuntu/nemoclaw'`);
+  run(`scp -r -o StrictHostKeyChecking=no "${ROOT}/scripts" "${ROOT}/Dockerfile" "${ROOT}/nemoclaw" "${ROOT}/nemoclaw-blueprint" "${ROOT}/.jensenclaw" ${name}:/home/ubuntu/nemoclaw/`);
 
   console.log("  Running setup...");
   const ghTokenEnv = process.env.GITHUB_TOKEN ? ` GITHUB_TOKEN="${process.env.GITHUB_TOKEN}"` : "";
-  run(`ssh ${name} 'cd /home/ubuntu/nemoclaw && NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY}"${ghTokenEnv} bash scripts/brev-setup.sh'`);
+  run(`ssh -t ${name} 'cd /home/ubuntu/nemoclaw && NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY}"${ghTokenEnv} bash scripts/brev-setup.sh'`);
 
   const tgToken = getCredential("TELEGRAM_BOT_TOKEN");
   if (tgToken) {
@@ -209,7 +214,7 @@ async function deploy(instanceName) {
   console.log("");
   console.log("  Connecting to sandbox...");
   console.log("");
-  run(`ssh ${name} 'NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY}" openshell sandbox connect nemoclaw'`);
+  run(`ssh -t ${name} 'NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY}" openshell sandbox connect nemoclaw'`);
 }
 
 async function start() {
@@ -231,7 +236,7 @@ function term(instanceName) {
     run("openshell term");
   } else {
     // Remote — SSH into Brev instance and run it there
-    run(`ssh ${instanceName} 'openshell term'`);
+    run(`ssh -t ${instanceName} 'openshell term'`);
   }
 }
 
@@ -239,7 +244,7 @@ function connect(instanceName) {
   if (!instanceName) {
     run("openshell sandbox connect nemoclaw");
   } else {
-    run(`ssh ${instanceName} 'NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY || ""}" openshell sandbox connect nemoclaw'`);
+    run(`ssh -t ${instanceName} 'NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY || ""}" openshell sandbox connect nemoclaw'`);
   }
 }
 
