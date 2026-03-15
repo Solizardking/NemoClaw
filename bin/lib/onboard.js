@@ -1,0 +1,393 @@
+// SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+//
+// Interactive onboarding wizard — 7 steps from zero to running sandbox.
+
+const fs = require("fs");
+const path = require("path");
+const { ROOT, SCRIPTS, run, runCapture } = require("./runner");
+const { prompt, ensureApiKey, getCredential } = require("./credentials");
+const registry = require("./registry");
+const nim = require("./nim");
+const policies = require("./policies");
+
+// ── Helpers ──────────────────────────────────────────────────────
+
+function step(n, total, msg) {
+  console.log("");
+  console.log(`  [${n}/${total}] ${msg}`);
+  console.log(`  ${"─".repeat(50)}`);
+}
+
+function isDockerRunning() {
+  try {
+    runCapture("docker info", { ignoreError: false });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function isOpenshellInstalled() {
+  try {
+    runCapture("command -v openshell");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function installOpenshell() {
+  console.log("  Installing openshell CLI...");
+  run(`bash "${path.join(SCRIPTS, "install.sh")}"`, { ignoreError: true });
+  return isOpenshellInstalled();
+}
+
+// ── Step 1: Preflight ────────────────────────────────────────────
+
+async function preflight() {
+  step(1, 7, "Preflight checks");
+
+  // Docker
+  if (!isDockerRunning()) {
+    console.error("  Docker is not running. Please start Docker and try again.");
+    process.exit(1);
+  }
+  console.log("  ✓ Docker is running");
+
+  // OpenShell CLI
+  if (!isOpenshellInstalled()) {
+    console.log("  openshell CLI not found. Attempting to install...");
+    if (!installOpenshell()) {
+      console.error("  Failed to install openshell CLI.");
+      console.error("  Install manually: https://github.com/NVIDIA/OpenShell/releases");
+      process.exit(1);
+    }
+  }
+  console.log(`  ✓ openshell CLI: ${runCapture("openshell --version 2>/dev/null || echo unknown", { ignoreError: true })}`);
+
+  // GPU
+  const gpu = nim.detectGpu();
+  if (gpu) {
+    console.log(`  ✓ GPU detected: ${gpu.count} GPU(s), ${gpu.totalMemoryMB} MB total VRAM`);
+  } else {
+    console.log("  ⓘ No GPU detected — will use cloud inference");
+  }
+
+  return gpu;
+}
+
+// ── Step 2: Gateway ──────────────────────────────────────────────
+
+async function startGateway(gpu) {
+  step(2, 7, "Starting OpenShell gateway");
+
+  // Destroy old gateway
+  run("openshell gateway destroy -g nemoclaw 2>/dev/null || true", { ignoreError: true });
+
+  const gwArgs = ["--name", "nemoclaw"];
+  if (gpu) gwArgs.push("--gpu");
+
+  run(`openshell gateway start ${gwArgs.join(" ")}`, { ignoreError: false });
+
+  // Verify health
+  for (let i = 0; i < 5; i++) {
+    const status = runCapture("openshell status 2>&1", { ignoreError: true });
+    if (status.includes("Connected")) {
+      console.log("  ✓ Gateway is healthy");
+      break;
+    }
+    if (i === 4) {
+      console.error("  Gateway failed to start. Run: openshell gateway info");
+      process.exit(1);
+    }
+    require("child_process").spawnSync("sleep", ["2"]);
+  }
+
+  // CoreDNS fix for Colima
+  const colimaSocket = path.join(process.env.HOME || "/tmp", ".colima/default/docker.sock");
+  if (fs.existsSync(colimaSocket)) {
+    console.log("  Patching CoreDNS for Colima...");
+    run(`bash "${path.join(SCRIPTS, "fix-coredns.sh")}" 2>&1 || true`, { ignoreError: true });
+  }
+}
+
+// ── Step 3: Sandbox ──────────────────────────────────────────────
+
+async function createSandbox(gpu) {
+  step(3, 7, "Creating sandbox");
+
+  const nameAnswer = await prompt("  Sandbox name [my-assistant]: ");
+  const sandboxName = nameAnswer || "my-assistant";
+
+  // Check if sandbox already exists in registry
+  const existing = registry.getSandbox(sandboxName);
+  if (existing) {
+    const recreate = await prompt(`  Sandbox '${sandboxName}' already exists. Recreate? [y/N]: `);
+    if (recreate.toLowerCase() !== "y") {
+      console.log("  Keeping existing sandbox.");
+      return sandboxName;
+    }
+    // Destroy old sandbox
+    run(`openshell sandbox delete ${sandboxName} 2>/dev/null || true`, { ignoreError: true });
+    registry.removeSandbox(sandboxName);
+  }
+
+  // Stage build context
+  const { mkdtempSync } = require("fs");
+  const os = require("os");
+  const buildCtx = fs.mkdtempSync(path.join(os.tmpdir(), "nemoclaw-build-"));
+  fs.copyFileSync(path.join(ROOT, "Dockerfile"), path.join(buildCtx, "Dockerfile"));
+  run(`cp -r "${path.join(ROOT, "nemoclaw")}" "${buildCtx}/nemoclaw"`);
+  run(`cp -r "${path.join(ROOT, "nemoclaw-blueprint")}" "${buildCtx}/nemoclaw-blueprint"`);
+  run(`cp -r "${path.join(ROOT, "scripts")}" "${buildCtx}/scripts"`);
+  run(`rm -rf "${buildCtx}/nemoclaw/node_modules" "${buildCtx}/nemoclaw/src"`, { ignoreError: true });
+
+  // Create sandbox
+  const createArgs = [
+    `--from "${buildCtx}/Dockerfile"`,
+    `--name ${sandboxName}`,
+  ];
+  if (gpu) createArgs.push("--gpu");
+  createArgs.push("--forward 18789");
+
+  console.log(`  Creating sandbox '${sandboxName}'...`);
+  run(`openshell sandbox create ${createArgs.join(" ")}`);
+
+  // Clean up build context
+  run(`rm -rf "${buildCtx}"`, { ignoreError: true });
+
+  // Register in registry
+  registry.registerSandbox({
+    name: sandboxName,
+    gpuEnabled: !!gpu,
+  });
+
+  console.log(`  ✓ Sandbox '${sandboxName}' created`);
+  return sandboxName;
+}
+
+// ── Step 4: NIM ──────────────────────────────────────────────────
+
+async function setupNim(sandboxName, gpu) {
+  step(4, 7, "Configuring inference (NIM)");
+
+  let model = null;
+  let provider = "nvidia-nim";
+  let nimContainer = null;
+
+  if (gpu) {
+    console.log("");
+    console.log("  Inference options:");
+    console.log("    1) Local NIM container (GPU required)");
+    console.log("    2) NVIDIA Cloud API (build.nvidia.com)");
+    console.log("    3) Existing vLLM instance (localhost:8000)");
+    console.log("");
+
+    const choice = await prompt("  Choose [2]: ");
+    const option = choice || "2";
+
+    if (option === "1") {
+      // List models that fit GPU VRAM
+      const models = nim.listModels().filter((m) => m.minGpuMemoryMB <= gpu.totalMemoryMB);
+      if (models.length === 0) {
+        console.log("  No NIM models fit your GPU VRAM. Falling back to cloud API.");
+      } else {
+        console.log("");
+        console.log("  Models that fit your GPU:");
+        models.forEach((m, i) => {
+          console.log(`    ${i + 1}) ${m.name} (min ${m.minGpuMemoryMB} MB)`);
+        });
+        console.log("");
+
+        const modelChoice = await prompt(`  Choose model [1]: `);
+        const idx = parseInt(modelChoice || "1", 10) - 1;
+        const selected = models[idx] || models[0];
+        model = selected.name;
+
+        console.log(`  Pulling NIM image for ${model}...`);
+        nim.pullNimImage(model);
+
+        console.log("  Starting NIM container...");
+        nimContainer = nim.startNimContainer(sandboxName, model);
+
+        console.log("  Waiting for NIM to become healthy...");
+        if (!nim.waitForNimHealth()) {
+          console.error("  NIM failed to start. Falling back to cloud API.");
+          model = null;
+          nimContainer = null;
+        } else {
+          provider = "vllm-local";
+        }
+      }
+    } else if (option === "3") {
+      // Check existing vLLM
+      const health = runCapture("curl -sf http://localhost:8000/v1/models 2>/dev/null", {
+        ignoreError: true,
+      });
+      if (health) {
+        console.log("  ✓ Existing vLLM detected on localhost:8000");
+        provider = "vllm-local";
+        model = "vllm-local";
+      } else {
+        console.log("  No vLLM instance found on localhost:8000. Falling back to cloud API.");
+      }
+    }
+  }
+
+  if (provider === "nvidia-nim") {
+    await ensureApiKey();
+    model = model || "nvidia/nemotron-3-super-120b-a12b";
+    console.log(`  Using NVIDIA Cloud API with model: ${model}`);
+  }
+
+  registry.updateSandbox(sandboxName, { model, provider, nimContainer });
+
+  return { model, provider };
+}
+
+// ── Step 5: Inference provider ───────────────────────────────────
+
+async function setupInference(sandboxName, model, provider) {
+  step(5, 7, "Setting up inference provider");
+
+  if (provider === "nvidia-nim") {
+    // Create nvidia-nim provider
+    run(
+      `openshell provider create --name nvidia-nim --type openai ` +
+      `--credential "NVIDIA_API_KEY=${process.env.NVIDIA_API_KEY}" ` +
+      `--config "OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1" 2>&1 || true`,
+      { ignoreError: true }
+    );
+    run(
+      `openshell inference set --provider nvidia-nim --model ${model} 2>/dev/null || true`,
+      { ignoreError: true }
+    );
+  } else if (provider === "vllm-local") {
+    run(
+      `openshell provider create --name vllm-local --type openai ` +
+      `--credential "OPENAI_API_KEY=dummy" ` +
+      `--config "OPENAI_BASE_URL=http://host.docker.internal:8000/v1" 2>&1 || true`,
+      { ignoreError: true }
+    );
+    run(
+      `openshell inference set --provider vllm-local --model ${model} 2>/dev/null || true`,
+      { ignoreError: true }
+    );
+  }
+
+  registry.updateSandbox(sandboxName, { model, provider });
+  console.log(`  ✓ Inference route set: ${provider} / ${model}`);
+}
+
+// ── Step 6: OpenClaw ─────────────────────────────────────────────
+
+async function setupOpenclaw(sandboxName) {
+  step(6, 7, "Setting up OpenClaw inside sandbox");
+
+  run(
+    `openshell sandbox connect ${sandboxName} -- bash -c "openclaw doctor --fix; openclaw nemoclaw onboard" 2>&1 || true`,
+    { ignoreError: true }
+  );
+  console.log("  ✓ OpenClaw configured");
+}
+
+// ── Step 7: Policy presets ───────────────────────────────────────
+
+async function setupPolicies(sandboxName) {
+  step(7, 7, "Policy presets");
+
+  const suggestions = ["pypi", "npm"];
+
+  // Auto-detect based on env tokens
+  if (getCredential("TELEGRAM_BOT_TOKEN")) {
+    suggestions.push("telegram");
+    console.log("  Auto-detected: TELEGRAM_BOT_TOKEN → suggesting telegram preset");
+  }
+  if (getCredential("SLACK_BOT_TOKEN") || process.env.SLACK_BOT_TOKEN) {
+    suggestions.push("slack");
+    console.log("  Auto-detected: SLACK_BOT_TOKEN → suggesting slack preset");
+  }
+  if (getCredential("DISCORD_BOT_TOKEN") || process.env.DISCORD_BOT_TOKEN) {
+    suggestions.push("discord");
+    console.log("  Auto-detected: DISCORD_BOT_TOKEN → suggesting discord preset");
+  }
+
+  const allPresets = policies.listPresets();
+  const applied = policies.getAppliedPresets(sandboxName);
+
+  console.log("");
+  console.log("  Available policy presets:");
+  allPresets.forEach((p) => {
+    const marker = applied.includes(p.name) ? "●" : "○";
+    const suggested = suggestions.includes(p.name) ? " (suggested)" : "";
+    console.log(`    ${marker} ${p.name} — ${p.description}${suggested}`);
+  });
+  console.log("");
+
+  const answer = await prompt(`  Apply suggested presets (${suggestions.join(", ")})? [Y/n/list]: `);
+
+  if (answer.toLowerCase() === "n") {
+    console.log("  Skipping policy presets.");
+    return;
+  }
+
+  if (answer.toLowerCase() === "list") {
+    // Let user pick
+    const picks = await prompt("  Enter preset names (comma-separated): ");
+    const selected = picks.split(",").map((s) => s.trim()).filter(Boolean);
+    for (const name of selected) {
+      policies.applyPreset(sandboxName, name);
+    }
+  } else {
+    // Apply suggested
+    for (const name of suggestions) {
+      policies.applyPreset(sandboxName, name);
+    }
+  }
+
+  console.log("  ✓ Policies applied");
+}
+
+// ── Dashboard ────────────────────────────────────────────────────
+
+function printDashboard(sandboxName, model, provider) {
+  const nimStat = nim.nimStatus(sandboxName);
+  const nimLabel = nimStat.running ? "running" : "not running";
+
+  let providerLabel = provider;
+  if (provider === "nvidia-nim") providerLabel = "NVIDIA Cloud API";
+  else if (provider === "vllm-local") providerLabel = "Local vLLM";
+
+  console.log("");
+  console.log(`  ${"─".repeat(50)}`);
+  console.log(`  Dashboard    http://localhost:18789/`);
+  console.log(`  Sandbox      ${sandboxName} (Landlock + seccomp + netns)`);
+  console.log(`  Model        ${model} (${providerLabel})`);
+  console.log(`  NIM          ${nimLabel}`);
+  console.log(`  ${"─".repeat(50)}`);
+  console.log(`  Run:         nemoclaw ${sandboxName} connect`);
+  console.log(`  Status:      nemoclaw ${sandboxName} status`);
+  console.log(`  Logs:        nemoclaw ${sandboxName} logs --follow`);
+  console.log(`  ${"─".repeat(50)}`);
+  console.log("");
+}
+
+// ── Main ─────────────────────────────────────────────────────────
+
+async function onboard() {
+  console.log("");
+  console.log("  NemoClaw Onboarding");
+  console.log("  ===================");
+
+  const gpu = await preflight();
+  await startGateway(gpu);
+  const sandboxName = await createSandbox(gpu);
+  const { model, provider } = await setupNim(sandboxName, gpu);
+  await setupInference(sandboxName, model, provider);
+  await setupOpenclaw(sandboxName);
+  await setupPolicies(sandboxName);
+  printDashboard(sandboxName, model, provider);
+}
+
+module.exports = { onboard };

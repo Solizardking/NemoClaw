@@ -5,153 +5,39 @@
 const { execSync, spawnSync } = require("child_process");
 const path = require("path");
 const fs = require("fs");
-const readline = require("readline");
+const os = require("os");
 
-const ROOT = path.resolve(__dirname, "..");
-const SCRIPTS = path.join(ROOT, "scripts");
-const CREDS_DIR = path.join(process.env.HOME || "/tmp", ".nemoclaw");
-const CREDS_FILE = path.join(CREDS_DIR, "credentials.json");
+const { ROOT, SCRIPTS, run, runCapture } = require("./lib/runner");
+const {
+  ensureApiKey,
+  ensureGithubToken,
+  getCredential,
+  isRepoPrivate,
+} = require("./lib/credentials");
+const registry = require("./lib/registry");
+const nim = require("./lib/nim");
+const policies = require("./lib/policies");
 
-// Auto-detect Colima Docker socket
-if (!process.env.DOCKER_HOST) {
-  const colimaSocket = path.join(process.env.HOME || "/tmp", ".colima/default/docker.sock");
-  if (fs.existsSync(colimaSocket)) {
-    process.env.DOCKER_HOST = `unix://${colimaSocket}`;
-  }
+// ── Global commands ──────────────────────────────────────────────
+
+const GLOBAL_COMMANDS = new Set([
+  "onboard", "list", "deploy", "setup", "setup-spark",
+  "start", "stop", "status", "egg", "claw", "jensen",
+  "help", "--help", "-h",
+]);
+
+// ── Commands ─────────────────────────────────────────────────────
+
+async function onboard() {
+  const { onboard: runOnboard } = require("./lib/onboard");
+  await runOnboard();
 }
-
-function run(cmd, opts = {}) {
-  const result = spawnSync("bash", ["-c", cmd], {
-    stdio: "inherit",
-    cwd: ROOT,
-    env: { ...process.env, ...opts.env },
-    ...opts,
-  });
-  if (result.status !== 0 && !opts.ignoreError) {
-    console.error(`  Command failed (exit ${result.status}): ${cmd.slice(0, 80)}`);
-    process.exit(result.status || 1);
-  }
-}
-
-// ── Credential management ─────────────────────────────────────────
-
-function loadCredentials() {
-  try {
-    if (fs.existsSync(CREDS_FILE)) {
-      return JSON.parse(fs.readFileSync(CREDS_FILE, "utf-8"));
-    }
-  } catch {}
-  return {};
-}
-
-function saveCredential(key, value) {
-  fs.mkdirSync(CREDS_DIR, { recursive: true, mode: 0o700 });
-  const creds = loadCredentials();
-  creds[key] = value;
-  fs.writeFileSync(CREDS_FILE, JSON.stringify(creds, null, 2), { mode: 0o600 });
-}
-
-function getCredential(key) {
-  // env var takes priority, then saved creds
-  if (process.env[key]) return process.env[key];
-  const creds = loadCredentials();
-  return creds[key] || null;
-}
-
-function prompt(question) {
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stderr });
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer.trim());
-    });
-  });
-}
-
-async function ensureApiKey() {
-  let key = getCredential("NVIDIA_API_KEY");
-  if (key) {
-    process.env.NVIDIA_API_KEY = key;
-    return;
-  }
-
-  console.log("");
-  console.log("  ┌───────────────────────────────────────────────┐");
-  console.log("  │  NVIDIA API Key required                      │");
-  console.log("  │                                               │");
-  console.log("  │  1. Go to https://build.nvidia.com            │");
-  console.log("  │  2. Sign in with your NVIDIA account          │");
-  console.log("  │  3. Click any model -> 'Get API Key'          │");
-  console.log("  │  4. Paste the key below (starts with nvapi-)  │");
-  console.log("  └───────────────────────────────────────────────┘");
-  console.log("");
-
-  key = await prompt("  NVIDIA API Key: ");
-
-  if (!key || !key.startsWith("nvapi-")) {
-    console.error("  Invalid key. Must start with nvapi-");
-    process.exit(1);
-  }
-
-  saveCredential("NVIDIA_API_KEY", key);
-  process.env.NVIDIA_API_KEY = key;
-  console.log("");
-  console.log("  Key saved to ~/.nemoclaw/credentials.json (mode 600)");
-  console.log("");
-}
-
-function isRepoPrivate(repo) {
-  try {
-    const json = execSync(`gh api repos/${repo} --jq .private 2>/dev/null`, { encoding: "utf-8" }).trim();
-    return json === "true";
-  } catch {
-    // If gh CLI isn't available or API fails, assume public
-    return false;
-  }
-}
-
-async function ensureGithubToken() {
-  let token = getCredential("GITHUB_TOKEN");
-  if (token) {
-    process.env.GITHUB_TOKEN = token;
-    return;
-  }
-
-  // Try gh CLI
-  try {
-    token = execSync("gh auth token 2>/dev/null", { encoding: "utf-8" }).trim();
-    if (token) {
-      process.env.GITHUB_TOKEN = token;
-      return;
-    }
-  } catch {}
-
-  console.log("");
-  console.log("  ┌──────────────────────────────────────────────────┐");
-  console.log("  │  GitHub token required (private repo detected)   │");
-  console.log("  │                                                  │");
-  console.log("  │  Option A: gh auth login (if you have gh CLI)    │");
-  console.log("  │  Option B: Paste a PAT with read:packages scope  │");
-  console.log("  └──────────────────────────────────────────────────┘");
-  console.log("");
-
-  token = await prompt("  GitHub Token: ");
-
-  if (!token) {
-    console.error("  Token required for deploy (repo is private).");
-    process.exit(1);
-  }
-
-  saveCredential("GITHUB_TOKEN", token);
-  process.env.GITHUB_TOKEN = token;
-  console.log("");
-  console.log("  Token saved to ~/.nemoclaw/credentials.json (mode 600)");
-  console.log("");
-}
-
-// ── Commands ──────────────────────────────────────────────────────
 
 async function setup() {
+  console.log("");
+  console.log("  ⚠  `nemoclaw setup` is deprecated. Use `nemoclaw onboard` instead.");
+  console.log("     Running legacy setup.sh for backwards compatibility...");
+  console.log("");
   await ensureApiKey();
   run(`bash "${SCRIPTS}/setup.sh"`);
 }
@@ -202,7 +88,6 @@ async function deploy(instanceName) {
     console.log(`  Brev instance '${name}' already exists.`);
   }
 
-  // Refresh Brev SSH config so the hostname resolves
   run(`brev refresh`, { ignoreError: true });
 
   console.log("  Waiting for SSH...");
@@ -223,13 +108,12 @@ async function deploy(instanceName) {
   run(`ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${name} 'mkdir -p /home/ubuntu/nemoclaw'`);
   run(`scp -q -r -o StrictHostKeyChecking=no -o LogLevel=ERROR "${ROOT}/scripts" "${ROOT}/Dockerfile" "${ROOT}/nemoclaw" "${ROOT}/nemoclaw-blueprint" "${ROOT}/.jensenclaw" ${name}:/home/ubuntu/nemoclaw/`);
 
-  // Write credentials to a .env file on the VM (avoids shell quoting issues)
   const envLines = [`NVIDIA_API_KEY=${process.env.NVIDIA_API_KEY}`];
   const ghToken = process.env.GITHUB_TOKEN;
   if (ghToken) envLines.push(`GITHUB_TOKEN=${ghToken}`);
   const tgToken = getCredential("TELEGRAM_BOT_TOKEN");
   if (tgToken) envLines.push(`TELEGRAM_BOT_TOKEN=${tgToken}`);
-  const envTmp = path.join(require("os").tmpdir(), `nemoclaw-env-${Date.now()}`);
+  const envTmp = path.join(os.tmpdir(), `nemoclaw-env-${Date.now()}`);
   fs.writeFileSync(envTmp, envLines.join("\n") + "\n", { mode: 0o600 });
   run(`scp -q -o StrictHostKeyChecking=no -o LogLevel=ERROR "${envTmp}" ${name}:/home/ubuntu/nemoclaw/.env`);
   fs.unlinkSync(envTmp);
@@ -257,28 +141,61 @@ function stop() {
   run(`bash "${SCRIPTS}/start-services.sh" --stop`);
 }
 
-function status() {
+function showStatus() {
+  // Show sandbox registry
+  const { sandboxes, defaultSandbox } = registry.listSandboxes();
+  if (sandboxes.length > 0) {
+    console.log("");
+    console.log("  Sandboxes:");
+    for (const sb of sandboxes) {
+      const def = sb.name === defaultSandbox ? " *" : "";
+      const model = sb.model ? ` (${sb.model})` : "";
+      console.log(`    ${sb.name}${def}${model}`);
+    }
+    console.log("");
+  }
+
+  // Show service status
   run(`bash "${SCRIPTS}/start-services.sh" --status`);
+}
+
+function listSandboxes() {
+  const { sandboxes, defaultSandbox } = registry.listSandboxes();
+  if (sandboxes.length === 0) {
+    console.log("");
+    console.log("  No sandboxes registered. Run `nemoclaw onboard` to get started.");
+    console.log("");
+    return;
+  }
+
+  console.log("");
+  console.log("  Sandboxes:");
+  for (const sb of sandboxes) {
+    const def = sb.name === defaultSandbox ? " *" : "";
+    const model = sb.model || "unknown";
+    const provider = sb.provider || "unknown";
+    const gpu = sb.gpuEnabled ? "GPU" : "CPU";
+    const presets = sb.policies && sb.policies.length > 0 ? sb.policies.join(", ") : "none";
+    console.log(`    ${sb.name}${def}`);
+    console.log(`      model: ${model}  provider: ${provider}  ${gpu}  policies: ${presets}`);
+  }
+  console.log("");
+  console.log("  * = default sandbox");
+  console.log("");
 }
 
 function egg(instanceName) {
   const sshPrefix = instanceName
     ? `ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${instanceName} `
     : "";
-  const cdPrefix = instanceName
-    ? "'cd /home/ubuntu/nemoclaw && set -a && . .env && set +a && "
-    : "";
-  const cdSuffix = instanceName ? "'" : "";
 
   if (instanceName) {
     const ssh = `ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${instanceName}`;
     const env = `cd /home/ubuntu/nemoclaw && set -a && . .env && set +a`;
 
-    // Remote: start JensenClaw + cloudflared on the Brev VM with nohup so they survive SSH disconnect
     console.log("  Starting JensenClaw...");
     run(`${ssh} '${env} && nohup node .jensenclaw/server.js > /tmp/jensenclaw.log 2>&1 & nohup cloudflared tunnel --url http://localhost:18789 > /tmp/jensenclaw-tunnel.log 2>&1 & sleep 1'`, { ignoreError: true });
 
-    // Wait for tunnel URL
     console.log("  Waiting for public URL...");
     for (let i = 0; i < 20; i++) {
       try {
@@ -300,78 +217,192 @@ function egg(instanceName) {
     }
     console.error("  Tunnel didn't start in time. Check /tmp/jensenclaw-tunnel.log on the VM.");
   } else {
-    // Local
     console.log("  Starting JensenClaw locally on http://localhost:18789");
     run(`NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY || ""}" node "${ROOT}/.jensenclaw/server.js"`);
   }
 }
 
-function term(instanceName) {
-  if (!instanceName) {
-    // Local — run openshell term directly
-    run("openshell term");
-  } else {
-    // Remote — SSH into Brev instance and run it there
-    run(`ssh -t -o StrictHostKeyChecking=no -o LogLevel=ERROR ${instanceName} 'openshell term'`);
-  }
+// ── Sandbox-scoped actions ───────────────────────────────────────
+
+function sandboxConnect(sandboxName) {
+  run(`openshell sandbox connect ${sandboxName}`);
 }
 
-function connect(instanceName) {
-  if (!instanceName) {
-    run("openshell sandbox connect nemoclaw");
-  } else {
-    run(`ssh -t -o StrictHostKeyChecking=no -o LogLevel=ERROR ${instanceName} 'NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY || ""}" openshell sandbox connect nemoclaw'`);
+function sandboxStatus(sandboxName) {
+  const sb = registry.getSandbox(sandboxName);
+  if (sb) {
+    console.log("");
+    console.log(`  Sandbox: ${sb.name}`);
+    console.log(`    Model:    ${sb.model || "unknown"}`);
+    console.log(`    Provider: ${sb.provider || "unknown"}`);
+    console.log(`    GPU:      ${sb.gpuEnabled ? "yes" : "no"}`);
+    console.log(`    Policies: ${(sb.policies || []).join(", ") || "none"}`);
   }
+
+  // openshell info
+  run(`openshell sandbox get ${sandboxName} 2>/dev/null || true`, { ignoreError: true });
+
+  // NIM health
+  const nimStat = nim.nimStatus(sandboxName);
+  console.log(`    NIM:      ${nimStat.running ? `running (${nimStat.container})` : "not running"}`);
+  if (nimStat.running) {
+    console.log(`    Healthy:  ${nimStat.healthy ? "yes" : "no"}`);
+  }
+  console.log("");
 }
+
+function sandboxLogs(sandboxName, follow) {
+  const followFlag = follow ? " --follow" : "";
+  run(`openshell sandbox logs ${sandboxName}${followFlag}`);
+}
+
+async function sandboxPolicyAdd(sandboxName) {
+  const allPresets = policies.listPresets();
+  const applied = policies.getAppliedPresets(sandboxName);
+
+  console.log("");
+  console.log("  Available presets:");
+  allPresets.forEach((p) => {
+    const marker = applied.includes(p.name) ? "●" : "○";
+    console.log(`    ${marker} ${p.name} — ${p.description}`);
+  });
+  console.log("");
+
+  const { prompt: askPrompt } = require("./lib/credentials");
+  const answer = await askPrompt("  Preset to apply: ");
+  if (!answer) return;
+
+  const confirm = await askPrompt(`  Apply '${answer}' to sandbox '${sandboxName}'? [Y/n]: `);
+  if (confirm.toLowerCase() === "n") return;
+
+  policies.applyPreset(sandboxName, answer);
+}
+
+function sandboxPolicyList(sandboxName) {
+  const allPresets = policies.listPresets();
+  const applied = policies.getAppliedPresets(sandboxName);
+
+  console.log("");
+  console.log(`  Policy presets for sandbox '${sandboxName}':`);
+  allPresets.forEach((p) => {
+    const marker = applied.includes(p.name) ? "●" : "○";
+    console.log(`    ${marker} ${p.name} — ${p.description}`);
+  });
+  console.log("");
+}
+
+function sandboxDestroy(sandboxName) {
+  console.log(`  Stopping NIM for '${sandboxName}'...`);
+  nim.stopNimContainer(sandboxName);
+
+  console.log(`  Deleting sandbox '${sandboxName}'...`);
+  run(`openshell sandbox delete ${sandboxName} 2>/dev/null || true`, { ignoreError: true });
+
+  registry.removeSandbox(sandboxName);
+  console.log(`  ✓ Sandbox '${sandboxName}' destroyed`);
+}
+
+// ── Help ─────────────────────────────────────────────────────────
 
 function help() {
   console.log(`
   nemoclaw — NemoClaw CLI
 
-  Usage:
-    nemoclaw setup | onboard       Set up locally (gateway, providers, sandbox)
-    nemoclaw setup-spark           Set up on DGX Spark (fixes cgroup v2 + Docker)
-    nemoclaw deploy <name>         Deploy to a Brev VM and start services
-    nemoclaw connect [name]        Connect to sandbox (local or remote Brev)
-    nemoclaw term [name]           Monitor network egress (local or remote Brev)
-    nemoclaw start                 Start services (Telegram, tunnel)
-    nemoclaw stop                  Stop all services
-    nemoclaw status                Show service status
+  Getting Started:
+    nemoclaw onboard                 Interactive setup wizard (recommended)
+    nemoclaw setup                   Legacy setup (deprecated, use onboard)
+    nemoclaw setup-spark             Set up on DGX Spark (fixes cgroup v2 + Docker)
+
+  Sandbox Management:
+    nemoclaw list                    List all sandboxes
+    nemoclaw <name> connect          Connect to a sandbox
+    nemoclaw <name> status           Show sandbox status and health
+    nemoclaw <name> logs [--follow]  View sandbox logs
+    nemoclaw <name> destroy          Stop NIM + delete sandbox
+
+  Policy Presets:
+    nemoclaw <name> policy-add       Add a policy preset to a sandbox
+    nemoclaw <name> policy-list      List presets (● = applied)
+
+  Deploy:
+    nemoclaw deploy <instance>       Deploy to a Brev VM and start services
+
+  Services:
+    nemoclaw start                   Start services (Telegram, tunnel)
+    nemoclaw stop                    Stop all services
+    nemoclaw status                  Show sandbox list and service status
+
+  Legacy:
+    nemoclaw egg|claw|jensen [name]  Easter egg
 
   Credentials are prompted on first use, then saved securely
   in ~/.nemoclaw/credentials.json (mode 600).
-
-  Quick start:
-    npm install -g nemoclaw
-    nemoclaw setup
 `);
 }
 
-// ── Dispatch ──────────────────────────────────────────────────────
+// ── Dispatch ─────────────────────────────────────────────────────
 
 const [cmd, ...args] = process.argv.slice(2);
 
 (async () => {
-  switch (cmd) {
-    case "setup":
-    case "onboard":     await setup(); break;
-    case "setup-spark": await setupSpark(); break;
-    case "deploy":  await deploy(args[0]); break;
-    case "connect": connect(args[0]); break;
-    case "term":    term(args[0]); break;
-    case "start":   await start(); break;
-    case "stop":    stop(); break;
-    case "status":  status(); break;
-    case "egg":
-    case "claw":
-    case "jensen":  egg(args[0]); break;
-    case "--help":
-    case "-h":
-    case "help":
-    case undefined: help(); break;
-    default:
-      console.error(`Unknown command: ${cmd}`);
-      help();
-      process.exit(1);
+  // No command → help
+  if (!cmd || cmd === "help" || cmd === "--help" || cmd === "-h") {
+    help();
+    return;
   }
+
+  // Global commands
+  if (GLOBAL_COMMANDS.has(cmd)) {
+    switch (cmd) {
+      case "onboard":     await onboard(); break;
+      case "setup":       await setup(); break;
+      case "setup-spark": await setupSpark(); break;
+      case "deploy":      await deploy(args[0]); break;
+      case "start":       await start(); break;
+      case "stop":        stop(); break;
+      case "status":      showStatus(); break;
+      case "list":        listSandboxes(); break;
+      case "egg":
+      case "claw":
+      case "jensen":      egg(args[0]); break;
+      default:            help(); break;
+    }
+    return;
+  }
+
+  // Sandbox-scoped commands: nemoclaw <name> <action>
+  const sandbox = registry.getSandbox(cmd);
+  if (sandbox) {
+    const action = args[0] || "connect";
+    const actionArgs = args.slice(1);
+
+    switch (action) {
+      case "connect":     sandboxConnect(cmd); break;
+      case "status":      sandboxStatus(cmd); break;
+      case "logs":        sandboxLogs(cmd, actionArgs.includes("--follow")); break;
+      case "policy-add":  await sandboxPolicyAdd(cmd); break;
+      case "policy-list": sandboxPolicyList(cmd); break;
+      case "destroy":     sandboxDestroy(cmd); break;
+      default:
+        console.error(`  Unknown action: ${action}`);
+        console.error(`  Valid actions: connect, status, logs, policy-add, policy-list, destroy`);
+        process.exit(1);
+    }
+    return;
+  }
+
+  // Unknown command — suggest
+  console.error(`  Unknown command: ${cmd}`);
+  console.error("");
+
+  // Check if it looks like a sandbox name with missing action
+  const allNames = registry.listSandboxes().sandboxes.map((s) => s.name);
+  if (allNames.length > 0) {
+    console.error(`  Registered sandboxes: ${allNames.join(", ")}`);
+    console.error(`  Try: nemoclaw <sandbox-name> connect`);
+    console.error("");
+  }
+
+  console.error(`  Run 'nemoclaw help' for usage.`);
+  process.exit(1);
 })();

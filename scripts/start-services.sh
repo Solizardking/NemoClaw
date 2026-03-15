@@ -9,13 +9,40 @@
 #   TELEGRAM_BOT_TOKEN=... ./scripts/start-services.sh         # start all
 #   ./scripts/start-services.sh --status                       # check status
 #   ./scripts/start-services.sh --stop                         # stop all
+#   ./scripts/start-services.sh --sandbox mybox                # start for specific sandbox
+#   ./scripts/start-services.sh --sandbox mybox --stop         # stop for specific sandbox
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-PIDDIR="/tmp/nemoclaw-services"
 JENSENCLAW_PORT="${JENSENCLAW_PORT:-18789}"
+
+# ── Parse flags ──────────────────────────────────────────────────
+SANDBOX_NAME="${NEMOCLAW_SANDBOX:-default}"
+ACTION="start"
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --sandbox)
+      SANDBOX_NAME="${2:?--sandbox requires a name}"
+      shift 2
+      ;;
+    --stop)
+      ACTION="stop"
+      shift
+      ;;
+    --status)
+      ACTION="status"
+      shift
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
+
+PIDDIR="/tmp/nemoclaw-services-${SANDBOX_NAME}"
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -171,8 +198,8 @@ do_start() {
 }
 
 # Dispatch
-case "${1:-}" in
-  --stop)   do_stop ;;
-  --status) show_status ;;
-  *)        do_start ;;
+case "$ACTION" in
+  stop)   do_stop ;;
+  status) show_status ;;
+  start)  do_start ;;
 esac
