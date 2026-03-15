@@ -98,7 +98,17 @@ info "Deleting old nemoclaw sandbox (if any)..."
 openshell sandbox delete nemoclaw > /dev/null 2>&1 || true
 
 info "Building and creating NemoClaw sandbox (this takes a few minutes on first run)..."
-openshell sandbox create --from "$REPO_DIR/Dockerfile" --name nemoclaw
+
+# Stage a clean build context (openshell doesn't honor .dockerignore)
+BUILD_CTX="$(mktemp -d)"
+cp "$REPO_DIR/Dockerfile" "$BUILD_CTX/"
+cp -r "$REPO_DIR/nemoclaw" "$BUILD_CTX/nemoclaw"
+cp -r "$REPO_DIR/nemoclaw-blueprint" "$BUILD_CTX/nemoclaw-blueprint"
+cp -r "$REPO_DIR/scripts" "$BUILD_CTX/scripts"
+rm -rf "$BUILD_CTX/nemoclaw/node_modules" "$BUILD_CTX/nemoclaw/src"
+
+openshell sandbox create --from "$BUILD_CTX/Dockerfile" --name nemoclaw
+rm -rf "$BUILD_CTX"
 
 # 6. Done
 echo ""
