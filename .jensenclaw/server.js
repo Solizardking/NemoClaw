@@ -113,6 +113,13 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (req.method === "GET" && req.url === "/jensen.jpg") {
+    const img = fs.readFileSync(path.join(__dirname, "jensen.jpg"));
+    res.writeHead(200, { "Content-Type": "image/jpeg", "Cache-Control": "public, max-age=86400" });
+    res.end(img);
+    return;
+  }
+
   if (req.method === "POST" && req.url === "/api/chat") {
     let body = "";
     req.on("data", (chunk) => (body += chunk));

@@ -18,6 +18,21 @@
     text-shadow: 0 0 5px rgba(51, 255, 51, 0.5);
   }
 
+  /* Jensen ghost image burned into the phosphor */
+  #jensen-ghost {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 45vh;
+    max-width: 400px;
+    opacity: 0.07;
+    filter: grayscale(100%) brightness(2) sepia(100%) hue-rotate(70deg) saturate(3);
+    pointer-events: none;
+    z-index: 0;
+    mask-image: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 85%);
+    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 85%);
+  }
+
   /* CRT scanline overlay */
   body::after {
     content: '';
@@ -152,6 +167,8 @@
 </style>
 </head>
 <body>
+
+<img id="jensen-ghost" src="/jensen.jpg" alt="">
 
 <div class="header-bar">
   <span>JENSENCLAW v0.1 // NEMOCLAW TERMINAL</span>
