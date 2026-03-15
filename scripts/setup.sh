@@ -84,18 +84,42 @@ else
   info "Created nvidia-nim provider"
 fi
 
-# vllm-local (if running)
-if curl -s http://localhost:8000/v1/models > /dev/null 2>&1; then
+# vllm-local (if vLLM is installed or running)
+if curl -s http://localhost:8000/v1/models > /dev/null 2>&1 || python3 -c "import vllm" 2>/dev/null; then
   if openshell provider create --name vllm-local --type openai \
     --credential "OPENAI_API_KEY=dummy" \
     --config "OPENAI_BASE_URL=http://host.docker.internal:8000/v1" 2>&1 | grep -q "AlreadyExists"; then
     info "vllm-local provider already exists"
   else
-    info "Created vllm-local provider (vLLM detected on localhost:8000)"
+    info "Created vllm-local provider"
   fi
 fi
 
-# 4. Inference route — default to nvidia-nim
+# 4a. Ollama (macOS local inference)
+if [ "$(uname -s)" = "Darwin" ]; then
+  if ! command -v ollama > /dev/null 2>&1; then
+    info "Installing Ollama..."
+    brew install ollama 2>/dev/null || warn "Ollama install failed (brew required). Install manually: https://ollama.com"
+  fi
+  if command -v ollama > /dev/null 2>&1; then
+    # Start Ollama service if not running
+    if ! curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
+      info "Starting Ollama service..."
+      ollama serve > /dev/null 2>&1 &
+      sleep 2
+    fi
+    # Create provider if not exists
+    if openshell provider create --name ollama-local --type openai \
+      --credential "OPENAI_API_KEY=ollama" \
+      --config "OPENAI_BASE_URL=http://host.docker.internal:11434/v1" 2>&1 | grep -q "AlreadyExists"; then
+      info "ollama-local provider already exists"
+    else
+      info "Created ollama-local provider"
+    fi
+  fi
+fi
+
+# 4b. Inference route — default to nvidia-nim
 info "Setting inference route to nvidia-nim / Nemotron 3 Super..."
 openshell inference set --provider nvidia-nim --model nvidia/nemotron-3-super-120b-a12b > /dev/null 2>&1
 

@@ -133,7 +133,17 @@ if [ "$NEEDS_RESTART" = true ]; then
   info "Docker restarted with cgroupns=host"
 fi
 
-# ── 4. Run normal setup ──────────────────────────────────────────
+# ── 4. Install vLLM (local inference on Spark GPU) ────────────────
+
+if ! python3 -c "import vllm" 2>/dev/null; then
+  info "Installing vLLM..."
+  pip3 install --break-system-packages vllm 2>&1 | tail -1
+  info "vLLM installed"
+else
+  info "vLLM already installed"
+fi
+
+# ── 5. Run normal setup ──────────────────────────────────────────
 
 info "Running NemoClaw setup..."
 echo ""

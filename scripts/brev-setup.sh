@@ -114,7 +114,18 @@ else
   info "cloudflared already installed"
 fi
 
-# --- 4. Run setup.sh ---
+# --- 4. vLLM (local inference, if GPU present) ---
+if command -v nvidia-smi > /dev/null 2>&1; then
+  if ! python3 -c "import vllm" 2>/dev/null; then
+    info "Installing vLLM..."
+    pip3 install --break-system-packages vllm 2>&1 | tail -1 || pip3 install vllm 2>&1 | tail -1
+    info "vLLM installed"
+  else
+    info "vLLM already installed"
+  fi
+fi
+
+# --- 5. Run setup.sh ---
 # Use sg docker to ensure docker group is active (usermod -aG doesn't
 # take effect in the current session without re-login)
 info "Running setup.sh..."
