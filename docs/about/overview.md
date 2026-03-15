@@ -6,23 +6,18 @@
 # Overview
 
 NemoClaw is the [OpenClaw](https://openclaw.ai) plugin for [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell).
-It moves OpenClaw into a sandboxed environment where every network request, file access, and inference call
-is governed by declarative policy.
+It moves OpenClaw into a sandboxed environment where every network request, file access, and inference call is governed by declarative policy.
 
 ## What NemoClaw Does
 
-- **Sandboxes OpenClaw** -- Creates an OpenShell sandbox pre-configured for OpenClaw, with strict filesystem
-  and network policies applied from the first boot.
-- **Routes inference through NVIDIA** -- Configures OpenShell inference routing so agent traffic flows through
-  Nemotron 3 Super 120B (cloud), a local NIM service, or vLLM, depending on the selected profile.
-- **Manages the lifecycle** -- Handles migration from a host-installed OpenClaw, snapshot-based rollback,
-  blueprint versioning, and digest verification.
+- Sandboxes OpenClaw. Creates an OpenShell sandbox pre-configured for OpenClaw, with strict filesystem and network policies applied from the first boot.
+- Routes inference through NVIDIA. Configures OpenShell inference routing so agent traffic flows through Nemotron 3 Super 120B (cloud), a local NIM service, or vLLM, depending on the selected profile.
+- Manages the lifecycle. Handles migration from a host-installed OpenClaw, snapshot-based rollback, blueprint versioning, and digest verification.
 
 ## How It Fits Together
 
 NemoClaw is a thin TypeScript plugin that registers commands under the `openclaw nemoclaw` namespace.
-It delegates heavy lifting to a versioned **blueprint** -- a Python artifact that orchestrates sandbox
-creation, policy application, and inference provider setup through the OpenShell CLI.
+It delegates heavy lifting to a versioned blueprint, a Python artifact that orchestrates sandbox creation, policy application, and inference provider setup through the OpenShell CLI.
 
 ```text
 ┌──────────────────────────────────────────────┐

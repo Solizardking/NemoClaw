@@ -5,9 +5,9 @@
 
 # Network Policies
 
-NemoClaw runs with a strict-by-default network policy. The sandbox can only reach endpoints
-that are explicitly allowed. Any request to an unlisted destination is intercepted by OpenShell,
-and the operator is prompted to approve or deny it in real time through the TUI.
+NemoClaw runs with a strict-by-default network policy.
+The sandbox can only reach endpoints that are explicitly allowed.
+Any request to an unlisted destination is intercepted by OpenShell, and the operator is prompted to approve or deny it in real time through the TUI.
 
 ## Baseline Policy
 
@@ -20,8 +20,8 @@ The baseline policy is defined in `nemoclaw-blueprint/policies/openclaw-sandbox.
 | `/sandbox`, `/tmp`, `/dev/null` | Read-write |
 | `/usr`, `/lib`, `/proc`, `/dev/urandom`, `/app`, `/etc`, `/var/log` | Read-only |
 
-The sandbox process runs as a dedicated `sandbox` user and group. Landlock LSM enforcement
-is applied on a best-effort basis.
+The sandbox process runs as a dedicated `sandbox` user and group.
+Landlock LSM enforcement applies on a best-effort basis.
 
 ### Network Policies
 
@@ -92,8 +92,7 @@ providers are reached through the OpenShell gateway, not by direct sandbox egres
 
 ## Operator Approval Flow
 
-When the agent attempts to reach an endpoint not listed in the policy, OpenShell intercepts
-the request and presents it in the TUI for operator review:
+When the agent attempts to reach an endpoint not listed in the policy, OpenShell intercepts the request and presents it in the TUI for operator review:
 
 1. The agent makes a network request to an unlisted host.
 2. OpenShell blocks the connection and logs the attempt.

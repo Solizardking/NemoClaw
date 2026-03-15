@@ -6,8 +6,8 @@
 # Commands
 
 NemoClaw provides two command interfaces.
-The **plugin commands** run under the `openclaw nemoclaw` namespace inside the OpenClaw CLI.
-The **standalone `nemoclaw` binary** handles host-side setup, deployment, and service management.
+The plugin commands run under the `openclaw nemoclaw` namespace inside the OpenClaw CLI.
+The standalone `nemoclaw` binary handles host-side setup, deployment, and service management.
 Both interfaces are installed when you run `npm install -g nemoclaw`.
 
 ## Plugin Commands
@@ -30,7 +30,7 @@ $ openclaw nemoclaw launch [--force] [--profile <profile>]
 ### `openclaw nemoclaw migrate`
 
 Migrate an existing host OpenClaw installation into an OpenShell sandbox.
-Creates a snapshot of the current state before making changes.
+The command creates a snapshot of the current state before making changes.
 
 ```console
 $ openclaw nemoclaw migrate [--dry-run] [--profile <profile>] [--skip-backup]
@@ -113,8 +113,7 @@ The `nemoclaw` binary handles host-side operations that run outside the OpenClaw
 
 ### `nemoclaw setup`
 
-Run the full host-side setup: start an OpenShell gateway, register inference providers, build
-the sandbox image, and create the sandbox.
+Run the full host-side setup: start an OpenShell gateway, register inference providers, build the sandbox image, and create the sandbox.
 
 ```console
 $ nemoclaw setup
@@ -125,8 +124,7 @@ The first run prompts for your NVIDIA API key and saves it to `~/.nemoclaw/crede
 ### `nemoclaw deploy`
 
 Deploy NemoClaw to a remote GPU instance via [Brev](https://brev.nvidia.com).
-The deploy script installs Docker, NVIDIA Container Toolkit (if a GPU is present),
-and OpenShell on the VM, then runs setup and connects to the sandbox.
+The deploy script installs Docker, NVIDIA Container Toolkit (if a GPU is present), and OpenShell on the VM, then runs setup and connects to the sandbox.
 
 ```console
 $ nemoclaw deploy <instance-name>

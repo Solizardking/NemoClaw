@@ -5,8 +5,7 @@
 
 # Quickstart
 
-This guide walks you through installing NemoClaw, creating a sandboxed OpenClaw instance,
-and running your first agent prompt.
+This guide walks you through installing NemoClaw, creating a sandboxed OpenClaw instance, and running your first agent prompt.
 
 ## Prerequisites
 
@@ -56,7 +55,8 @@ $ openclaw agent --agent main --local -m "your prompt" --session-id s1
 
 ## Switch Inference Providers
 
-NemoClaw supports three inference profiles. Switch between them with the OpenShell CLI:
+NemoClaw supports three inference profiles.
+Switch between them with the OpenShell CLI:
 
 ::::{tab-set}
 
@@ -96,8 +96,7 @@ Open the OpenShell TUI to monitor sandbox activity and approve network egress re
 $ openshell term
 ```
 
-When the agent tries to access an endpoint not in the baseline policy, the TUI prompts you
-to approve or deny the request in real time.
+When the agent tries to access an endpoint not in the baseline policy, the TUI prompts you to approve or deny the request in real time.
 
 ## Deploy to a Cloud VM
 

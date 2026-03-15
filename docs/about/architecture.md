@@ -5,8 +5,7 @@
 
 # Architecture
 
-NemoClaw has two main components: a **TypeScript plugin** that integrates with the OpenClaw CLI,
-and a **Python blueprint** that orchestrates OpenShell resources.
+NemoClaw has two main components: a TypeScript plugin that integrates with the OpenClaw CLI, and a Python blueprint that orchestrates OpenShell resources.
 
 ## Plugin (`nemoclaw/`)
 
@@ -38,9 +37,9 @@ nemoclaw/
 
 ## Blueprint (`nemoclaw-blueprint/`)
 
-The blueprint is a versioned Python artifact with its own release stream. The plugin resolves,
-verifies, and executes the blueprint as a subprocess. The blueprint drives all interactions
-with the OpenShell CLI.
+The blueprint is a versioned Python artifact with its own release stream.
+The plugin resolves, verifies, and executes the blueprint as a subprocess.
+The blueprint drives all interactions with the OpenShell CLI.
 
 ```text
 nemoclaw-blueprint/
@@ -64,13 +63,11 @@ flowchart LR
     D --> F[rollback]
 ```
 
-1. **Resolve** -- The plugin locates the blueprint artifact and checks the version against
-   `min_openshell_version` and `min_openclaw_version` constraints in `blueprint.yaml`.
-2. **Verify** -- The artifact digest is checked against the expected value.
-3. **Plan** -- The runner determines what OpenShell resources need to be created or updated
-   (gateway, providers, sandbox, inference route, policy).
-4. **Apply** -- The runner executes the plan by calling `openshell` CLI commands.
-5. **Status / Rollback** -- The runner can report current state or roll back to a snapshot.
+1. **Resolve.** The plugin locates the blueprint artifact and checks the version against `min_openshell_version` and `min_openclaw_version` constraints in `blueprint.yaml`.
+2. **Verify.** The plugin checks the artifact digest against the expected value.
+3. **Plan.** The runner determines what OpenShell resources to create or update (gateway, providers, sandbox, inference route, policy).
+4. **Apply.** The runner executes the plan by calling `openshell` CLI commands.
+5. **Status / Rollback.** The runner reports current state or rolls back to a snapshot.
 
 ## Sandbox Environment
 
@@ -85,8 +82,8 @@ container image. Inside the sandbox:
 
 ## Inference Routing
 
-Inference requests from the agent never leave the sandbox directly. OpenShell intercepts them
-and routes to the configured provider:
+Inference requests from the agent never leave the sandbox directly.
+OpenShell intercepts them and routes to the configured provider:
 
 ```text
 Agent (sandbox)  ──▶  OpenShell gateway  ──▶  Provider

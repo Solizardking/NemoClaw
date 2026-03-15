@@ -5,9 +5,10 @@
 
 # Inference Profiles
 
-NemoClaw ships with three inference profiles defined in `blueprint.yaml`. Each profile configures
-an OpenShell inference provider and model route. The agent inside the sandbox uses whichever
-profile is active -- inference requests are routed transparently through the OpenShell gateway.
+NemoClaw ships with three inference profiles defined in `blueprint.yaml`.
+Each profile configures an OpenShell inference provider and model route.
+The agent inside the sandbox uses whichever profile is active.
+Inference requests are routed transparently through the OpenShell gateway.
 
 ## Profile Summary
 
@@ -93,4 +94,5 @@ After the sandbox is running, switch inference providers with the OpenShell CLI:
 $ openshell inference set --provider <provider-name> --model <model-name>
 ```
 
-The change takes effect immediately -- no sandbox restart is needed.
+The change takes effect immediately.
+No sandbox restart is needed.
