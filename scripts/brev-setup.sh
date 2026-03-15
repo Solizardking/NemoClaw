@@ -92,6 +92,17 @@ else
   info "openshell already installed: $(openshell --version)"
 fi
 
+# --- 3b. cloudflared (for public tunnel) ---
+if ! command -v cloudflared > /dev/null 2>&1; then
+  info "Installing cloudflared..."
+  curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /tmp/cloudflared
+  sudo install -m 755 /tmp/cloudflared /usr/local/bin/cloudflared
+  rm -f /tmp/cloudflared
+  info "cloudflared $(cloudflared --version 2>&1 | head -1) installed"
+else
+  info "cloudflared already installed"
+fi
+
 # --- 4. GHCR Docker login ---
 info "Logging into ghcr.io..."
 GHCR_USER="$(GH_TOKEN="$GITHUB_TOKEN" gh api user -q .login 2>/dev/null || echo "${USER:-ubuntu}")"
