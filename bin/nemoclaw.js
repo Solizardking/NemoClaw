@@ -197,7 +197,9 @@ async function deploy(instanceName) {
     console.log(`  Brev instance '${name}' already exists.`);
   }
 
-  // Wait for Brev to set up SSH config and instance to be reachable
+  // Refresh Brev SSH config so the hostname resolves
+  run(`brev refresh`, { ignoreError: true });
+
   console.log("  Waiting for SSH...");
   for (let i = 0; i < 60; i++) {
     try {
