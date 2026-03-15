@@ -115,6 +115,7 @@ else
 fi
 
 # --- 4. vLLM (local inference, if GPU present) ---
+VLLM_MODEL="nvidia/nemotron-3-nano-30b-a3b"
 if command -v nvidia-smi > /dev/null 2>&1; then
   if ! python3 -c "import vllm" 2>/dev/null; then
     info "Installing vLLM..."
@@ -122,6 +123,31 @@ if command -v nvidia-smi > /dev/null 2>&1; then
     info "vLLM installed"
   else
     info "vLLM already installed"
+  fi
+
+  # Start vLLM if not already running
+  if curl -s http://localhost:8000/v1/models > /dev/null 2>&1; then
+    info "vLLM already running on :8000"
+  elif python3 -c "import vllm" 2>/dev/null; then
+    info "Starting vLLM with $VLLM_MODEL..."
+    nohup python3 -m vllm.entrypoints.openai.api_server \
+      --model "$VLLM_MODEL" \
+      --port 8000 \
+      --host 0.0.0.0 \
+      > /tmp/vllm-server.log 2>&1 &
+    VLLM_PID=$!
+    info "Waiting for vLLM to load model (this can take a few minutes)..."
+    for i in $(seq 1 120); do
+      if curl -s http://localhost:8000/v1/models > /dev/null 2>&1; then
+        info "vLLM ready (PID $VLLM_PID)"
+        break
+      fi
+      if ! kill -0 "$VLLM_PID" 2>/dev/null; then
+        warn "vLLM exited. Check /tmp/vllm-server.log"
+        break
+      fi
+      sleep 2
+    done
   fi
 fi
 
