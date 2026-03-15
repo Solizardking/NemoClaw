@@ -232,7 +232,7 @@ function help() {
   Usage:
     nemoclaw setup                 Set up locally (gateway, providers, sandbox)
     nemoclaw deploy <name>         Deploy to a Brev VM and start services
-    nemoclaw start                 Start services (JensenClaw, Telegram, tunnel)
+    nemoclaw start                 Start services (Telegram, tunnel)
     nemoclaw stop                  Stop all services
     nemoclaw status                Show service status
 

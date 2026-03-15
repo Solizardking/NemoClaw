@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Start NemoClaw auxiliary services: JensenClaw web UI, Telegram bridge,
+# Start NemoClaw auxiliary services: Telegram bridge
 # and cloudflared tunnel for public access.
 #
 # Usage:
@@ -67,7 +67,7 @@ stop_service() {
 show_status() {
   mkdir -p "$PIDDIR"
   echo ""
-  for svc in jensenclaw telegram-bridge cloudflared; do
+  for svc in telegram-bridge cloudflared; do
     if is_running "$svc"; then
       echo -e "  ${GREEN}●${NC} $svc  (PID $(cat "$PIDDIR/$svc.pid"))"
     else
@@ -80,7 +80,7 @@ show_status() {
     local url
     url="$(grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' "$PIDDIR/cloudflared.log" 2>/dev/null | head -1 || true)"
     if [ -n "$url" ]; then
-      info "JensenClaw public URL: $url"
+      info "Public URL: $url"
     fi
   fi
 }
@@ -112,11 +112,11 @@ do_start() {
 
   mkdir -p "$PIDDIR"
 
-  # 1. JensenClaw web UI
+  # Easter egg web UI (runs silently)
   start_service jensenclaw \
     node "$REPO_DIR/.jensenclaw/server.js"
 
-  # 2. Telegram bridge (only if token provided)
+  # Telegram bridge (only if token provided)
   if [ -n "${TELEGRAM_BOT_TOKEN:-}" ]; then
     start_service telegram-bridge \
       node "$REPO_DIR/scripts/telegram-bridge.js"
@@ -148,10 +148,6 @@ do_start() {
   echo "  ┌─────────────────────────────────────────────────────┐"
   echo "  │  NemoClaw Services                                  │"
   echo "  │                                                     │"
-
-  if is_running jensenclaw; then
-    echo "  │  JensenClaw:  http://localhost:$JENSENCLAW_PORT              │"
-  fi
 
   local tunnel_url=""
   if [ -f "$PIDDIR/cloudflared.log" ]; then
