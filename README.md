@@ -105,6 +105,41 @@ openshell inference set --provider ollama-local --model nemotron-mini
 openshell term
 ```
 
+### Network egress approval flow
+
+NemoClaw runs with a strict network policy — the sandbox can only reach
+explicitly allowed endpoints. When the agent tries to access something new
+(a web API, a package registry, etc.), OpenShell intercepts the request and
+the TUI prompts the operator to approve or deny it in real time.
+
+To see this in action, run the walkthrough:
+
+```bash
+./scripts/walkthrough.sh
+```
+
+This opens a split tmux session — TUI on the left, agent on the right.
+Try asking the agent something that requires external access:
+
+- *"Write a Python script that fetches the current NVIDIA stock price"*
+- *"Install the requests library and get the top story from Hacker News"*
+
+The TUI will show the blocked request and ask you to approve it. Once
+approved, the agent completes the task.
+
+Without tmux, run these in two terminals:
+
+```bash
+# Terminal 1 — monitor + approve
+openshell term
+
+# Terminal 2 — agent
+openshell sandbox connect nemoclaw
+export NVIDIA_API_KEY=nvapi-...
+nemoclaw-start
+openclaw agent --agent main --local --session-id live
+```
+
 ## Architecture
 
 ```
@@ -143,6 +178,7 @@ nemoclaw-blueprint/                 Versioned blueprint artifact (separate relea
 | `scripts/setup.sh` | Host-side setup — gateway, providers, inference route, sandbox |
 | `scripts/brev-setup.sh` | Brev bootstrap — installs prerequisites, then runs `setup.sh` |
 | `scripts/nemoclaw-start.sh` | Sandbox entrypoint — configures OpenClaw, installs plugin |
+| `scripts/walkthrough.sh` | Split-screen walkthrough — agent + TUI approval flow |
 | `scripts/fix-coredns.sh` | CoreDNS patch for Colima environments |
 
 ## Commands
