@@ -49,16 +49,18 @@ command -v docker > /dev/null || fail "docker not found"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-# 1. Gateway
-info "Checking OpenShell gateway..."
-if openshell status 2>&1 | grep -q "Connected"; then
-  info "Gateway already running"
-else
-  info "Starting OpenShell gateway..."
-  GATEWAY_ARGS=(--name nemoclaw)
-  command -v nvidia-smi > /dev/null 2>&1 && GATEWAY_ARGS+=(--gpu)
-  openshell gateway start "${GATEWAY_ARGS[@]}" 2>&1 | tail -5
+# 1. Gateway — always start fresh to avoid stale state
+info "Starting OpenShell gateway..."
+openshell gateway destroy -g nemoclaw > /dev/null 2>&1 || true
+GATEWAY_ARGS=(--name nemoclaw)
+command -v nvidia-smi > /dev/null 2>&1 && GATEWAY_ARGS+=(--gpu)
+openshell gateway start "${GATEWAY_ARGS[@]}" 2>&1 | tail -10
+
+# Verify gateway is actually healthy
+if ! openshell status 2>&1 | grep -q "Connected"; then
+  fail "Gateway failed to start. Check 'openshell gateway info' and Docker logs."
 fi
+info "Gateway is healthy"
 
 # 2. CoreDNS fix (Colima only)
 if [ -S "$HOME/.colima/default/docker.sock" ]; then
