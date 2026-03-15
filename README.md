@@ -21,7 +21,7 @@ First run prompts for your NVIDIA API Key (get one from [build.nvidia.com](https
 
 - Node.js 20+
 - Docker
-- [OpenShell CLI](https://github.com/NVIDIA/OpenShell)
+- [OpenShell CLI](https://github.com/NVIDIA/OpenShell/releases) (binary download)
 
 ### Ubuntu 24.04 (fresh install)
 
@@ -35,10 +35,10 @@ sudo apt-get install -y docker.io
 sudo usermod -aG docker $USER
 newgrp docker
 
-# OpenShell CLI
-sudo apt-get install -y python3-pip pipx
-pipx install 'openshell @ git+https://github.com/NVIDIA/OpenShell.git'
-export PATH="$HOME/.local/bin:$PATH"
+# OpenShell CLI (binary from GitHub releases)
+curl -fsSL https://github.com/NVIDIA/OpenShell/releases/latest/download/openshell-x86_64-unknown-linux-musl.tar.gz | tar xz
+sudo install -m 755 openshell /usr/local/bin/openshell
+rm -f openshell
 
 # NVIDIA Container Toolkit (if you have a GPU)
 curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
@@ -61,7 +61,11 @@ nemoclaw setup
 ```bash
 brew install colima docker node
 colima start
-pip install 'openshell @ git+https://github.com/NVIDIA/OpenShell.git'
+
+# OpenShell CLI (binary from GitHub releases)
+curl -fsSL https://github.com/NVIDIA/OpenShell/releases/latest/download/openshell-aarch64-apple-darwin.tar.gz | tar xz
+sudo install -m 755 openshell /usr/local/bin/openshell
+rm -f openshell
 
 # NemoClaw (pre-publish: install from git)
 git clone https://github.com/NVIDIA/openshell-openclaw-plugin.git
