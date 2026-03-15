@@ -42,9 +42,24 @@ RUN chmod +x /usr/local/bin/nemoclaw-start
 WORKDIR /sandbox
 USER sandbox
 
-# Pre-create OpenClaw directories
+# Pre-create OpenClaw directories and bake in auth + model config
+# so the sandbox is ready the moment you connect (no entrypoint needed)
 RUN mkdir -p /sandbox/.openclaw/agents/main/agent \
     && chmod 700 /sandbox/.openclaw
 
-ENTRYPOINT ["nemoclaw-start"]
+# Auth profile: use NVIDIA provider, read API key from env at runtime
+RUN python3 -c "\
+import json, os; \
+path = os.path.expanduser('~/.openclaw/agents/main/agent/auth-profiles.json'); \
+json.dump({'nvidia:manual': {'type': 'api_key', 'provider': 'nvidia', 'keyRef': {'source': 'env', 'id': 'NVIDIA_API_KEY'}, 'profileId': 'nvidia:manual'}}, open(path, 'w')); \
+os.chmod(path, 0o600)"
+
+# Install NemoClaw plugin into OpenClaw
+RUN openclaw doctor --fix > /dev/null 2>&1 || true \
+    && openclaw plugins install /opt/nemoclaw > /dev/null 2>&1 || true
+
+# Set default model
+RUN openclaw models set nvidia/nvidia/nemotron-3-super-120b-a12b > /dev/null 2>&1 || true
+
+ENTRYPOINT ["/bin/bash"]
 CMD []
