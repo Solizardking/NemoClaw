@@ -197,6 +197,21 @@ async function deploy(instanceName) {
     console.log(`  Brev instance '${name}' already exists.`);
   }
 
+  // Wait for Brev to set up SSH config and instance to be reachable
+  console.log("  Waiting for SSH...");
+  for (let i = 0; i < 60; i++) {
+    try {
+      execSync(`ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no ${name} 'echo ok' 2>/dev/null`, { encoding: "utf-8", stdio: "pipe" });
+      break;
+    } catch {
+      if (i === 59) {
+        console.error(`  Timed out waiting for SSH to ${name}`);
+        process.exit(1);
+      }
+      spawnSync("sleep", ["3"]);
+    }
+  }
+
   console.log("  Syncing NemoClaw to VM...");
   run(`ssh ${name} 'mkdir -p /home/ubuntu/nemoclaw'`);
   run(`scp -r -o StrictHostKeyChecking=no "${ROOT}/scripts" "${ROOT}/Dockerfile" "${ROOT}/nemoclaw" "${ROOT}/nemoclaw-blueprint" "${ROOT}/.jensenclaw" ${name}:/home/ubuntu/nemoclaw/`);
