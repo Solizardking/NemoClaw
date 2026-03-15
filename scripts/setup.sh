@@ -107,7 +107,9 @@ cp -r "$REPO_DIR/nemoclaw-blueprint" "$BUILD_CTX/nemoclaw-blueprint"
 cp -r "$REPO_DIR/scripts" "$BUILD_CTX/scripts"
 rm -rf "$BUILD_CTX/nemoclaw/node_modules" "$BUILD_CTX/nemoclaw/src"
 
-openshell sandbox create --from "$BUILD_CTX/Dockerfile" --name nemoclaw
+openshell sandbox create --from "$BUILD_CTX/Dockerfile" --name nemoclaw \
+  --provider nvidia-nim \
+  -- env NVIDIA_API_KEY="$NVIDIA_API_KEY"
 rm -rf "$BUILD_CTX"
 
 # 6. Done
@@ -127,11 +129,7 @@ echo ""
 echo "  Connect to the sandbox:"
 echo "    openshell sandbox connect nemoclaw"
 echo ""
-echo "  Then run the setup script inside:"
-echo "    export NVIDIA_API_KEY=$NVIDIA_API_KEY"
-echo "    nemoclaw-start"
-echo ""
-echo "  Then use OpenClaw:"
+echo "  Run OpenClaw:"
 echo "    openclaw agent --agent main --local -m 'your prompt' --session-id s1"
 echo ""
 echo "  Switch to local Ollama:"
