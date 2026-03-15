@@ -95,6 +95,8 @@ else
 fi
 
 # --- 4. Run setup.sh ---
+# Use sg docker to ensure docker group is active (usermod -aG doesn't
+# take effect in the current session without re-login)
 info "Running setup.sh..."
 export NVIDIA_API_KEY
-exec bash "$SCRIPT_DIR/setup.sh"
+exec sg docker -c "bash $SCRIPT_DIR/setup.sh"
