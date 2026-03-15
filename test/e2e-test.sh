@@ -63,6 +63,8 @@ info "5. Verify host OpenClaw detection (migration source)"
 [ -f /sandbox/.openclaw/openclaw.json ] && pass "Host OpenClaw config detected" || fail "No host config"
 [ -d /sandbox/.openclaw/workspace ] && pass "Host workspace directory exists" || fail "No workspace dir"
 [ -d /sandbox/.openclaw/skills ] && pass "Host skills directory exists" || fail "No skills dir"
+[ -d /sandbox/.openclaw/hooks ] && pass "Host hooks directory exists" || fail "No hooks dir"
+[ -f /sandbox/.openclaw/hooks/demo-hook/HOOK.md ] && pass "Host hook fixture exists" || fail "No hook fixture"
 
 # -------------------------------------------------------
 info "6. Verify snapshot creation (migration pre-step)"
@@ -75,6 +77,8 @@ from snapshot import create_snapshot, list_snapshots
 snap = create_snapshot()
 assert snap is not None, 'Snapshot returned None'
 assert snap.exists(), f'Snapshot dir does not exist: {snap}'
+hook_file = snap / 'openclaw' / 'hooks' / 'demo-hook' / 'HOOK.md'
+assert hook_file.exists(), f'Hook file missing from snapshot: {hook_file}'
 
 snaps = list_snapshots()
 assert len(snaps) == 1, f'Expected 1 snapshot, got {len(snaps)}'

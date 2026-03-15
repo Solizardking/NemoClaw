@@ -59,7 +59,7 @@ USER sandbox
 
 # Simulate a host OpenClaw installation for migration testing.
 # Uses real OpenClaw config schema (passes `openclaw doctor` validation).
-RUN mkdir -p /sandbox/.openclaw/workspace /sandbox/.openclaw/extensions /sandbox/.openclaw/skills \
+RUN mkdir -p /sandbox/.openclaw/workspace /sandbox/.openclaw/extensions /sandbox/.openclaw/skills /sandbox/.openclaw/hooks/demo-hook \
     && chmod 700 /sandbox/.openclaw \
     && printf '%s\n' \
         '{' \
@@ -81,6 +81,8 @@ RUN mkdir -p /sandbox/.openclaw/workspace /sandbox/.openclaw/extensions /sandbox
         '}' > /sandbox/.openclaw/openclaw.json \
     && chmod 600 /sandbox/.openclaw/openclaw.json \
     && echo "test-skill" > /sandbox/.openclaw/skills/test.md \
-    && echo "test-workspace-file" > /sandbox/.openclaw/workspace/project.md
+    && echo "test-workspace-file" > /sandbox/.openclaw/workspace/project.md \
+    && printf '%s\n' '---' 'name: demo-hook' 'description: Demo hook fixture' '---' > /sandbox/.openclaw/hooks/demo-hook/HOOK.md \
+    && printf '%s\n' 'export default async function demoHook() {}' > /sandbox/.openclaw/hooks/demo-hook/handler.js
 
 ENTRYPOINT ["/bin/bash"]

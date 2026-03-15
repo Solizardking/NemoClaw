@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, cpSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { PluginLogger, NemoClawConfig } from "../index.js";
@@ -17,6 +18,7 @@ export interface HostOpenClawState {
   workspaceDir: string | null;
   extensionsDir: string | null;
   skillsDir: string | null;
+  hooksDir: string | null;
   configFile: string | null;
 }
 
@@ -31,6 +33,7 @@ export function detectHostOpenClaw(): HostOpenClawState {
       workspaceDir: null,
       extensionsDir: null,
       skillsDir: null,
+      hooksDir: null,
       configFile: null,
     };
   }
@@ -48,6 +51,7 @@ export function detectHostOpenClaw(): HostOpenClawState {
     : null;
 
   const skillsDir = existsSync(join(configDir, "skills")) ? join(configDir, "skills") : null;
+  const hooksDir = existsSync(join(configDir, "hooks")) ? join(configDir, "hooks") : null;
 
   return {
     exists: true,
@@ -55,6 +59,7 @@ export function detectHostOpenClaw(): HostOpenClawState {
     workspaceDir,
     extensionsDir,
     skillsDir,
+    hooksDir,
     configFile,
   };
 }
@@ -87,6 +92,7 @@ export async function cliMigrate(opts: MigrateOptions): Promise<void> {
   if (hostState.workspaceDir) logger.info(`  Workspace: ${hostState.workspaceDir}`);
   if (hostState.extensionsDir) logger.info(`  Extensions: ${hostState.extensionsDir}`);
   if (hostState.skillsDir) logger.info(`  Skills: ${hostState.skillsDir}`);
+  if (hostState.hooksDir) logger.info(`  Hooks: ${hostState.hooksDir}`);
 
   // Step 2: Create snapshot backup
   let snapshotPath: string | null = null;
@@ -105,11 +111,9 @@ export async function cliMigrate(opts: MigrateOptions): Promise<void> {
     logger.info("[Dry run] Would perform the following:");
     logger.info("  1. Resolve and verify blueprint");
     logger.info("  2. Create OpenShell sandbox");
-    logger.info("  3. Copy config, workspace, extensions, and skills into sandbox");
-    logger.info("  4. Patch paths for sandbox context");
-    logger.info("  5. Configure inference provider");
-    logger.info("  6. Cut over to sandbox runtime");
-    logger.info("  7. Archive host ~/.openclaw");
+    logger.info("  3. Copy ~/.openclaw (config, hooks, workspace, extensions, skills) into sandbox");
+    logger.info("  4. Configure inference provider");
+    logger.info("  5. Leave host ~/.openclaw snapshot available for rollback");
     return;
   }
 
@@ -162,6 +166,18 @@ export async function cliMigrate(opts: MigrateOptions): Promise<void> {
     return;
   }
 
+  logger.info("Syncing host OpenClaw state into sandbox...");
+  const synced = syncOpenClawStateIntoSandbox({
+    configDir: hostState.configDir,
+    sandboxName: pluginConfig.sandboxName,
+    logger,
+  });
+  if (!synced) {
+    logger.error("Sandbox sync failed. Host OpenClaw state was not copied into the sandbox.");
+    logger.info("Your host installation is unchanged. Resolve the copy error and rerun migrate.");
+    return;
+  }
+
   // Step 6: Save state for eject
   saveState({
     ...loadState(),
@@ -184,6 +200,43 @@ export async function cliMigrate(opts: MigrateOptions): Promise<void> {
   logger.info("");
   logger.info("To rollback to your host installation:");
   logger.info("  openclaw nemoclaw eject");
+}
+
+function syncOpenClawStateIntoSandbox(params: {
+  configDir: string | null;
+  sandboxName: string;
+  logger: PluginLogger;
+}): boolean {
+  const { configDir, sandboxName, logger } = params;
+  if (!configDir) {
+    logger.error("Cannot sync host state: ~/.openclaw was not found.");
+    return false;
+  }
+
+  try {
+    // Copy directory contents so hooks/extensions/skills land directly under
+    // /sandbox/.openclaw instead of creating a nested ".openclaw" directory.
+    execFileSync(
+      "openshell",
+      ["sandbox", "cp", join(configDir, "."), `${sandboxName}:/sandbox/.openclaw`],
+      {
+        encoding: "utf-8",
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+    logger.info("Sandbox state synchronized to /sandbox/.openclaw.");
+    return true;
+  } catch (err: unknown) {
+    const stderr =
+      err &&
+      typeof err === "object" &&
+      "stderr" in err &&
+      typeof (err as { stderr?: unknown }).stderr === "string"
+        ? (err as { stderr: string }).stderr.trim()
+        : "";
+    logger.error(`Failed to copy ~/.openclaw into sandbox: ${stderr || String(err)}`);
+    return false;
+  }
 }
 
 function createSnapshot(hostState: HostOpenClawState, logger: PluginLogger): string | null {
