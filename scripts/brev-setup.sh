@@ -33,6 +33,16 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 export NEEDRESTART_MODE=a
 export DEBIAN_FRONTEND=noninteractive
 
+# --- 0. Node.js (needed for JensenClaw and services) ---
+if ! command -v node > /dev/null 2>&1; then
+  info "Installing Node.js..."
+  curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - > /dev/null 2>&1
+  sudo apt-get install -y -qq nodejs > /dev/null 2>&1
+  info "Node.js $(node --version) installed"
+else
+  info "Node.js already installed: $(node --version)"
+fi
+
 # --- 1. Docker ---
 if ! command -v docker > /dev/null 2>&1; then
   info "Installing Docker..."
