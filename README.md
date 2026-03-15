@@ -1,6 +1,6 @@
 # NemoClaw — OpenClaw Plugin for OpenShell
 
-Run OpenClaw inside an OpenShell sandbox with NVIDIA inference (Nemotron 3 Super 120B via [build.nvidia.com](https://build.nvidia.com), or local Ollama).
+Run OpenClaw inside an OpenShell sandbox with NVIDIA inference (Nemotron 3 Super 120B via [build.nvidia.com](https://build.nvidia.com), or local vLLM).
 
 ## Quick Start
 
@@ -48,8 +48,8 @@ openclaw agent --agent main --local -m "your prompt" --session-id s1
 # NVIDIA cloud (Nemotron 3 Super 120B)
 openshell inference set --provider nvidia-nim --model nvidia/nemotron-3-super-120b-a12b
 
-# Local Ollama (Nemotron Mini)
-openshell inference set --provider ollama-local --model nemotron-mini
+# Local vLLM
+openshell inference set --provider vllm-local --model nemotron-3-super-120b-a12b
 ```
 
 ### Monitor
@@ -151,7 +151,7 @@ nemoclaw-blueprint/                 Versioned blueprint artifact (separate relea
 |---------|----------|-------|----------|
 | `default` | NVIDIA cloud | nemotron-3-super-120b-a12b | Production, requires API key |
 | `nim-local` | Local NIM service | nemotron-3-super-120b-a12b | On-prem, NIM deployed as pod |
-| `ollama` | Ollama | llama3.1:8b | Local development, no API key |
+| `vllm` | vLLM | nemotron-3-super-120b-a12b | Local inference, vLLM on localhost:8000 |
 
 ## Design Principles
 

@@ -42,7 +42,7 @@ bp = yaml.safe_load(open('/opt/nemoclaw-blueprint/blueprint.yaml'))
 assert bp['version'] == '0.1.0', f'Bad version: {bp[\"version\"]}'
 profiles = bp['components']['inference']['profiles']
 assert 'default' in profiles, 'Missing default profile'
-assert 'ollama' in profiles, 'Missing ollama profile'
+assert 'vllm' in profiles, 'Missing vllm profile'
 assert 'nim-local' in profiles, 'Missing nim-local profile'
 print(f'Profiles: {list(profiles.keys())}')
 " && pass "Blueprint YAML valid with all 3 profiles" || fail "Blueprint YAML invalid"
@@ -53,7 +53,7 @@ info "4. Verify blueprint runner plan command"
 cd /opt/nemoclaw-blueprint
 # Runner will fail at openshell prereq check (expected in test container)
 # We just verify it gets past validation and profile resolution
-python3 orchestrator/runner.py plan --profile ollama --dry-run 2>&1 | tee /tmp/plan-output.txt || true
+python3 orchestrator/runner.py plan --profile vllm --dry-run 2>&1 | tee /tmp/plan-output.txt || true
 grep -q "RUN_ID:" /tmp/plan-output.txt && pass "Blueprint plan generates run ID" || fail "No run ID in plan output"
 grep -q "Validating blueprint" /tmp/plan-output.txt && pass "Blueprint runner validates before execution" || fail "No validation step"
 

@@ -17,7 +17,7 @@
 #   1. Starts an OpenShell gateway (or reuses existing)
 #   2. Fixes CoreDNS for Colima environments
 #   3. Creates nvidia-nim provider (build.nvidia.com)
-#   4. Creates ollama-local provider (if Ollama is running)
+#   4. Creates vllm-local provider (if vLLM is running)
 #   5. Sets inference route to nvidia-nim by default
 #   6. Builds and creates the NemoClaw sandbox
 #   7. Prints next steps
@@ -80,14 +80,14 @@ else
   info "Created nvidia-nim provider"
 fi
 
-# ollama-local (if running)
-if curl -s http://localhost:11434/v1/models > /dev/null 2>&1; then
-  if openshell provider create --name ollama-local --type openai \
+# vllm-local (if running)
+if curl -s http://localhost:8000/v1/models > /dev/null 2>&1; then
+  if openshell provider create --name vllm-local --type openai \
     --credential "OPENAI_API_KEY=dummy" \
-    --config "OPENAI_BASE_URL=http://host.docker.internal:11434/v1" 2>&1 | grep -q "AlreadyExists"; then
-    info "ollama-local provider already exists"
+    --config "OPENAI_BASE_URL=http://host.docker.internal:8000/v1" 2>&1 | grep -q "AlreadyExists"; then
+    info "vllm-local provider already exists"
   else
-    info "Created ollama-local provider (Ollama detected on localhost:11434)"
+    info "Created vllm-local provider (vLLM detected on localhost:8000)"
   fi
 fi
 
@@ -134,8 +134,8 @@ echo ""
 echo "  Run OpenClaw:"
 echo "    openclaw agent --agent main --local -m 'your prompt' --session-id s1"
 echo ""
-echo "  Switch to local Ollama:"
-echo "    openshell inference set --provider ollama-local --model nemotron-mini"
+echo "  Switch to local vLLM:"
+echo "    openshell inference set --provider vllm-local --model nemotron-3-super-120b-a12b"
 echo ""
 echo "  Start Telegram bridge + JensenClaw + public tunnel:"
 echo "    TELEGRAM_BOT_TOKEN=... ./scripts/start-services.sh"

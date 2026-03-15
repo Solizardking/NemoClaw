@@ -9,11 +9,11 @@ digest: ""  # Computed at release time
 profiles:
   - default
   - nim-local
-  - ollama
+  - vllm
 
 description: |
   NemoClaw blueprint: orchestrates OpenClaw sandbox creation, migration,
-  and NIM/Ollama inference routing inside OpenShell.
+  and NIM/vLLM inference routing inside OpenShell.
 
 components:
   sandbox:
@@ -37,11 +37,11 @@ components:
         model: "nvidia/nemotron-3-super-120b-a12b"
         credential_env: "NIM_API_KEY"
 
-      ollama:
+      vllm:
         provider_type: "openai"
-        provider_name: "ollama-local"
-        endpoint: "http://localhost:11434/v1"
-        model: "llama3.1:8b"
+        provider_name: "vllm-local"
+        endpoint: "http://localhost:8000/v1"
+        model: "nvidia/nemotron-3-super-120b-a12b"
         credential_env: "OPENAI_API_KEY"
         credential_default: "dummy"
 
