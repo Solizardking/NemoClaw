@@ -157,6 +157,16 @@ Egress control, operator approval flow, and policy configuration.
 {bdg-secondary}`Reference`
 :::
 
+:::{grid-item-card} How-To Guides
+:link: inference/switch-inference-providers
+:link-type: doc
+
+Task-oriented guides for inference, migration, deployment, and policy management.
+
++++
+{bdg-secondary}`How-To`
+:::
+
 ::::
 
 ```{toctree}
@@ -179,6 +189,46 @@ Release Notes <about/release-notes>
 :hidden:
 
 Quickstart <get-started/quickstart>
+```
+
+```{toctree}
+:caption: Inference
+:hidden:
+
+Switch Inference Providers <inference/switch-inference-providers>
+Set Up Local vLLM <inference/set-up-local-vllm>
+Set Up a Local NIM Service <inference/set-up-local-nim>
+```
+
+```{toctree}
+:caption: Migration
+:hidden:
+
+Migrate OpenClaw to a Sandbox <migration/migrate-openclaw-to-sandbox>
+Roll Back a Migration <migration/roll-back-migration>
+```
+
+```{toctree}
+:caption: Network Policy
+:hidden:
+
+Approve or Deny Network Requests <network-policy/approve-network-requests>
+Customize the Network Policy <network-policy/customize-network-policy>
+```
+
+```{toctree}
+:caption: Deployment
+:hidden:
+
+Deploy to a Remote GPU Instance <deployment/deploy-to-remote-gpu>
+Set Up the Telegram Bridge <deployment/set-up-telegram-bridge>
+```
+
+```{toctree}
+:caption: Monitoring
+:hidden:
+
+Monitor Sandbox Activity <monitoring/monitor-sandbox-activity>
 ```
 
 ```{toctree}

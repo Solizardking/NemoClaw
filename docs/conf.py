@@ -90,7 +90,7 @@ html_extra_path = ["project.json"]
 highlight_language = "console"
 
 html_theme_options = {
-    "public_docs_features": True,
+    # "public_docs_features": True, # TODO: Uncomment this when the docs are public
     "icon_links": [
         {
             "name": "GitHub",
