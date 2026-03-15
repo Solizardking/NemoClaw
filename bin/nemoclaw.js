@@ -120,7 +120,7 @@ function help() {
     NEMOCLAW_GPU         Brev GPU type (default: a2-highgpu-1g:nvidia-tesla-a100:1)
 
   Quick start:
-    npm install -g nemoclaw
+    npm install nemoclaw
     export NVIDIA_API_KEY=nvapi-...
     nemoclaw setup
 
