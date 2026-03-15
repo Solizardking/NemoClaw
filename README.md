@@ -35,10 +35,14 @@ sudo apt-get install -y docker.io
 sudo usermod -aG docker $USER
 newgrp docker
 
-# OpenShell CLI (binary from GitHub releases)
+# OpenShell CLI (binary from GitHub releases — needs gh CLI while repo is private)
+sudo apt-get install -y gh
+gh auth login
 ARCH=$(uname -m); [ "$ARCH" = "aarch64" ] && ARCH="aarch64" || ARCH="x86_64"
-curl -fsSL "https://github.com/NVIDIA/OpenShell/releases/latest/download/openshell-${ARCH}-unknown-linux-musl.tar.gz" | tar xz
-sudo install -m 755 openshell /usr/local/bin/openshell && rm -f openshell
+gh release download --repo NVIDIA/OpenShell --pattern "openshell-${ARCH}-unknown-linux-musl.tar.gz"
+tar xzf openshell-${ARCH}-unknown-linux-musl.tar.gz
+sudo install -m 755 openshell /usr/local/bin/openshell
+rm -f openshell openshell-${ARCH}-unknown-linux-musl.tar.gz
 
 # NVIDIA Container Toolkit (if you have a GPU)
 curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
