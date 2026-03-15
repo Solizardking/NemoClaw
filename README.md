@@ -38,7 +38,7 @@ newgrp docker
 # OpenShell CLI
 sudo apt-get install -y python3-pip pipx
 pipx install 'openshell @ git+https://github.com/NVIDIA/OpenShell.git'
-pipx ensurepath && source ~/.bashrc
+export PATH="$HOME/.local/bin:$PATH"
 
 # NVIDIA Container Toolkit (if you have a GPU)
 curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
