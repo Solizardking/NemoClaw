@@ -29,11 +29,15 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 [ -n "${NVIDIA_API_KEY:-}" ] || fail "NVIDIA_API_KEY not set"
 
+# Suppress needrestart noise from apt (Scanning processes, No services need...)
+export NEEDRESTART_MODE=a
+export DEBIAN_FRONTEND=noninteractive
+
 # --- 1. Docker ---
 if ! command -v docker > /dev/null 2>&1; then
   info "Installing Docker..."
-  sudo apt-get update -qq
-  sudo apt-get install -y -qq docker.io
+  sudo apt-get update -qq > /dev/null 2>&1
+  sudo apt-get install -y -qq docker.io > /dev/null 2>&1
   sudo usermod -aG docker "$(whoami)"
   info "Docker installed"
 else
@@ -49,9 +53,9 @@ if command -v nvidia-smi > /dev/null 2>&1; then
     curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list \
       | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' \
       | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list > /dev/null
-    sudo apt-get update -qq
-    sudo apt-get install -y -qq nvidia-container-toolkit
-    sudo nvidia-ctk runtime configure --runtime=docker
+    sudo apt-get update -qq > /dev/null 2>&1
+    sudo apt-get install -y -qq nvidia-container-toolkit > /dev/null 2>&1
+    sudo nvidia-ctk runtime configure --runtime=docker > /dev/null 2>&1
     sudo systemctl restart docker
     info "NVIDIA Container Toolkit installed"
   else
@@ -63,8 +67,8 @@ fi
 if ! command -v openshell > /dev/null 2>&1; then
   info "Installing openshell CLI from GitHub release..."
   if ! command -v gh > /dev/null 2>&1; then
-    sudo apt-get update -qq
-    sudo apt-get install -y -qq gh
+    sudo apt-get update -qq > /dev/null 2>&1
+    sudo apt-get install -y -qq gh > /dev/null 2>&1
   fi
   ARCH="$(uname -m)"
   case "$ARCH" in

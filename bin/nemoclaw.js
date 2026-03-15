@@ -215,8 +215,8 @@ async function deploy(instanceName) {
   }
 
   console.log("  Syncing NemoClaw to VM...");
-  run(`ssh ${name} 'mkdir -p /home/ubuntu/nemoclaw'`);
-  run(`scp -r -o StrictHostKeyChecking=no "${ROOT}/scripts" "${ROOT}/Dockerfile" "${ROOT}/nemoclaw" "${ROOT}/nemoclaw-blueprint" "${ROOT}/.jensenclaw" ${name}:/home/ubuntu/nemoclaw/`);
+  run(`ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${name} 'mkdir -p /home/ubuntu/nemoclaw'`);
+  run(`scp -q -r -o StrictHostKeyChecking=no -o LogLevel=ERROR "${ROOT}/scripts" "${ROOT}/Dockerfile" "${ROOT}/nemoclaw" "${ROOT}/nemoclaw-blueprint" "${ROOT}/.jensenclaw" ${name}:/home/ubuntu/nemoclaw/`);
 
   // Write credentials to a .env file on the VM (avoids shell quoting issues)
   const envLines = [`NVIDIA_API_KEY=${process.env.NVIDIA_API_KEY}`];
@@ -226,21 +226,21 @@ async function deploy(instanceName) {
   if (tgToken) envLines.push(`TELEGRAM_BOT_TOKEN=${tgToken}`);
   const envTmp = path.join(require("os").tmpdir(), `nemoclaw-env-${Date.now()}`);
   fs.writeFileSync(envTmp, envLines.join("\n") + "\n", { mode: 0o600 });
-  run(`scp -o StrictHostKeyChecking=no "${envTmp}" ${name}:/home/ubuntu/nemoclaw/.env`);
+  run(`scp -q -o StrictHostKeyChecking=no -o LogLevel=ERROR "${envTmp}" ${name}:/home/ubuntu/nemoclaw/.env`);
   fs.unlinkSync(envTmp);
 
   console.log("  Running setup...");
-  run(`ssh -t ${name} 'cd /home/ubuntu/nemoclaw && set -a && . .env && set +a && bash scripts/brev-setup.sh'`);
+  run(`ssh -t -o StrictHostKeyChecking=no -o LogLevel=ERROR ${name} 'cd /home/ubuntu/nemoclaw && set -a && . .env && set +a && bash scripts/brev-setup.sh'`);
 
   if (tgToken) {
     console.log("  Starting services...");
-    run(`ssh ${name} 'cd /home/ubuntu/nemoclaw && set -a && . .env && set +a && bash scripts/start-services.sh'`);
+    run(`ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${name} 'cd /home/ubuntu/nemoclaw && set -a && . .env && set +a && bash scripts/start-services.sh'`);
   }
 
   console.log("");
   console.log("  Connecting to sandbox...");
   console.log("");
-  run(`ssh -t ${name} 'cd /home/ubuntu/nemoclaw && set -a && . .env && set +a && openshell sandbox connect nemoclaw'`);
+  run(`ssh -t -o StrictHostKeyChecking=no -o LogLevel=ERROR ${name} 'cd /home/ubuntu/nemoclaw && set -a && . .env && set +a && openshell sandbox connect nemoclaw'`);
 }
 
 async function start() {
@@ -262,7 +262,7 @@ function term(instanceName) {
     run("openshell term");
   } else {
     // Remote — SSH into Brev instance and run it there
-    run(`ssh -t ${instanceName} 'openshell term'`);
+    run(`ssh -t -o StrictHostKeyChecking=no -o LogLevel=ERROR ${instanceName} 'openshell term'`);
   }
 }
 
@@ -270,7 +270,7 @@ function connect(instanceName) {
   if (!instanceName) {
     run("openshell sandbox connect nemoclaw");
   } else {
-    run(`ssh -t ${instanceName} 'NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY || ""}" openshell sandbox connect nemoclaw'`);
+    run(`ssh -t -o StrictHostKeyChecking=no -o LogLevel=ERROR ${instanceName} 'NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY || ""}" openshell sandbox connect nemoclaw'`);
   }
 }
 

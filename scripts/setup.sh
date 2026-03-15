@@ -54,7 +54,7 @@ info "Starting OpenShell gateway..."
 openshell gateway destroy -g nemoclaw > /dev/null 2>&1 || true
 GATEWAY_ARGS=(--name nemoclaw)
 command -v nvidia-smi > /dev/null 2>&1 && GATEWAY_ARGS+=(--gpu)
-openshell gateway start "${GATEWAY_ARGS[@]}" 2>&1 | tail -10
+openshell gateway start "${GATEWAY_ARGS[@]}" 2>&1 | grep -E "Gateway|✓|Error|error" || true
 
 # Verify gateway is actually healthy
 if ! openshell status 2>&1 | grep -q "Connected"; then
@@ -109,9 +109,12 @@ cp -r "$REPO_DIR/nemoclaw-blueprint" "$BUILD_CTX/nemoclaw-blueprint"
 cp -r "$REPO_DIR/scripts" "$BUILD_CTX/scripts"
 rm -rf "$BUILD_CTX/nemoclaw/node_modules" "$BUILD_CTX/nemoclaw/src"
 
+# Filter build output: show progress steps, hide apt noise and env dump
+# (openshell prints all env vars including NVIDIA_API_KEY after creation)
 openshell sandbox create --from "$BUILD_CTX/Dockerfile" --name nemoclaw \
   --provider nvidia-nim \
-  -- env NVIDIA_API_KEY="$NVIDIA_API_KEY"
+  -- env NVIDIA_API_KEY="$NVIDIA_API_KEY" 2>&1 | \
+  grep -E "^  (Step |Building |Built |Pushing |\[progress\]|Successfully |Created sandbox|Image )|✓" || true
 rm -rf "$BUILD_CTX"
 
 # 6. Done
