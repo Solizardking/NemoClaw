@@ -150,17 +150,18 @@ When the agent tries to reach an unlisted host, OpenShell blocks the request and
 | `openclaw nemoclaw logs [-f]`              | Stream blueprint execution and sandbox logs.             |
 | `openclaw nemoclaw eject`                  | Roll back to the host installation from a snapshot.      |
 
-See the full [CLI reference](docs/reference/commands.md) for all commands, flags, and options.
+See the full [CLI reference](https://docs.nvidia.com/nemoclaw/latest/reference/commands.md) for all commands, flags, and options.
 
 ## Learn More
 
-- [Quickstart](docs/get-started/quickstart.md): detailed install and first sandbox walkthrough
-- [Overview](docs/about/overview.md): what NemoClaw does and how it fits together
-- [How It Works](docs/about/how-it-works.md): plugin, blueprint, and sandbox lifecycle
-- [Architecture](docs/reference/architecture.md): plugin structure, blueprint lifecycle, and sandbox environment
-- [Inference Profiles](docs/reference/inference-profiles.md): NVIDIA cloud, NIM, and vLLM configuration
-- [Network Policies](docs/reference/network-policies.md): egress control and policy customization
-- [CLI Commands](docs/reference/commands.md): full command reference
+Refer to the documentation for more information on NemoClaw.
+
+- [Overview](https://docs.nvidia.com/nemoclaw/latest/about/overview.md): what NemoClaw does and how it fits together
+- [How It Works](https://docs.nvidia.com/nemoclaw/latest/about/how-it-works.md): plugin, blueprint, and sandbox lifecycle
+- [Architecture](https://docs.nvidia.com/nemoclaw/latest/reference/architecture.md): plugin structure, blueprint lifecycle, and sandbox environment
+- [Inference Profiles](https://docs.nvidia.com/nemoclaw/latest/reference/inference-profiles.md): NVIDIA cloud, NIM, and vLLM configuration
+- [Network Policies](https://docs.nvidia.com/nemoclaw/latest/reference/network-policies.md): egress control and policy customization
+- [CLI Commands](https://docs.nvidia.com/nemoclaw/latest/reference/commands.md): full command reference
 
 ## License
 
