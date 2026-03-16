@@ -100,7 +100,7 @@ Refer to [Approve or Deny Agent Network Requests](../network-policy/approve-netw
 Run a test inference request to verify that the provider is responding:
 
 ```console
-$ nemoclaw connect
+$ nemoclaw my-assistant connect
 $ openclaw agent --agent main --local -m "Test inference" --session-id debug
 ```
 

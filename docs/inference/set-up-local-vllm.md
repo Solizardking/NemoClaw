@@ -68,7 +68,7 @@ For local use, this defaults to `dummy` and does not need to be set.
 Run a test inference request from inside the sandbox:
 
 ```console
-$ nemoclaw connect
+$ nemoclaw my-assistant connect
 $ openclaw agent --agent main --local -m "Hello, are you running locally?" --session-id test
 ```
 

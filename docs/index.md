@@ -77,7 +77,7 @@ Install the CLI and launch a sandboxed OpenClaw instance in a few commands.
   <div class="nc-term-body">
     <div><span class="nc-ps">$ </span>npm install -g nemoclaw</div>
     <div><span class="nc-ps">$ </span>nemoclaw setup</div>
-    <div><span class="nc-ps">$ </span>nemoclaw connect<span class="nc-cursor"></span></div>
+    <div><span class="nc-ps">$ </span>nemoclaw my-assistant connect<span class="nc-cursor"></span></div>
   </div>
 </div>
 ```

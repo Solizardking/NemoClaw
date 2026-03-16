@@ -72,7 +72,7 @@ The output should show the sandbox as running with the default inference profile
 Open an interactive shell inside the new sandbox:
 
 ```console
-$ openclaw nemoclaw connect
+$ nemoclaw my-assistant connect
 ```
 
 Run a test agent prompt to confirm that inference routing works:

@@ -60,16 +60,13 @@ $ openclaw nemoclaw migrate [--dry-run] [--profile <profile>] [--skip-backup]
 `--skip-backup`
 : Skip creating a host backup snapshot before migration.
 
-### `openclaw nemoclaw connect`
+### `nemoclaw <name> connect`
 
 Open an interactive shell inside the OpenClaw sandbox.
 
 ```console
-$ openclaw nemoclaw connect [--sandbox <name>]
+$ nemoclaw my-assistant connect
 ```
-
-`--sandbox <name>`
-: Sandbox name to connect to. Default: `openclaw`.
 
 ### `openclaw nemoclaw status`
 
@@ -145,13 +142,12 @@ The deploy script installs Docker, NVIDIA Container Toolkit if a GPU is present,
 $ nemoclaw deploy <instance-name>
 ```
 
-### `nemoclaw connect`
+### `nemoclaw <name> connect`
 
-Connect to a local or remote sandbox.
+Connect to a sandbox by name.
 
 ```console
-$ nemoclaw connect               # local sandbox
-$ nemoclaw connect my-gpu-box    # remote Brev instance
+$ nemoclaw my-assistant connect
 ```
 
 ### `nemoclaw term`
