@@ -165,7 +165,7 @@ async function createSandbox(gpu) {
   if (process.env.NVIDIA_API_KEY) {
     envArgs.push(`NVIDIA_API_KEY=${process.env.NVIDIA_API_KEY}`);
   }
-  run(`openshell sandbox create --forward 18789 ${createArgs.join(" ")} -- env ${envArgs.join(" ")} nemoclaw-start 2>&1 | awk '/Sandbox allocated/{if(!seen){print;seen=1}next}1'`);
+  run(`openshell sandbox create ${createArgs.join(" ")} -- env ${envArgs.join(" ")} nemoclaw-start 2>&1 | awk '/Sandbox allocated/{if(!seen){print;seen=1}next}1'`);
 
   // Forward dashboard port separately
   run(`openshell forward start --background 18789 ${sandboxName}`, { ignoreError: true });

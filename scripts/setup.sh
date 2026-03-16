@@ -159,7 +159,6 @@ fi
 CREATE_LOG=$(mktemp /tmp/nemoclaw-create-XXXXXX.log)
 set +e
 openshell sandbox create --from "$BUILD_CTX/Dockerfile" --name nemoclaw \
-  --forward 18789 \
   --provider nvidia-nim \
   -- env NVIDIA_API_KEY="$NVIDIA_API_KEY" > "$CREATE_LOG" 2>&1
 CREATE_RC=$?
