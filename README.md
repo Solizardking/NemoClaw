@@ -29,15 +29,17 @@ First run prompts for your NVIDIA API Key (get one from [build.nvidia.com](https
 #### Prerequisites (one-time, interactive steps)
 
 ```bash
-# Node.js 22 LTS
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt-get install -y nodejs
-
 # Docker
 sudo apt-get install -y docker.io
 sudo usermod -aG docker $USER
-# Log out and back in (or run `su - $USER`) for the docker group to take effect.
-# Do NOT use `newgrp docker` — it spawns a subshell that breaks copy-paste flows.
+newgrp docker
+```
+You must run the above first before continuing.
+
+```
+# Node.js 22 LTS
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs
 
 # gh CLI (needed while OpenShell repo is private)
 sudo apt-get install -y gh
