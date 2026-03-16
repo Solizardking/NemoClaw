@@ -144,7 +144,7 @@ main() {
   info "=== NemoClaw Installer ==="
 
   install_nodejs
-  install_or_upgrade_ollama
+  # install_or_upgrade_ollama
   install_nemoclaw
   run_onboard
 
