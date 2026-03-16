@@ -24,24 +24,70 @@ function listModels() {
 }
 
 function detectGpu() {
+  // Try NVIDIA first
   try {
     const output = runCapture(
       "nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits",
       { ignoreError: true }
     );
-    if (!output) return null;
-    const lines = output.split("\n").filter((l) => l.trim());
-    const perGpuMB = lines.map((l) => parseInt(l.trim(), 10)).filter((n) => !isNaN(n));
-    if (perGpuMB.length === 0) return null;
-    const totalMemoryMB = perGpuMB.reduce((a, b) => a + b, 0);
-    return {
-      count: perGpuMB.length,
-      totalMemoryMB,
-      perGpuMB: perGpuMB[0],
-    };
-  } catch {
-    return null;
+    if (output) {
+      const lines = output.split("\n").filter((l) => l.trim());
+      const perGpuMB = lines.map((l) => parseInt(l.trim(), 10)).filter((n) => !isNaN(n));
+      if (perGpuMB.length > 0) {
+        const totalMemoryMB = perGpuMB.reduce((a, b) => a + b, 0);
+        return {
+          type: "nvidia",
+          count: perGpuMB.length,
+          totalMemoryMB,
+          perGpuMB: perGpuMB[0],
+          nimCapable: true,
+        };
+      }
+    }
+  } catch {}
+
+  // macOS: detect Apple Silicon or discrete GPU
+  if (process.platform === "darwin") {
+    try {
+      const spOutput = runCapture(
+        "system_profiler SPDisplaysDataType 2>/dev/null",
+        { ignoreError: true }
+      );
+      if (spOutput) {
+        const chipMatch = spOutput.match(/Chipset Model:\s*(.+)/);
+        const vramMatch = spOutput.match(/VRAM.*?:\s*(\d+)\s*(MB|GB)/i);
+        const coresMatch = spOutput.match(/Total Number of Cores:\s*(\d+)/);
+
+        if (chipMatch) {
+          const name = chipMatch[1].trim();
+          let memoryMB = 0;
+
+          if (vramMatch) {
+            memoryMB = parseInt(vramMatch[1], 10);
+            if (vramMatch[2].toUpperCase() === "GB") memoryMB *= 1024;
+          } else {
+            // Apple Silicon shares system RAM — read total memory
+            try {
+              const memBytes = runCapture("sysctl -n hw.memsize", { ignoreError: true });
+              if (memBytes) memoryMB = Math.floor(parseInt(memBytes, 10) / 1024 / 1024);
+            } catch {}
+          }
+
+          return {
+            type: "apple",
+            name,
+            count: 1,
+            cores: coresMatch ? parseInt(coresMatch[1], 10) : null,
+            totalMemoryMB: memoryMB,
+            perGpuMB: memoryMB,
+            nimCapable: false,
+          };
+        }
+      }
+    } catch {}
   }
+
+  return null;
 }
 
 function pullNimImage(model) {
