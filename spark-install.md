@@ -6,8 +6,8 @@
 
 ```bash
 # Clone and install
-git clone https://github.com/NVIDIA/openshell-openclaw-plugin.git
-cd openshell-openclaw-plugin
+git clone https://github.com/NVIDIA/NemoClaw.git
+cd NemoClaw
 sudo npm install -g .
 
 # Spark-specific setup (configures Docker for cgroup v2, then runs normal setup)
