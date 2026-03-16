@@ -21,3 +21,4 @@ docs = [
 
 [tool.uv]
 package = false
+managed = true
