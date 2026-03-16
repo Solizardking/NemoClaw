@@ -68,8 +68,11 @@ async function preflight() {
 
   // GPU
   const gpu = nim.detectGpu();
-  if (gpu) {
-    console.log(`  ✓ GPU detected: ${gpu.count} GPU(s), ${gpu.totalMemoryMB} MB total VRAM`);
+  if (gpu && gpu.type === "nvidia") {
+    console.log(`  ✓ NVIDIA GPU detected: ${gpu.count} GPU(s), ${gpu.totalMemoryMB} MB VRAM`);
+  } else if (gpu && gpu.type === "apple") {
+    console.log(`  ✓ Apple GPU detected: ${gpu.name}${gpu.cores ? ` (${gpu.cores} cores)` : ""}, ${gpu.totalMemoryMB} MB unified memory`);
+    console.log("  ⓘ NIM requires NVIDIA GPU — will use cloud inference");
   } else {
     console.log("  ⓘ No GPU detected — will use cloud inference");
   }
@@ -86,7 +89,7 @@ async function startGateway(gpu) {
   run("openshell gateway destroy -g nemoclaw 2>/dev/null || true", { ignoreError: true });
 
   const gwArgs = ["--name", "nemoclaw"];
-  if (gpu) gwArgs.push("--gpu");
+  if (gpu && gpu.nimCapable) gwArgs.push("--gpu");
 
   run(`openshell gateway start ${gwArgs.join(" ")}`, { ignoreError: false });
 
@@ -150,7 +153,7 @@ async function createSandbox(gpu) {
     `--name ${sandboxName}`,
     `--policy "${basePolicyPath}"`,
   ];
-  if (gpu) createArgs.push("--gpu");
+  if (gpu && gpu.nimCapable) createArgs.push("--gpu");
 
   console.log(`  Creating sandbox '${sandboxName}' (this takes a few minutes on first run)...`);
   run(`openshell sandbox create ${createArgs.join(" ")} -- env 2>&1 | awk '/Sandbox allocated/{if(!seen){print;seen=1}next}1'`);
@@ -180,7 +183,7 @@ async function setupNim(sandboxName, gpu) {
   let provider = "nvidia-nim";
   let nimContainer = null;
 
-  if (gpu) {
+  if (gpu && gpu.nimCapable) {
     console.log("");
     console.log("  Inference options:");
     console.log("    1) Local NIM container (GPU required)");
@@ -264,7 +267,7 @@ async function setupInference(sandboxName, model, provider) {
       { ignoreError: true }
     );
     run(
-      `openshell inference set --provider nvidia-nim --model ${model} 2>/dev/null || true`,
+      `openshell inference set --no-verify --provider nvidia-nim --model ${model} 2>/dev/null || true`,
       { ignoreError: true }
     );
   } else if (provider === "vllm-local") {
@@ -275,7 +278,7 @@ async function setupInference(sandboxName, model, provider) {
       { ignoreError: true }
     );
     run(
-      `openshell inference set --provider vllm-local --model ${model} 2>/dev/null || true`,
+      `openshell inference set --no-verify --provider vllm-local --model ${model} 2>/dev/null || true`,
       { ignoreError: true }
     );
   }
@@ -385,6 +388,9 @@ async function onboard() {
   console.log("");
   console.log("  NemoClaw Onboarding");
   console.log("  ===================");
+
+  // Prompt for API key upfront — needed for cloud inference (most common path)
+  await ensureApiKey();
 
   const gpu = await preflight();
   await startGateway(gpu);

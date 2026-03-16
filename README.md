@@ -96,6 +96,19 @@ sudo npm install -g .
 nemoclaw setup
 ```
 
+### Windows (via WSL2)
+
+NemoClaw does not support native Windows. All scripts, binaries, and tooling target Linux and macOS only. To run on Windows, use **WSL2 with Ubuntu 24.04**:
+
+```bash
+# 1. Install WSL2 with Ubuntu 24.04 (from PowerShell as Administrator)
+wsl --install -d Ubuntu-24.04
+
+# 2. Launch Ubuntu and follow the Ubuntu 24.04 instructions above
+```
+
+Once inside WSL2, the full Ubuntu 24.04 setup applies as-is — Docker Desktop integrates with WSL2 backends, and Linux binaries (OpenShell) work natively.
+
 ### Deploy to a cloud VM
 
 ```bash
@@ -109,8 +122,8 @@ Requires the [Brev CLI](https://github.com/brevdev/brev-cli) and [Brev account](
 ### Connect to the sandbox
 
 ```bash
-nemoclaw connect                # local
-nemoclaw connect my-gpu-box     # remote Brev instance
+nemoclaw <sandbox-name> connect          # local
+nemoclaw deploy my-gpu-box               # remote Brev instance
 ```
 
 ### Run OpenClaw (inside the sandbox)
@@ -215,12 +228,16 @@ nemoclaw-blueprint/                 Versioned blueprint artifact (separate relea
 
 | Command | Description |
 |---------|-------------|
-| `openclaw nemoclaw launch` | Fresh install into OpenShell (warns net-new users) |
-| `openclaw nemoclaw migrate` | Migrate host OpenClaw into sandbox (snapshot + cutover) |
-| `openclaw nemoclaw connect` | Interactive shell into the sandbox |
-| `openclaw nemoclaw status` | Blueprint state, sandbox health, inference config |
-| `openclaw nemoclaw eject` | Rollback to host installation from snapshot |
-| `/nemoclaw` | Slash command in chat (status, eject) |
+| `nemoclaw onboard` | Interactive setup wizard (recommended) |
+| `nemoclaw list` | List all sandboxes |
+| `nemoclaw <name> connect` | Interactive shell into the sandbox |
+| `nemoclaw <name> status` | Sandbox health, inference config, NIM status |
+| `nemoclaw <name> policy-add` | Add a network policy preset |
+| `nemoclaw <name> policy-list` | List presets (● = applied) |
+| `nemoclaw <name> destroy` | Stop NIM + delete sandbox |
+| `nemoclaw deploy <instance>` | Deploy to a Brev VM |
+| `nemoclaw start` / `stop` / `status` | Manage services (Telegram, tunnel) |
+| `nemoclaw setup` | Legacy setup (deprecated) |
 
 ## Inference Profiles
 

@@ -227,6 +227,8 @@ function egg(instanceName) {
 // ── Sandbox-scoped actions ───────────────────────────────────────
 
 function sandboxConnect(sandboxName) {
+  // Ensure port forward is alive before connecting
+  run(`openshell forward start --background 18789 ${sandboxName} 2>/dev/null || true`, { ignoreError: true });
   run(`openshell sandbox connect ${sandboxName}`);
 }
 

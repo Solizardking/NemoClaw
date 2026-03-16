@@ -108,6 +108,56 @@ install_node() {
 
 install_node
 
+# ── Install Docker ───────────────────────────────────────────────
+
+install_docker() {
+  if command -v docker > /dev/null 2>&1 && docker info > /dev/null 2>&1; then
+    info "Docker already running"
+    return 0
+  fi
+
+  if command -v docker > /dev/null 2>&1; then
+    # Docker installed but not running
+    if [ "$OS" = "Darwin" ]; then
+      if command -v colima > /dev/null 2>&1; then
+        info "Starting Colima..."
+        colima start
+        return 0
+      fi
+    fi
+    warn "Docker is installed but not running. Please start Docker and re-run."
+    return 1
+  fi
+
+  info "Installing Docker..."
+
+  case "$OS" in
+    Darwin)
+      if ! command -v brew > /dev/null 2>&1; then
+        fail "Homebrew required to install Docker on macOS. Install from https://brew.sh"
+      fi
+      info "Installing Colima + Docker CLI via Homebrew..."
+      brew install colima docker
+      info "Starting Colima..."
+      colima start
+      ;;
+    Linux)
+      sudo apt-get update -qq > /dev/null 2>&1
+      sudo apt-get install -y -qq docker.io > /dev/null 2>&1
+      sudo usermod -aG docker "$(whoami)"
+      info "Docker installed. You may need to log out and back in for group changes."
+      ;;
+  esac
+
+  if ! docker info > /dev/null 2>&1; then
+    fail "Docker installed but not running. Start Docker and re-run."
+  fi
+
+  info "Docker is running"
+}
+
+install_docker
+
 # ── Install OpenShell CLI binary ─────────────────────────────────
 
 install_openshell() {

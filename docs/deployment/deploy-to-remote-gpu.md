@@ -51,7 +51,7 @@ The deploy script performs the following steps on the VM:
 After deployment finishes, connect to the sandbox on the remote instance:
 
 ```console
-$ nemoclaw connect <instance-name>
+$ nemoclaw deploy <instance-name>
 ```
 
 This opens an interactive shell inside the remote sandbox.

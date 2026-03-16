@@ -71,7 +71,7 @@ Setup creates an OpenShell gateway, registers inference providers, and launches 
 Connect to the sandbox by running:
 
 ```console
-$ nemoclaw connect
+$ nemoclaw <sandbox-name> connect
 ```
 
 This opens an interactive shell inside the sandboxed OpenClaw environment.
@@ -140,5 +140,5 @@ $ nemoclaw deploy my-gpu-box
 Then connect remotely:
 
 ```console
-$ nemoclaw connect my-gpu-box
+$ nemoclaw deploy my-gpu-box
 ```
