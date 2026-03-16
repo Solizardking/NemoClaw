@@ -69,15 +69,23 @@ Logs:        nemoclaw my-assistant logs --follow
 
 ### Chat with the Agent
 
+After installation, you can chat with the agent using the OpenClaw TUI or CLI.
+
+#### Using the OpenClaw TUI
+
 After installation, launch the OpenClaw TUI to start chatting with the agent:
 
 ```console
 $ openclaw tui
 ```
 
+Send a test message to the agent and verify you receive a response.
+
 The TUI opens an interactive chat interface inside the sandbox. Type a message and press Enter to send it to the agent.
 
-You can also connect to the sandbox terminal directly:
+#### Using the OpenClaw CLI
+
+You can also connect to the sandbox terminal directly and send a test message to the agent:
 
 ```console
 $ nemoclaw my-assistant connect
