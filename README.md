@@ -51,7 +51,6 @@ When the install completes, a summary confirms the running environment:
 
 ```
 ──────────────────────────────────────────────────
-Dashboard    http://localhost:18789/
 Sandbox      my-assistant (Landlock + seccomp + netns)
 Model        nvidia/nemotron-3-super-120b-a12b (NVIDIA Cloud API)
 ──────────────────────────────────────────────────
