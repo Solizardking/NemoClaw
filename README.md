@@ -107,6 +107,8 @@ The blueprint lifecycle follows four stages: resolve the artifact, verify its di
 
 When something goes wrong, errors may originate from either NemoClaw or the OpenShell layer underneath. Run `nemoclaw <name> status` for NemoClaw-level health and `openshell sandbox list` to check the underlying sandbox state.
 
+---
+
 ## Inference Profiles
 
 Inference requests from the agent never leave the sandbox directly. OpenShell intercepts every call and routes it to the configured provider. NemoClaw ships with three profiles:
@@ -124,6 +126,8 @@ $ openclaw nemoclaw launch --profile vllm
 $ openshell inference set --provider vllm-local --model nvidia/nemotron-3-nano-30b-a3b
 ```
 
+---
+
 ## Protection Layers
 
 The sandbox starts with a strict baseline policy that controls network egress and filesystem access:
@@ -136,6 +140,8 @@ The sandbox starts with a strict baseline policy that controls network egress an
 | Inference  | Reroutes model API calls to controlled backends.    | Hot-reloadable at runtime.  |
 
 When the agent tries to reach an unlisted host, OpenShell blocks the request and surfaces it in the TUI for operator approval.
+
+---
 
 ## Key Commands
 
@@ -167,6 +173,7 @@ See the full [CLI reference](https://docs.nvidia.com/nemoclaw/latest/reference/c
 > - The `openclaw nemoclaw` plugin commands are under active development. Use the `nemoclaw` host CLI as the primary interface.
 > - Setup may require manual workarounds on some platforms. File an issue if you encounter blockers.
 
+---
 
 ## Learn More
 
