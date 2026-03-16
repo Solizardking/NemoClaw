@@ -9,7 +9,7 @@ Scan recent git history for commits that affect user-facing behavior and draft d
 
 ## Prerequisites
 
-- You must be in the NemoClaw git repository (`openshell-openclaw-plugin`).
+- You must be in the NemoClaw git repository (`NemoClaw`).
 - The `docs/` directory must exist with the current doc set.
 
 ## When to Use
