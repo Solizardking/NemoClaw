@@ -48,8 +48,6 @@ The installer detects available VRAM and pulls the appropriate model:
 | >= 120 GB (such as 2 H100 80 GB) | `nemotron-3-super:120b`  |
 | < 120 GB                         | `nemotron-3-nano:30b`    |
 
-The installer handles all other dependencies, including Node.js, Docker, the OpenShell CLI, and Ollama.
-
 When the install completes, a summary confirms the running environment:
 
 ```
