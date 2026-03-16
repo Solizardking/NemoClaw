@@ -85,31 +85,13 @@ network_policies:
     endpoints:
       - host: github.com
         port: 443
-        protocol: rest
-        enforcement: enforce
-        tls: terminate
-        rules:
-          - allow: { method: "*", path: "/**" }
+        access: full
+      - host: api.github.com
+        port: 443
+        access: full
     binaries:
       - { path: /usr/bin/gh }
       - { path: /usr/bin/git }
-
-  github_rest_api:
-    name: github_rest_api
-    endpoints:
-      - host: api.github.com
-        port: 443
-        protocol: rest
-        enforcement: enforce
-        tls: terminate
-        rules:
-          - allow: { method: GET, path: "/**" }
-          - allow: { method: POST, path: "/**" }
-          - allow: { method: PATCH, path: "/**" }
-          - allow: { method: PUT, path: "/**" }
-          - allow: { method: DELETE, path: "/**" }
-    binaries:
-      - { path: /usr/bin/gh }
 
   # ── OpenClaw "phone home" ────────────────────────────────────────────
   # Minimum viable set for OpenClaw to authenticate, discover plugins,
@@ -158,18 +140,13 @@ network_policies:
     binaries:
       - { path: /usr/local/bin/openclaw }
 
-  # npm registry — needed for `openclaw plugins install`
-  # Restricted to openclaw and npm binaries, GET only (read/download).
+  # npm registry — needed for `openclaw plugins install` and `npm install`
   npm_registry:
     name: npm_registry
     endpoints:
       - host: registry.npmjs.org
         port: 443
-        protocol: rest
-        enforcement: enforce
-        tls: terminate
-        rules:
-          - allow: { method: GET, path: "/**" }
+        access: full
     binaries:
       - { path: /usr/local/bin/openclaw }
       - { path: /usr/local/bin/npm }
