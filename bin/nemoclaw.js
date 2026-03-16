@@ -217,6 +217,8 @@ function egg(instanceName) {
     }
     console.error("  Tunnel didn't start in time. Check /tmp/jensenclaw-tunnel.log on the VM.");
   } else {
+    // Kill anything already on the port
+    run(`lsof -ti:18789 | xargs kill -9 2>/dev/null || true`, { ignoreError: true });
     console.log("  Starting JensenClaw locally on http://localhost:18789");
     run(`NVIDIA_API_KEY="${process.env.NVIDIA_API_KEY || ""}" node "${ROOT}/.jensenclaw/server.js"`);
   }
