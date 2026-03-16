@@ -145,10 +145,10 @@ Run these on the host to set up, connect to, and manage sandboxes.
 
 | Command                              | Description                                            |
 |--------------------------------------|--------------------------------------------------------|
-| `nemoclaw setup`                     | Full host-side setup: gateway, providers, sandbox.     |
+| `nemoclaw onboard`                  | Interactive setup wizard: gateway, providers, sandbox. |
 | `nemoclaw deploy <instance>`         | Deploy to a remote GPU instance through Brev.          |
 | `nemoclaw <name> connect`            | Open an interactive shell inside the sandbox.          |
-| `nemoclaw term`                      | Launch the OpenShell TUI for monitoring and approvals. |
+| `openshell term`                     | Launch the OpenShell TUI for monitoring and approvals. |
 | `nemoclaw start` / `stop` / `status` | Manage auxiliary services (Telegram bridge, tunnel).   |
 
 ### Plugin commands (`openclaw nemoclaw`)
