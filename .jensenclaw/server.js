@@ -24,7 +24,23 @@ const PORT = parseInt(process.env.JENSENCLAW_PORT || "18789", 10);
 const API_KEY = process.env.NVIDIA_API_KEY;
 const API_BASE = process.env.INFERENCE_URL || "https://integrate.api.nvidia.com/v1";
 const MODEL = process.env.INFERENCE_MODEL || "nvidia/nemotron-3-super-120b-a12b";
-const SANDBOX = process.env.SANDBOX_NAME || "nemoclaw";
+const SANDBOX = process.env.SANDBOX_NAME || (() => {
+  // Read default sandbox from nemoclaw registry
+  try {
+    const regFile = path.join(process.env.HOME || "/tmp", ".nemoclaw", "sandboxes.json");
+    if (fs.existsSync(regFile)) {
+      const reg = JSON.parse(fs.readFileSync(regFile, "utf-8"));
+      if (reg.defaultSandbox) return reg.defaultSandbox;
+    }
+  } catch {}
+  // Fall back to openshell's last-used sandbox
+  try {
+    const list = execSync("openshell sandbox list 2>/dev/null", { encoding: "utf-8" });
+    const match = list.match(/^(\S+)\s+\S+\s+\S+\s+Ready/m);
+    if (match) return match[1];
+  } catch {}
+  return "nemoclaw";
+})();
 
 if (!API_KEY) {
   console.error("NVIDIA_API_KEY is required");
