@@ -11,8 +11,7 @@ Run OpenClaw inside an OpenShell sandbox with NVIDIA inference (Nemotron 3 Super
 # Pre-publish: install from git
 git clone git@github.com:NVIDIA/openshell-openclaw-plugin.git
 cd openshell-openclaw-plugin
-sudo npm install -g .
-nemoclaw setup
+./install.sh
 ```
 
 First run prompts for your NVIDIA API Key (get one from [build.nvidia.com](https://build.nvidia.com)) and saves it to `~/.nemoclaw/credentials.json`.

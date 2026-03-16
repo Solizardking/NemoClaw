@@ -58,10 +58,6 @@ detect_gpu() {
   if command_exists nvidia-smi; then
     nvidia-smi &>/dev/null && return 0
   fi
-  # macOS — Apple Silicon always has a GPU (Metal)
-  if [[ "$(uname -s)" == "Darwin" ]]; then
-    return 0
-  fi
   return 1
 }
 
@@ -69,7 +65,7 @@ get_vram_mb() {
   # Returns total VRAM in MiB (NVIDIA only). Falls back to 0.
   if command_exists nvidia-smi; then
     nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits 2>/dev/null \
-      | head -1 | tr -d ' '
+      | awk '{s += $1} END {print s+0}'
     return
   fi
   # macOS — report unified memory as VRAM
@@ -83,7 +79,7 @@ get_vram_mb() {
 }
 
 install_or_upgrade_ollama() {
-  if command_exists ollama; then
+  if detect_gpu && command_exists ollama; then
     local current
     current=$(get_ollama_version)
     if [[ -n "$current" ]] && version_gte "$current" "$OLLAMA_MIN_VERSION"; then
@@ -126,7 +122,7 @@ install_or_upgrade_ollama() {
 install_nemoclaw() {
   if [[ -f "./package.json" ]] && grep -q '"name": "nemoclaw"' ./package.json 2>/dev/null; then
     info "NemoClaw package.json found in current directory — installing from source…"
-    npm install
+    npm install && npm link
   else
     info "Installing NemoClaw from npm…"
     npm install -g nemoclaw
