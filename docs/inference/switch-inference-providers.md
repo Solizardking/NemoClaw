@@ -41,13 +41,14 @@ The `nemoclaw setup` command stores this key in `~/.nemoclaw/credentials.json` o
 
 ## Switch to Local vLLM
 
-Set the provider to `vllm-local` and specify a model served by vLLM on `localhost:8000`:
+Set the provider to `vllm-local` and specify a model served by vLLM on the host:
 
 ```console
 $ openshell inference set --provider vllm-local --model nvidia/nemotron-3-nano-30b-a3b
 ```
 
 The vLLM server must be running before you switch.
+Bind the server to `0.0.0.0` and make sure the host firewall allows the bridge subnet to reach port `8000`.
 Refer to [Set Up Local vLLM](set-up-local-vllm.md) for setup instructions.
 
 ## Switch to Local NIM

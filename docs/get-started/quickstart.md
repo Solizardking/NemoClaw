@@ -119,6 +119,8 @@ $ openshell inference set --provider nim-local --model nvidia/nemotron-3-super-1
 
 Refer to [Inference Profiles](../reference/inference-profiles.md) for full details on each provider.
 
+For host-backed local inference such as vLLM or Ollama, OpenShell reaches the host through `host.openshell.internal`, not `localhost`. Bind the host service to `0.0.0.0` so the gateway can reach it. On Linux hosts that use UFW, allow the local inference port from the Docker bridge subnet before switching providers.
+
 ## Monitor the Sandbox
 
 Open the OpenShell TUI to monitor sandbox activity and approve network egress requests:

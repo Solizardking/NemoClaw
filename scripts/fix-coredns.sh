@@ -19,8 +19,16 @@
 set -euo pipefail
 
 GATEWAY_NAME="${1:-}"
-DOCKER_HOST="${DOCKER_HOST:-unix://$HOME/.colima/default/docker.sock}"
-export DOCKER_HOST
+COLIMA_SOCKET="$HOME/.colima/default/docker.sock"
+
+if [ -z "${DOCKER_HOST:-}" ]; then
+  if [ -S "$COLIMA_SOCKET" ]; then
+    export DOCKER_HOST="unix://$COLIMA_SOCKET"
+  else
+    echo "Skipping CoreDNS patch: Colima socket not found at $COLIMA_SOCKET."
+    exit 0
+  fi
+fi
 
 # Find the cluster container
 CLUSTER=$(docker ps --filter "name=openshell-cluster" --format '{{.Names}}' | head -1)

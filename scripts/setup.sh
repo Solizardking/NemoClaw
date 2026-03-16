@@ -33,6 +33,24 @@ info() { echo -e "${GREEN}>>>${NC} $1"; }
 warn() { echo -e "${YELLOW}>>>${NC} $1"; }
 fail() { echo -e "${RED}>>>${NC} $1"; exit 1; }
 
+upsert_provider() {
+  local name="$1"
+  local type="$2"
+  local credential="$3"
+  local config="$4"
+
+  if openshell provider create --name "$name" --type "$type" \
+    --credential "$credential" \
+    --config "$config" 2>&1 | grep -q "AlreadyExists"; then
+    openshell provider update "$name" \
+      --credential "$credential" \
+      --config "$config" > /dev/null
+    info "Updated $name provider"
+  else
+    info "Created $name provider"
+  fi
+}
+
 # Resolve DOCKER_HOST for Colima if needed
 if [ -z "${DOCKER_HOST:-}" ]; then
   if [ -S "$HOME/.colima/default/docker.sock" ]; then
@@ -76,23 +94,19 @@ fi
 info "Setting up inference providers..."
 
 # nvidia-nim (build.nvidia.com)
-if openshell provider create --name nvidia-nim --type openai \
-  --credential "NVIDIA_API_KEY=$NVIDIA_API_KEY" \
-  --config "OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1" 2>&1 | grep -q "AlreadyExists"; then
-  info "nvidia-nim provider already exists"
-else
-  info "Created nvidia-nim provider"
-fi
+upsert_provider \
+  "nvidia-nim" \
+  "openai" \
+  "NVIDIA_API_KEY=$NVIDIA_API_KEY" \
+  "OPENAI_BASE_URL=https://integrate.api.nvidia.com/v1"
 
 # vllm-local (if vLLM is installed or running)
 if curl -s http://localhost:8000/v1/models > /dev/null 2>&1 || python3 -c "import vllm" 2>/dev/null; then
-  if openshell provider create --name vllm-local --type openai \
-    --credential "OPENAI_API_KEY=dummy" \
-    --config "OPENAI_BASE_URL=http://host.docker.internal:8000/v1" 2>&1 | grep -q "AlreadyExists"; then
-    info "vllm-local provider already exists"
-  else
-    info "Created vllm-local provider"
-  fi
+  upsert_provider \
+    "vllm-local" \
+    "openai" \
+    "OPENAI_API_KEY=dummy" \
+    "OPENAI_BASE_URL=http://host.openshell.internal:8000/v1"
 fi
 
 # 4a. Ollama (macOS local inference)
@@ -105,17 +119,14 @@ if [ "$(uname -s)" = "Darwin" ]; then
     # Start Ollama service if not running
     if ! curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
       info "Starting Ollama service..."
-      ollama serve > /dev/null 2>&1 &
+      OLLAMA_HOST=0.0.0.0:11434 ollama serve > /dev/null 2>&1 &
       sleep 2
     fi
-    # Create provider if not exists
-    if openshell provider create --name ollama-local --type openai \
-      --credential "OPENAI_API_KEY=ollama" \
-      --config "OPENAI_BASE_URL=http://host.docker.internal:11434/v1" 2>&1 | grep -q "AlreadyExists"; then
-      info "ollama-local provider already exists"
-    else
-      info "Created ollama-local provider"
-    fi
+    upsert_provider \
+      "ollama-local" \
+      "openai" \
+      "OPENAI_API_KEY=ollama" \
+      "OPENAI_BASE_URL=http://host.openshell.internal:11434/v1"
   fi
 fi
 
