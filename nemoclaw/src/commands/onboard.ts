@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { execFileSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import type { PluginLogger, NemoClawConfig } from "../index.js";
 import {
   loadOnboardConfig,
@@ -22,7 +22,7 @@ export interface OnboardOptions {
   pluginConfig: NemoClawConfig;
 }
 
-const ENDPOINT_TYPES: EndpointType[] = ["build", "ncp", "nim-local", "vllm", "custom"];
+const ENDPOINT_TYPES: EndpointType[] = ["build", "ncp", "nim-local", "vllm", "ollama", "custom"];
 
 const BUILD_ENDPOINT_URL = "https://integrate.api.nvidia.com/v1";
 
@@ -44,6 +44,8 @@ function resolveProfile(endpointType: EndpointType): string {
       return "nim-local";
     case "vllm":
       return "vllm";
+    case "ollama":
+      return "ollama";
   }
 }
 
@@ -58,6 +60,8 @@ function resolveProviderName(endpointType: EndpointType): string {
       return "nim-local";
     case "vllm":
       return "vllm-local";
+    case "ollama":
+      return "ollama-local";
   }
 }
 
@@ -70,16 +74,53 @@ function resolveCredentialEnv(endpointType: EndpointType): string {
     case "nim-local":
       return "NIM_API_KEY";
     case "vllm":
+    case "ollama":
       return "OPENAI_API_KEY";
   }
 }
 
 function isNonInteractive(opts: OnboardOptions): boolean {
-  if (!opts.apiKey || !opts.endpoint || !opts.model) return false;
+  if (!opts.endpoint || !opts.model) return false;
   const ep = opts.endpoint as EndpointType;
+  if (endpointRequiresApiKey(ep) && !opts.apiKey) return false;
   if ((ep === "ncp" || ep === "nim-local" || ep === "custom") && !opts.endpointUrl) return false;
   if (ep === "ncp" && !opts.ncpPartner) return false;
   return true;
+}
+
+function endpointRequiresApiKey(endpointType: EndpointType): boolean {
+  return (
+    endpointType === "build" ||
+    endpointType === "ncp" ||
+    endpointType === "nim-local" ||
+    endpointType === "custom"
+  );
+}
+
+function defaultCredentialForEndpoint(endpointType: EndpointType): string {
+  switch (endpointType) {
+    case "vllm":
+      return "dummy";
+    case "ollama":
+      return "ollama";
+    default:
+      return "";
+  }
+}
+
+function detectOllama(): { installed: boolean; running: boolean } {
+  const installed = testCommand("command -v ollama >/dev/null 2>&1");
+  const running = testCommand("curl -sf http://localhost:11434/api/tags >/dev/null 2>&1");
+  return { installed, running };
+}
+
+function testCommand(command: string): boolean {
+  try {
+    execSync(command, { encoding: "utf-8", stdio: "ignore", shell: "/bin/bash" });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function showConfig(config: NemoClawOnboardConfig, logger: PluginLogger): void {
@@ -124,28 +165,7 @@ export async function cliOnboard(opts: OnboardOptions): Promise<void> {
     }
   }
 
-  // Step 1: API Key
-  let apiKey: string;
-  if (opts.apiKey) {
-    apiKey = opts.apiKey;
-  } else {
-    const envKey = process.env.NVIDIA_API_KEY;
-    if (envKey) {
-      logger.info(`Detected NVIDIA_API_KEY in environment (${maskApiKey(envKey)})`);
-      const useEnv = await promptConfirm("Use this key?");
-      apiKey = useEnv ? envKey : await promptInput("Enter your NVIDIA API key");
-    } else {
-      logger.info("Get an API key from: https://build.nvidia.com/settings/api-keys");
-      apiKey = await promptInput("Enter your NVIDIA API key");
-    }
-  }
-
-  if (!apiKey) {
-    logger.error("No API key provided. Aborting.");
-    return;
-  }
-
-  // Step 2: Endpoint Selection
+  // Step 1: Endpoint Selection
   let endpointType: EndpointType;
   if (opts.endpoint) {
     if (!ENDPOINT_TYPES.includes(opts.endpoint as EndpointType)) {
@@ -156,31 +176,42 @@ export async function cliOnboard(opts: OnboardOptions): Promise<void> {
     }
     endpointType = opts.endpoint as EndpointType;
   } else {
-    endpointType = (await promptSelect("Select your inference endpoint:", [
-      {
-        label: "NVIDIA Build (build.nvidia.com)",
-        value: "build",
-        hint: "recommended — zero infra, free credits",
-      },
-      {
-        label: "NVIDIA Cloud Partner (NCP)",
-        value: "ncp",
-        hint: "dedicated capacity, SLA-backed",
-      },
-      {
-        label: "Self-hosted NIM",
-        value: "nim-local",
-        hint: "your own NIM container deployment",
-      },
-      {
-        label: "Local vLLM",
-        value: "vllm",
-        hint: "local development",
-      },
-    ])) as EndpointType;
+    const ollama = detectOllama();
+    if (ollama.running) {
+      logger.info("Detected Ollama on localhost:11434. Using it for onboarding.");
+      endpointType = "ollama";
+    } else {
+      endpointType = (await promptSelect("Select your inference endpoint:", [
+        {
+          label: "NVIDIA Build (build.nvidia.com)",
+          value: "build",
+          hint: "recommended — zero infra, free credits",
+        },
+        {
+          label: "NVIDIA Cloud Partner (NCP)",
+          value: "ncp",
+          hint: "dedicated capacity, SLA-backed",
+        },
+        {
+          label: "Self-hosted NIM",
+          value: "nim-local",
+          hint: "your own NIM container deployment",
+        },
+        {
+          label: "Local vLLM",
+          value: "vllm",
+          hint: "local development",
+        },
+        {
+          label: "Local Ollama",
+          value: "ollama",
+          hint: ollama.installed ? "installed locally" : "localhost:11434",
+        },
+      ])) as EndpointType;
+    }
   }
 
-  // Step 2b: Endpoint URL resolution
+  // Step 2: Endpoint URL resolution
   let endpointUrl: string;
   let ncpPartner: string | null = null;
 
@@ -191,7 +222,8 @@ export async function cliOnboard(opts: OnboardOptions): Promise<void> {
     case "ncp":
       ncpPartner = opts.ncpPartner ?? (await promptInput("NCP partner name"));
       endpointUrl =
-        opts.endpointUrl ?? (await promptInput("NCP endpoint URL (e.g., https://partner.api.nvidia.com/v1)"));
+        opts.endpointUrl ??
+        (await promptInput("NCP endpoint URL (e.g., https://partner.api.nvidia.com/v1)"));
       break;
     case "nim-local":
       endpointUrl =
@@ -200,6 +232,9 @@ export async function cliOnboard(opts: OnboardOptions): Promise<void> {
       break;
     case "vllm":
       endpointUrl = "http://localhost:8000/v1";
+      break;
+    case "ollama":
+      endpointUrl = opts.endpointUrl ?? "http://localhost:11434/v1";
       break;
     case "custom":
       endpointUrl = opts.endpointUrl ?? (await promptInput("Custom endpoint URL"));
@@ -212,13 +247,42 @@ export async function cliOnboard(opts: OnboardOptions): Promise<void> {
   }
 
   const credentialEnv = resolveCredentialEnv(endpointType);
+  const requiresApiKey = endpointRequiresApiKey(endpointType);
 
-  // Step 3: Validate API Key
-  // For local endpoints (vllm, nim-local), validation is best-effort since the
+  // Step 3: Credential
+  let apiKey = defaultCredentialForEndpoint(endpointType);
+  if (requiresApiKey) {
+    if (opts.apiKey) {
+      apiKey = opts.apiKey;
+    } else {
+      const envKey = process.env.NVIDIA_API_KEY;
+      if (envKey) {
+        logger.info(`Detected NVIDIA_API_KEY in environment (${maskApiKey(envKey)})`);
+        const useEnv = nonInteractive ? true : await promptConfirm("Use this key?");
+        apiKey = useEnv ? envKey : await promptInput("Enter your NVIDIA API key");
+      } else {
+        logger.info("Get an API key from: https://build.nvidia.com/settings/api-keys");
+        apiKey = await promptInput("Enter your NVIDIA API key");
+      }
+    }
+  } else {
+    logger.info(
+      `No API key required for ${endpointType}. Using local credential value '${apiKey}'.`,
+    );
+  }
+
+  if (!apiKey) {
+    logger.error("No API key provided. Aborting.");
+    return;
+  }
+
+  // Step 4: Validate API Key
+  // For local endpoints (vllm, ollama, nim-local), validation is best-effort since the
   // service may not be running yet during onboarding.
-  const isLocalEndpoint = endpointType === "vllm" || endpointType === "nim-local";
+  const isLocalEndpoint =
+    endpointType === "vllm" || endpointType === "ollama" || endpointType === "nim-local";
   logger.info("");
-  logger.info(`Validating API key against ${endpointUrl}...`);
+  logger.info(`Validating ${requiresApiKey ? "credential" : "endpoint"} against ${endpointUrl}...`);
   const validation = await validateApiKey(apiKey, endpointUrl);
 
   if (!validation.valid) {
@@ -232,10 +296,12 @@ export async function cliOnboard(opts: OnboardOptions): Promise<void> {
       return;
     }
   } else {
-    logger.info(`API key valid. ${String(validation.models.length)} model(s) available.`);
+    logger.info(
+      `${requiresApiKey ? "Credential" : "Endpoint"} valid. ${String(validation.models.length)} model(s) available.`,
+    );
   }
 
-  // Step 4: Model Selection
+  // Step 5: Model Selection
   let model: string;
   if (opts.model) {
     model = opts.model;
@@ -250,11 +316,11 @@ export async function cliOnboard(opts: OnboardOptions): Promise<void> {
     model = await promptSelect("Select your primary model:", modelOptions);
   }
 
-  // Step 5: Resolve profile
+  // Step 6: Resolve profile
   const profile = resolveProfile(endpointType);
   const providerName = resolveProviderName(endpointType);
 
-  // Step 6: Confirmation
+  // Step 7: Confirmation
   logger.info("");
   logger.info("Configuration summary:");
   logger.info(`  Endpoint:    ${endpointType} (${endpointUrl})`);
@@ -262,7 +328,9 @@ export async function cliOnboard(opts: OnboardOptions): Promise<void> {
     logger.info(`  NCP Partner: ${ncpPartner}`);
   }
   logger.info(`  Model:       ${model}`);
-  logger.info(`  API Key:     ${maskApiKey(apiKey)}`);
+  logger.info(
+    `  API Key:     ${requiresApiKey ? maskApiKey(apiKey) : "not required (local provider)"}`,
+  );
   logger.info(`  Credential:  $${credentialEnv}`);
   logger.info(`  Profile:     ${profile}`);
   logger.info(`  Provider:    ${providerName}`);
@@ -276,7 +344,7 @@ export async function cliOnboard(opts: OnboardOptions): Promise<void> {
     }
   }
 
-  // Step 7: Apply
+  // Step 8: Apply
   logger.info("");
   logger.info("Applying configuration...");
 
@@ -300,7 +368,8 @@ export async function cliOnboard(opts: OnboardOptions): Promise<void> {
       logger.info(`Created provider: ${providerName}`);
     }
   } catch (err) {
-    const stderr = err instanceof Error && "stderr" in err ? String((err as { stderr: unknown }).stderr) : "";
+    const stderr =
+      err instanceof Error && "stderr" in err ? String((err as { stderr: unknown }).stderr) : "";
     if (stderr.includes("AlreadyExists") || stderr.includes("already exists")) {
       logger.info(`Provider '${providerName}' already exists, reusing.`);
     } else {
@@ -314,7 +383,8 @@ export async function cliOnboard(opts: OnboardOptions): Promise<void> {
     execOpenShell(["inference", "set", "--provider", providerName, "--model", model]);
     logger.info(`Inference route set: ${providerName} -> ${model}`);
   } catch (err) {
-    const stderr = err instanceof Error && "stderr" in err ? String((err as { stderr: unknown }).stderr) : "";
+    const stderr =
+      err instanceof Error && "stderr" in err ? String((err as { stderr: unknown }).stderr) : "";
     logger.error(`Failed to set inference route: ${stderr || String(err)}`);
     return;
   }
@@ -330,7 +400,7 @@ export async function cliOnboard(opts: OnboardOptions): Promise<void> {
     onboardedAt: new Date().toISOString(),
   });
 
-  // Step 8: Success
+  // Step 9: Success
   logger.info("");
   logger.info("Onboarding complete!");
   logger.info("");
