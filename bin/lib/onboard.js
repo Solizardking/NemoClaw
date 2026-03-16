@@ -104,13 +104,11 @@ async function startGateway(gpu) {
     require("child_process").spawnSync("sleep", ["2"]);
   }
 
-  // CoreDNS fix — always run on macOS (Colima and Docker Desktop both need it)
-  if (process.platform === "darwin") {
-    console.log("  Patching CoreDNS for macOS Docker...");
-    run(`bash "${path.join(SCRIPTS, "fix-coredns.sh")}" 2>&1 || true`, { ignoreError: true });
-    // Give DNS a moment to propagate
-    require("child_process").spawnSync("sleep", ["5"]);
-  }
+  // CoreDNS fix — always run. k3s-inside-Docker has broken DNS on all platforms.
+  console.log("  Patching CoreDNS...");
+  run(`bash "${path.join(SCRIPTS, "fix-coredns.sh")}" 2>&1 || true`, { ignoreError: true });
+  // Give DNS a moment to propagate
+  require("child_process").spawnSync("sleep", ["5"]);
 }
 
 // ── Step 3: Sandbox ──────────────────────────────────────────────
