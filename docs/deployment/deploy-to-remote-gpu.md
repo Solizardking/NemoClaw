@@ -57,10 +57,10 @@ $ nemoclaw deploy <instance-name>
 
 ## Monitor the Remote Sandbox
 
-Open the OpenShell TUI on the remote instance to monitor activity and approve network requests:
+SSH to the instance and run the OpenShell TUI to monitor activity and approve network requests:
 
 ```console
-$ nemoclaw term <instance-name>
+$ ssh <instance-name> 'cd /home/ubuntu/nemoclaw && set -a && . .env && set +a && openshell term'
 ```
 
 ## Verify Inference

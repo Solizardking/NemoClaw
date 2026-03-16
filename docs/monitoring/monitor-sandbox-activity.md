@@ -81,11 +81,7 @@ Open the OpenShell terminal UI for a live view of sandbox network activity and e
 $ openshell term
 ```
 
-For a remote sandbox:
-
-```console
-$ nemoclaw term <instance-name>
-```
+For a remote sandbox, SSH to the instance and run `openshell term` there.
 
 The TUI shows the following information:
 
