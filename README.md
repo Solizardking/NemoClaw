@@ -18,6 +18,8 @@ NemoClaw is the [OpenClaw](https://openclaw.ai) plugin for [NVIDIA OpenShell](ht
 
 ## Quick Start
 
+<!-- start-quickstart-guide -->
+
 Follow these steps to get started with NemoClaw and your first sandboxed OpenClaw agent.
 
 ### Prerequisites
@@ -89,6 +91,8 @@ Use the OpenClaw CLI to send a single message and print the response:
 ```console
 sandbox@my-assistant:~$ openclaw agent --agent main --local -m "hello" --session-id test
 ```
+
+<!-- end-quickstart-guide -->
 
 ---
 
