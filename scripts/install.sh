@@ -125,8 +125,7 @@ install_docker() {
         return 0
       fi
     fi
-    warn "Docker is installed but not running. Please start Docker and re-run."
-    return 1
+    fail "Docker is installed but not running. Please start Docker and re-run."
   fi
 
   info "Installing Docker..."
