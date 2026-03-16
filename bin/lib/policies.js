@@ -131,10 +131,14 @@ function applyPreset(sandboxName, presetName) {
     merged = result.join("\n");
   } else if (currentPolicy) {
     // No network_policies section yet — append one
+    // Ensure version field exists
+    if (!currentPolicy.includes("version:")) {
+      currentPolicy = "version: 1\n" + currentPolicy;
+    }
     merged = currentPolicy + "\n\nnetwork_policies:\n" + presetEntries;
   } else {
-    // No current policy at all — shouldn't happen, but handle it
-    merged = "network_policies:\n" + presetEntries;
+    // No current policy at all
+    merged = "version: 1\n\nnetwork_policies:\n" + presetEntries;
   }
 
   // Write temp file and apply
