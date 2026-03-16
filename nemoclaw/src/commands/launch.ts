@@ -7,7 +7,7 @@ import { resolveBlueprint } from "../blueprint/resolve.js";
 import { verifyBlueprintDigest, checkCompatibility } from "../blueprint/verify.js";
 import { execBlueprint } from "../blueprint/exec.js";
 import { loadState, saveState } from "../blueprint/state.js";
-import { detectHostOpenClaw } from "./migrate.js";
+import { cliMigrate, detectHostOpenClaw } from "./migrate.js";
 
 export interface LaunchOptions {
   force: boolean;
@@ -42,12 +42,14 @@ export async function cliLaunch(opts: LaunchOptions): Promise<void> {
   }
 
   if (hostState.exists && !force) {
-    logger.info(
-      "Existing OpenClaw installation detected. Consider using 'openclaw nemoclaw migrate' instead.",
-    );
-    logger.info(
-      "Use --force to proceed with a fresh launch (existing config will not be migrated).",
-    );
+    logger.info("Existing OpenClaw installation detected. Running migrate automatically.");
+    await cliMigrate({
+      dryRun: false,
+      profile,
+      skipBackup: false,
+      logger,
+      pluginConfig,
+    });
     return;
   }
 

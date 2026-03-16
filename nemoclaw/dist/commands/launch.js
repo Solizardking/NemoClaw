@@ -29,8 +29,14 @@ async function cliLaunch(opts) {
         return;
     }
     if (hostState.exists && !force) {
-        logger.info("Existing OpenClaw installation detected. Consider using 'openclaw nemoclaw migrate' instead.");
-        logger.info("Use --force to proceed with a fresh launch (existing config will not be migrated).");
+        logger.info("Existing OpenClaw installation detected. Running migrate automatically.");
+        await (0, migrate_js_1.cliMigrate)({
+            dryRun: false,
+            profile,
+            skipBackup: false,
+            logger,
+            pluginConfig,
+        });
         return;
     }
     // Resolve and verify blueprint
