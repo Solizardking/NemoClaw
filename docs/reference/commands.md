@@ -43,6 +43,15 @@ $ openclaw nemoclaw launch [--force] [--profile <profile>]
 `--profile <profile>`
 : Blueprint profile to use. Default: `default`.
 
+### `nemoclaw <name> connect`
+
+Open an interactive shell inside the OpenClaw sandbox.
+Use this after launch to connect and chat with the agent through the TUI or CLI.
+
+```console
+$ nemoclaw my-assistant connect
+```
+
 ### `openclaw nemoclaw status`
 
 Display sandbox health, blueprint run state, and inference configuration.
