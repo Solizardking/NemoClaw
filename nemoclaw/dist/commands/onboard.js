@@ -9,6 +9,7 @@ const prompt_js_1 = require("../onboard/prompt.js");
 const validate_js_1 = require("../onboard/validate.js");
 const ENDPOINT_TYPES = ["build", "ncp", "nim-local", "vllm", "ollama", "custom"];
 const BUILD_ENDPOINT_URL = "https://integrate.api.nvidia.com/v1";
+const HOST_GATEWAY_URL = "http://host.openshell.internal";
 const DEFAULT_MODELS = [
     { id: "nvidia/nemotron-3-super-120b-a12b", label: "Nemotron 3 Super 120B" },
     { id: "nvidia/llama-3.1-nemotron-ultra-253b-v1", label: "Nemotron Ultra 253B" },
@@ -71,7 +72,10 @@ function isNonInteractive(opts) {
     return true;
 }
 function endpointRequiresApiKey(endpointType) {
-    return endpointType === "build" || endpointType === "ncp" || endpointType === "nim-local" || endpointType === "custom";
+    return (endpointType === "build" ||
+        endpointType === "ncp" ||
+        endpointType === "nim-local" ||
+        endpointType === "custom");
 }
 function defaultCredentialForEndpoint(endpointType) {
     switch (endpointType) {
@@ -188,7 +192,8 @@ async function cliOnboard(opts) {
         case "ncp":
             ncpPartner = opts.ncpPartner ?? (await (0, prompt_js_1.promptInput)("NCP partner name"));
             endpointUrl =
-                opts.endpointUrl ?? (await (0, prompt_js_1.promptInput)("NCP endpoint URL (e.g., https://partner.api.nvidia.com/v1)"));
+                opts.endpointUrl ??
+                    (await (0, prompt_js_1.promptInput)("NCP endpoint URL (e.g., https://partner.api.nvidia.com/v1)"));
             break;
         case "nim-local":
             endpointUrl =
@@ -196,10 +201,10 @@ async function cliOnboard(opts) {
                     (await (0, prompt_js_1.promptInput)("NIM endpoint URL", "http://nim-service.local:8000/v1"));
             break;
         case "vllm":
-            endpointUrl = "http://localhost:8000/v1";
+            endpointUrl = `${HOST_GATEWAY_URL}:8000/v1`;
             break;
         case "ollama":
-            endpointUrl = opts.endpointUrl ?? "http://localhost:11434/v1";
+            endpointUrl = opts.endpointUrl ?? `${HOST_GATEWAY_URL}:11434/v1`;
             break;
         case "custom":
             endpointUrl = opts.endpointUrl ?? (await (0, prompt_js_1.promptInput)("Custom endpoint URL"));
@@ -298,7 +303,7 @@ async function cliOnboard(opts) {
     logger.info("Applying configuration...");
     // 7a: Create/update provider
     try {
-        const result = execOpenShell([
+        execOpenShell([
             "provider",
             "create",
             "--name",
@@ -310,17 +315,30 @@ async function cliOnboard(opts) {
             "--config",
             `OPENAI_BASE_URL=${endpointUrl}`,
         ]);
-        if (result.includes("AlreadyExists")) {
-            logger.info(`Provider '${providerName}' already exists, reusing.`);
-        }
-        else {
-            logger.info(`Created provider: ${providerName}`);
-        }
+        logger.info(`Created provider: ${providerName}`);
     }
     catch (err) {
         const stderr = err instanceof Error && "stderr" in err ? String(err.stderr) : "";
         if (stderr.includes("AlreadyExists") || stderr.includes("already exists")) {
-            logger.info(`Provider '${providerName}' already exists, reusing.`);
+            try {
+                execOpenShell([
+                    "provider",
+                    "update",
+                    providerName,
+                    "--credential",
+                    `${credentialEnv}=${apiKey}`,
+                    "--config",
+                    `OPENAI_BASE_URL=${endpointUrl}`,
+                ]);
+                logger.info(`Updated provider: ${providerName}`);
+            }
+            catch (updateErr) {
+                const updateStderr = updateErr instanceof Error && "stderr" in updateErr
+                    ? String(updateErr.stderr)
+                    : "";
+                logger.error(`Failed to update provider: ${updateStderr || String(updateErr)}`);
+                return;
+            }
         }
         else {
             logger.error(`Failed to create provider: ${stderr || String(err)}`);

@@ -31,7 +31,7 @@ Inference requests are routed transparently through the OpenShell gateway.
 |---|---|---|---|---|
 | `default` | NVIDIA cloud | `nvidia/nemotron-3-super-120b-a12b` | `integrate.api.nvidia.com` | Production. Requires an NVIDIA API key. |
 | `nim-local` | Local NIM service | `nvidia/nemotron-3-super-120b-a12b` | `nim-service.local:8000` | On-premises. NIM deployed as a local pod. |
-| `vllm` | vLLM | `nvidia/nemotron-3-nano-30b-a3b` | `localhost:8000` | Local development. vLLM on the host. |
+| `vllm` | vLLM | `nvidia/nemotron-3-nano-30b-a3b` | `host.openshell.internal:8000` | Local development. vLLM on the host. |
 
 ## Available Models
 
@@ -81,12 +81,15 @@ $ openshell inference set --provider nim-local --model nvidia/nemotron-3-super-1
 
 ## `vllm` -- Local vLLM
 
-Routes inference to a vLLM server running on `localhost:8000`.
+Routes inference to a vLLM server running on the host and exposed to the OpenShell gateway.
 
 - **Provider type:** `openai`, which uses the OpenAI-compatible API
-- **Endpoint:** `http://localhost:8000/v1`
+- **Endpoint:** `http://host.openshell.internal:8000/v1`
 - **Model:** `nvidia/nemotron-3-nano-30b-a3b`
 - **Credential:** `OPENAI_API_KEY` environment variable. Defaults to `dummy` for local use.
+
+Start the vLLM server with a non-loopback bind address such as `0.0.0.0`.
+On Linux hosts with UFW enabled, allow the Docker bridge subnet to reach port `8000`.
 
 ```console
 $ openshell inference set --provider vllm-local --model nvidia/nemotron-3-nano-30b-a3b

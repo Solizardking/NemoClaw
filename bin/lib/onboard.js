@@ -10,6 +10,7 @@ const { prompt, ensureApiKey, getCredential } = require("./credentials");
 const registry = require("./registry");
 const nim = require("./nim");
 const policies = require("./policies");
+const HOST_GATEWAY_URL = "http://host.openshell.internal";
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -108,8 +109,11 @@ async function startGateway(gpu) {
   }
 
   // CoreDNS fix — always run. k3s-inside-Docker has broken DNS on all platforms.
-  console.log("  Patching CoreDNS...");
-  run(`bash "${path.join(SCRIPTS, "fix-coredns.sh")}" 2>&1 || true`, { ignoreError: true });
+  const colimaSocket = path.join(process.env.HOME || "/tmp", ".colima/default/docker.sock");
+  if (fs.existsSync(colimaSocket)) {
+    console.log("  Patching CoreDNS for Colima...");
+    run(`bash "${path.join(SCRIPTS, "fix-coredns.sh")}" 2>&1 || true`, { ignoreError: true });
+  }
   // Give DNS a moment to propagate
   require("child_process").spawnSync("sleep", ["5"]);
 }
@@ -276,7 +280,7 @@ async function setupNim(sandboxName, gpu) {
     } else if (selected.key === "ollama") {
       if (!ollamaRunning) {
         console.log("  Starting Ollama...");
-        run("ollama serve > /dev/null 2>&1 &", { ignoreError: true });
+        run("OLLAMA_HOST=0.0.0.0:11434 ollama serve > /dev/null 2>&1 &", { ignoreError: true });
         require("child_process").spawnSync("sleep", ["2"]);
       }
       console.log("  ✓ Using Ollama on localhost:11434");
@@ -286,7 +290,7 @@ async function setupNim(sandboxName, gpu) {
       console.log("  Installing Ollama via Homebrew...");
       run("brew install ollama", { ignoreError: true });
       console.log("  Starting Ollama...");
-      run("ollama serve > /dev/null 2>&1 &", { ignoreError: true });
+      run("OLLAMA_HOST=0.0.0.0:11434 ollama serve > /dev/null 2>&1 &", { ignoreError: true });
       require("child_process").spawnSync("sleep", ["2"]);
       console.log("  ✓ Using Ollama on localhost:11434");
       provider = "ollama-local";
@@ -331,7 +335,9 @@ async function setupInference(sandboxName, model, provider) {
     run(
       `openshell provider create --name vllm-local --type openai ` +
       `--credential "OPENAI_API_KEY=dummy" ` +
-      `--config "OPENAI_BASE_URL=http://host.docker.internal:8000/v1" 2>&1 || true`,
+      `--config "OPENAI_BASE_URL=${HOST_GATEWAY_URL}:8000/v1" 2>&1 || ` +
+      `openshell provider update vllm-local --credential "OPENAI_API_KEY=dummy" ` +
+      `--config "OPENAI_BASE_URL=${HOST_GATEWAY_URL}:8000/v1" 2>&1 || true`,
       { ignoreError: true }
     );
     run(
@@ -342,7 +348,9 @@ async function setupInference(sandboxName, model, provider) {
     run(
       `openshell provider create --name ollama-local --type openai ` +
       `--credential "OPENAI_API_KEY=ollama" ` +
-      `--config "OPENAI_BASE_URL=http://host.docker.internal:11434/v1" 2>&1 || true`,
+      `--config "OPENAI_BASE_URL=${HOST_GATEWAY_URL}:11434/v1" 2>&1 || ` +
+      `openshell provider update ollama-local --credential "OPENAI_API_KEY=ollama" ` +
+      `--config "OPENAI_BASE_URL=${HOST_GATEWAY_URL}:11434/v1" 2>&1 || true`,
       { ignoreError: true }
     );
     run(
