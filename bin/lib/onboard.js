@@ -389,6 +389,9 @@ async function onboard() {
   console.log("  NemoClaw Onboarding");
   console.log("  ===================");
 
+  // Prompt for API key upfront — needed for cloud inference (most common path)
+  await ensureApiKey();
+
   const gpu = await preflight();
   await startGateway(gpu);
   const sandboxName = await createSandbox(gpu);
