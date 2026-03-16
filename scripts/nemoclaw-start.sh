@@ -42,6 +42,7 @@ if chat_origin not in origins:
 
 cfg.setdefault('gateway', {})['controlUi'] = {
     'allowInsecureAuth': True,
+    'dangerouslyDisableDeviceAuth': True,
     'allowedOrigins': origins,
 }
 cfg['gateway']['trustedProxies'] = ['127.0.0.1', '::1']
