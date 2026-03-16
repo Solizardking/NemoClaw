@@ -115,7 +115,7 @@ $ nemoclaw list
 ### `nemoclaw deploy`
 
 Deploy NemoClaw to a remote GPU instance through [Brev](https://brev.nvidia.com).
-The deploy script installs Docker, NVIDIA Container Toolkit if a GPU is present, and OpenShell on the VM, then runs the host setup script and connects to the sandbox.
+The deploy script installs Docker, NVIDIA Container Toolkit if a GPU is present, and OpenShell on the VM, then runs the nemoclaw setup and connects to the sandbox.
 
 ```console
 $ nemoclaw deploy <instance-name>
@@ -207,21 +207,6 @@ Show the sandbox list and the status of auxiliary services.
 
 ```console
 $ nemoclaw status
-```
-
-## Legacy Commands
-
-The following commands are deprecated or for specific platforms.
-Prefer `nemoclaw onboard` for new installs.
-
-### `nemoclaw setup` (deprecated)
-
-Legacy host-side setup.
-Runs the same steps as `nemoclaw onboard` but without the interactive wizard.
-Use `nemoclaw onboard` instead.
-
-```console
-$ nemoclaw setup
 ```
 
 ### `nemoclaw setup-spark`
