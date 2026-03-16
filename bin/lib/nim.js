@@ -24,7 +24,7 @@ function listModels() {
 }
 
 function detectGpu() {
-  // Try NVIDIA first
+  // Try NVIDIA first — query VRAM
   try {
     const output = runCapture(
       "nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits",
@@ -43,6 +43,30 @@ function detectGpu() {
           nimCapable: true,
         };
       }
+    }
+  } catch {}
+
+  // Fallback: DGX Spark (GB10) — VRAM not queryable due to unified memory architecture
+  try {
+    const nameOutput = runCapture(
+      "nvidia-smi --query-gpu=name --format=csv,noheader,nounits",
+      { ignoreError: true }
+    );
+    if (nameOutput && nameOutput.includes("GB10")) {
+      // GB10 has 128GB unified memory shared with Grace CPU — use system RAM
+      let totalMemoryMB = 0;
+      try {
+        const memLine = runCapture("free -m | awk '/Mem:/ {print $2}'", { ignoreError: true });
+        if (memLine) totalMemoryMB = parseInt(memLine.trim(), 10) || 0;
+      } catch {}
+      return {
+        type: "nvidia",
+        count: 1,
+        totalMemoryMB,
+        perGpuMB: totalMemoryMB,
+        nimCapable: true,
+        spark: true,
+      };
     }
   } catch {}
 
