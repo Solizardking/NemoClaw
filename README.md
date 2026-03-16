@@ -2,10 +2,17 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue)](LICENSE)
 [![Security Policy](https://img.shields.io/badge/Security-Report%20a%20Vulnerability-red)](SECURITY.md)
+[![Project Status](https://img.shields.io/badge/status-alpha-orange)](docs/about/release-notes.md)
 
 NemoClaw is the [OpenClaw](https://openclaw.ai) plugin for [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell). It moves OpenClaw into a sandboxed environment where every network request, file access, and inference call is governed by declarative policy with NVIDIA inference routing through Nemotron models through [build.nvidia.com](https://build.nvidia.com), a local NIM service, or vLLM.
 
-> **Alpha software.** NemoClaw is early-stage. Expect rough edges. We are building toward production-ready sandbox orchestration, but the starting point is getting your own environment up and running.
+> **Alpha software**
+> 
+> NemoClaw is early-stage. Expect rough edges. We are building toward production-ready sandbox orchestration, but the starting point is getting your own environment up and running.
+> Interfaces, APIs, and behavior may change without notice as we iterate on the design.
+> The project is shared to gather feedback and enable early experimentation, but it
+> should not yet be considered production-ready.
+> We welcome issues and discussion from the community while the project evolves.
 
 ## Quick Start
 
@@ -20,18 +27,14 @@ Check the prerequisites before you start.
 
 #### Hardware
 
-NVIDIA GPU is required for local inference. The installer detects available VRAM and pulls the appropriate model:
+The installer detects available VRAM and pulls the appropriate model:
 
 | Available VRAM                   | Model pulled             |
 |----------------------------------|--------------------------|
 | >= 120 GB (such as 2 H100 80 GB) | `nemotron-3-super:120b`  |
 | < 120 GB                         | `nemotron-3-nano:30b`    |
 
-On macOS, the installer uses unified system memory in place of VRAM.
-Without a GPU, the installer skips Ollama and local inference entirely.
-
 The installer handles all other dependencies, including Node.js, Docker, the OpenShell CLI, and Ollama.
-On macOS, Docker is installed via Colima and Homebrew. On Linux, the installer uses `docker.io` from apt.
 
 ---
 
@@ -111,7 +114,7 @@ NemoClaw combines a lightweight TypeScript plugin with a versioned Python bluepr
 | **Plugin**       | TypeScript CLI commands for launch, migrate, connect, status, logs, and eject.            |
 | **Blueprint**    | Versioned Python artifact that orchestrates sandbox creation, policy, and inference setup. |
 | **Sandbox**      | Isolated OpenShell container running OpenClaw with policy-enforced egress and filesystem.  |
-| **Inference**    | NVIDIA-routed model calls — cloud, local NIM, or vLLM — transparent to the agent.         |
+| **Inference**    | NVIDIA-routed model calls (cloud, local NIM, or vLLM), transparent to the agent.          |
 
 The blueprint lifecycle follows five stages: resolve the artifact, verify its digest, plan the resources, apply through the OpenShell CLI, and report status or rollback from a snapshot.
 
@@ -164,13 +167,13 @@ See the full [CLI reference](docs/reference/commands.md) for all commands, flags
 
 ## Learn More
 
-- [Quickstart](docs/get-started/quickstart.md) — detailed install and first sandbox walkthrough
-- [Overview](docs/about/overview.md) — what NemoClaw does and how it fits together
-- [How It Works](docs/about/how-it-works.md) — plugin, blueprint, and sandbox lifecycle
-- [Architecture](docs/reference/architecture.md) — plugin structure, blueprint lifecycle, and sandbox environment
-- [Inference Profiles](docs/reference/inference-profiles.md) — NVIDIA cloud, NIM, and vLLM configuration
-- [Network Policies](docs/reference/network-policies.md) — egress control and policy customization
-- [CLI Commands](docs/reference/commands.md) — full command reference
+- [Quickstart](docs/get-started/quickstart.md): detailed install and first sandbox walkthrough
+- [Overview](docs/about/overview.md): what NemoClaw does and how it fits together
+- [How It Works](docs/about/how-it-works.md): plugin, blueprint, and sandbox lifecycle
+- [Architecture](docs/reference/architecture.md): plugin structure, blueprint lifecycle, and sandbox environment
+- [Inference Profiles](docs/reference/inference-profiles.md): NVIDIA cloud, NIM, and vLLM configuration
+- [Network Policies](docs/reference/network-policies.md): egress control and policy customization
+- [CLI Commands](docs/reference/commands.md): full command reference
 
 ## License
 
