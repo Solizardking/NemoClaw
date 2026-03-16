@@ -206,6 +206,57 @@ remove_nemoclaw_state() {
   remove_path "$NEMOCLAW_CONFIG_DIR"
 }
 
+remove_related_docker_containers() {
+  if ! command -v docker > /dev/null 2>&1; then
+    warn "docker not found; skipping Docker container cleanup."
+    return 0
+  fi
+
+  if ! docker info > /dev/null 2>&1; then
+    warn "docker is not running; skipping Docker container cleanup."
+    return 0
+  fi
+
+  local -a container_ids=()
+  local line
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    container_ids+=("$line")
+  done < <(
+    docker ps -a --format '{{.ID}} {{.Image}} {{.Names}}' 2>/dev/null \
+      | awk '
+          BEGIN { IGNORECASE=1 }
+          {
+            ref=$0
+            if (ref ~ /openshell-cluster/ || ref ~ /openshell/ || ref ~ /openclaw/ || ref ~ /nemoclaw/) {
+              print $1
+            }
+          }
+        ' \
+      | awk '!seen[$0]++'
+  )
+
+  if [ "${#container_ids[@]}" -eq 0 ]; then
+    info "No NemoClaw/OpenShell Docker containers found"
+    return 0
+  fi
+
+  local removed_any=false
+  local container_id
+  for container_id in "${container_ids[@]}"; do
+    if docker rm -f "$container_id" > /dev/null 2>&1; then
+      info "Removed Docker container $container_id"
+      removed_any=true
+    else
+      warn "Failed to remove Docker container $container_id"
+    fi
+  done
+
+  if [ "$removed_any" = false ]; then
+    warn "No related Docker containers were removed"
+  fi
+}
+
 remove_related_docker_images() {
   if ! command -v docker > /dev/null 2>&1; then
     warn "docker not found; skipping Docker image cleanup."
@@ -326,6 +377,9 @@ main() {
 
   info "Removing NemoClaw state..."
   remove_nemoclaw_state
+
+  info "Removing related Docker containers..."
+  remove_related_docker_containers
 
   info "Removing related Docker images..."
   remove_related_docker_images
