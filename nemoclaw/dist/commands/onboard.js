@@ -7,7 +7,7 @@ const node_child_process_1 = require("node:child_process");
 const config_js_1 = require("../onboard/config.js");
 const prompt_js_1 = require("../onboard/prompt.js");
 const validate_js_1 = require("../onboard/validate.js");
-const ENDPOINT_TYPES = ["build", "ncp", "nim-local", "vllm", "custom"];
+const ENDPOINT_TYPES = ["build", "ncp", "nim-local", "vllm", "ollama", "custom"];
 const BUILD_ENDPOINT_URL = "https://integrate.api.nvidia.com/v1";
 const DEFAULT_MODELS = [
     { id: "nvidia/nemotron-3-super-120b-a12b", label: "Nemotron 3 Super 120B" },
@@ -26,6 +26,8 @@ function resolveProfile(endpointType) {
             return "nim-local";
         case "vllm":
             return "vllm";
+        case "ollama":
+            return "ollama";
     }
 }
 function resolveProviderName(endpointType) {
@@ -39,6 +41,8 @@ function resolveProviderName(endpointType) {
             return "nim-local";
         case "vllm":
             return "vllm-local";
+        case "ollama":
+            return "ollama-local";
     }
 }
 function resolveCredentialEnv(endpointType) {
@@ -50,18 +54,48 @@ function resolveCredentialEnv(endpointType) {
         case "nim-local":
             return "NIM_API_KEY";
         case "vllm":
+        case "ollama":
             return "OPENAI_API_KEY";
     }
 }
 function isNonInteractive(opts) {
-    if (!opts.apiKey || !opts.endpoint || !opts.model)
+    if (!opts.endpoint || !opts.model)
         return false;
     const ep = opts.endpoint;
+    if (endpointRequiresApiKey(ep) && !opts.apiKey)
+        return false;
     if ((ep === "ncp" || ep === "nim-local" || ep === "custom") && !opts.endpointUrl)
         return false;
     if (ep === "ncp" && !opts.ncpPartner)
         return false;
     return true;
+}
+function endpointRequiresApiKey(endpointType) {
+    return endpointType === "build" || endpointType === "ncp" || endpointType === "nim-local" || endpointType === "custom";
+}
+function defaultCredentialForEndpoint(endpointType) {
+    switch (endpointType) {
+        case "vllm":
+            return "dummy";
+        case "ollama":
+            return "ollama";
+        default:
+            return "";
+    }
+}
+function detectOllama() {
+    const installed = testCommand("command -v ollama >/dev/null 2>&1");
+    const running = testCommand("curl -sf http://localhost:11434/api/tags >/dev/null 2>&1");
+    return { installed, running };
+}
+function testCommand(command) {
+    try {
+        (0, node_child_process_1.execSync)(command, { encoding: "utf-8", stdio: "ignore", shell: "/bin/bash" });
+        return true;
+    }
+    catch {
+        return false;
+    }
 }
 function showConfig(config, logger) {
     logger.info(`  Endpoint:    ${config.endpointType} (${config.endpointUrl})`);
@@ -99,28 +133,7 @@ async function cliOnboard(opts) {
             }
         }
     }
-    // Step 1: API Key
-    let apiKey;
-    if (opts.apiKey) {
-        apiKey = opts.apiKey;
-    }
-    else {
-        const envKey = process.env.NVIDIA_API_KEY;
-        if (envKey) {
-            logger.info(`Detected NVIDIA_API_KEY in environment (${(0, validate_js_1.maskApiKey)(envKey)})`);
-            const useEnv = await (0, prompt_js_1.promptConfirm)("Use this key?");
-            apiKey = useEnv ? envKey : await (0, prompt_js_1.promptInput)("Enter your NVIDIA API key");
-        }
-        else {
-            logger.info("Get an API key from: https://build.nvidia.com/settings/api-keys");
-            apiKey = await (0, prompt_js_1.promptInput)("Enter your NVIDIA API key");
-        }
-    }
-    if (!apiKey) {
-        logger.error("No API key provided. Aborting.");
-        return;
-    }
-    // Step 2: Endpoint Selection
+    // Step 1: Endpoint Selection
     let endpointType;
     if (opts.endpoint) {
         if (!ENDPOINT_TYPES.includes(opts.endpoint)) {
@@ -130,30 +143,42 @@ async function cliOnboard(opts) {
         endpointType = opts.endpoint;
     }
     else {
-        endpointType = (await (0, prompt_js_1.promptSelect)("Select your inference endpoint:", [
-            {
-                label: "NVIDIA Build (build.nvidia.com)",
-                value: "build",
-                hint: "recommended — zero infra, free credits",
-            },
-            {
-                label: "NVIDIA Cloud Partner (NCP)",
-                value: "ncp",
-                hint: "dedicated capacity, SLA-backed",
-            },
-            {
-                label: "Self-hosted NIM",
-                value: "nim-local",
-                hint: "your own NIM container deployment",
-            },
-            {
-                label: "Local vLLM",
-                value: "vllm",
-                hint: "local development",
-            },
-        ]));
+        const ollama = detectOllama();
+        if (ollama.running) {
+            logger.info("Detected Ollama on localhost:11434. Using it for onboarding.");
+            endpointType = "ollama";
+        }
+        else {
+            endpointType = (await (0, prompt_js_1.promptSelect)("Select your inference endpoint:", [
+                {
+                    label: "NVIDIA Build (build.nvidia.com)",
+                    value: "build",
+                    hint: "recommended — zero infra, free credits",
+                },
+                {
+                    label: "NVIDIA Cloud Partner (NCP)",
+                    value: "ncp",
+                    hint: "dedicated capacity, SLA-backed",
+                },
+                {
+                    label: "Self-hosted NIM",
+                    value: "nim-local",
+                    hint: "your own NIM container deployment",
+                },
+                {
+                    label: "Local vLLM",
+                    value: "vllm",
+                    hint: "local development",
+                },
+                {
+                    label: "Local Ollama",
+                    value: "ollama",
+                    hint: ollama.installed ? "installed locally" : "localhost:11434",
+                },
+            ]));
+        }
     }
-    // Step 2b: Endpoint URL resolution
+    // Step 2: Endpoint URL resolution
     let endpointUrl;
     let ncpPartner = null;
     switch (endpointType) {
@@ -173,6 +198,9 @@ async function cliOnboard(opts) {
         case "vllm":
             endpointUrl = "http://localhost:8000/v1";
             break;
+        case "ollama":
+            endpointUrl = opts.endpointUrl ?? "http://localhost:11434/v1";
+            break;
         case "custom":
             endpointUrl = opts.endpointUrl ?? (await (0, prompt_js_1.promptInput)("Custom endpoint URL"));
             break;
@@ -182,12 +210,39 @@ async function cliOnboard(opts) {
         return;
     }
     const credentialEnv = resolveCredentialEnv(endpointType);
-    // Step 3: Validate API Key
-    // For local endpoints (vllm, nim-local), validation is best-effort since the
+    const requiresApiKey = endpointRequiresApiKey(endpointType);
+    // Step 3: Credential
+    let apiKey = defaultCredentialForEndpoint(endpointType);
+    if (requiresApiKey) {
+        if (opts.apiKey) {
+            apiKey = opts.apiKey;
+        }
+        else {
+            const envKey = process.env.NVIDIA_API_KEY;
+            if (envKey) {
+                logger.info(`Detected NVIDIA_API_KEY in environment (${(0, validate_js_1.maskApiKey)(envKey)})`);
+                const useEnv = nonInteractive ? true : await (0, prompt_js_1.promptConfirm)("Use this key?");
+                apiKey = useEnv ? envKey : await (0, prompt_js_1.promptInput)("Enter your NVIDIA API key");
+            }
+            else {
+                logger.info("Get an API key from: https://build.nvidia.com/settings/api-keys");
+                apiKey = await (0, prompt_js_1.promptInput)("Enter your NVIDIA API key");
+            }
+        }
+    }
+    else {
+        logger.info(`No API key required for ${endpointType}. Using local credential value '${apiKey}'.`);
+    }
+    if (!apiKey) {
+        logger.error("No API key provided. Aborting.");
+        return;
+    }
+    // Step 4: Validate API Key
+    // For local endpoints (vllm, ollama, nim-local), validation is best-effort since the
     // service may not be running yet during onboarding.
-    const isLocalEndpoint = endpointType === "vllm" || endpointType === "nim-local";
+    const isLocalEndpoint = endpointType === "vllm" || endpointType === "ollama" || endpointType === "nim-local";
     logger.info("");
-    logger.info(`Validating API key against ${endpointUrl}...`);
+    logger.info(`Validating ${requiresApiKey ? "credential" : "endpoint"} against ${endpointUrl}...`);
     const validation = await (0, validate_js_1.validateApiKey)(apiKey, endpointUrl);
     if (!validation.valid) {
         if (isLocalEndpoint) {
@@ -200,9 +255,9 @@ async function cliOnboard(opts) {
         }
     }
     else {
-        logger.info(`API key valid. ${String(validation.models.length)} model(s) available.`);
+        logger.info(`${requiresApiKey ? "Credential" : "Endpoint"} valid. ${String(validation.models.length)} model(s) available.`);
     }
-    // Step 4: Model Selection
+    // Step 5: Model Selection
     let model;
     if (opts.model) {
         model = opts.model;
@@ -215,10 +270,10 @@ async function cliOnboard(opts) {
             : DEFAULT_MODELS.map((m) => ({ label: `${m.label} (${m.id})`, value: m.id }));
         model = await (0, prompt_js_1.promptSelect)("Select your primary model:", modelOptions);
     }
-    // Step 5: Resolve profile
+    // Step 6: Resolve profile
     const profile = resolveProfile(endpointType);
     const providerName = resolveProviderName(endpointType);
-    // Step 6: Confirmation
+    // Step 7: Confirmation
     logger.info("");
     logger.info("Configuration summary:");
     logger.info(`  Endpoint:    ${endpointType} (${endpointUrl})`);
@@ -226,7 +281,7 @@ async function cliOnboard(opts) {
         logger.info(`  NCP Partner: ${ncpPartner}`);
     }
     logger.info(`  Model:       ${model}`);
-    logger.info(`  API Key:     ${(0, validate_js_1.maskApiKey)(apiKey)}`);
+    logger.info(`  API Key:     ${requiresApiKey ? (0, validate_js_1.maskApiKey)(apiKey) : "not required (local provider)"}`);
     logger.info(`  Credential:  $${credentialEnv}`);
     logger.info(`  Profile:     ${profile}`);
     logger.info(`  Provider:    ${providerName}`);
@@ -238,7 +293,7 @@ async function cliOnboard(opts) {
             return;
         }
     }
-    // Step 7: Apply
+    // Step 8: Apply
     logger.info("");
     logger.info("Applying configuration...");
     // 7a: Create/update provider
@@ -292,7 +347,7 @@ async function cliOnboard(opts) {
         credentialEnv,
         onboardedAt: new Date().toISOString(),
     });
-    // Step 8: Success
+    // Step 9: Success
     logger.info("");
     logger.info("Onboarding complete!");
     logger.info("");
