@@ -73,6 +73,12 @@ function showConfig(config, logger) {
     logger.info(`  Profile:     ${config.profile}`);
     logger.info(`  Onboarded:   ${config.onboardedAt}`);
 }
+function execOpenShell(args) {
+    return (0, node_child_process_1.execFileSync)("openshell", args, {
+        encoding: "utf-8",
+        stdio: ["pipe", "pipe", "pipe"],
+    });
+}
 async function cliOnboard(opts) {
     const { logger } = opts;
     const nonInteractive = isNonInteractive(opts);
@@ -237,8 +243,7 @@ async function cliOnboard(opts) {
     logger.info("Applying configuration...");
     // 7a: Create/update provider
     try {
-        const result = (0, node_child_process_1.execSync)([
-            "openshell",
+        const result = execOpenShell([
             "provider",
             "create",
             "--name",
@@ -249,7 +254,7 @@ async function cliOnboard(opts) {
             `${credentialEnv}=${apiKey}`,
             "--config",
             `OPENAI_BASE_URL=${endpointUrl}`,
-        ].join(" "), { encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"] });
+        ]);
         if (result.includes("AlreadyExists")) {
             logger.info(`Provider '${providerName}' already exists, reusing.`);
         }
@@ -269,7 +274,7 @@ async function cliOnboard(opts) {
     }
     // 7b: Set inference route
     try {
-        (0, node_child_process_1.execSync)(["openshell", "inference", "set", "--provider", providerName, "--model", model].join(" "), { encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"] });
+        execOpenShell(["inference", "set", "--provider", providerName, "--model", model]);
         logger.info(`Inference route set: ${providerName} -> ${model}`);
     }
     catch (err) {

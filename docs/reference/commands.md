@@ -30,7 +30,7 @@ Both interfaces are installed when you run `npm install -g nemoclaw`.
 ### `openclaw nemoclaw launch`
 
 Bootstrap OpenClaw inside an OpenShell sandbox.
-If NemoClaw detects an existing host installation, `launch` hands off to `migrate` automatically unless you pass `--force`.
+If NemoClaw detects an existing host installation, `launch` stops and points you to `openclaw nemoclaw migrate` unless you pass `--force`.
 
 ```console
 $ openclaw nemoclaw launch [--force] [--profile <profile>]
