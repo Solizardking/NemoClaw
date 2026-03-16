@@ -266,7 +266,7 @@ async function setupInference(sandboxName, model, provider) {
       { ignoreError: true }
     );
     run(
-      `openshell inference set --provider nvidia-nim --model ${model} 2>/dev/null || true`,
+      `openshell inference set --no-verify --provider nvidia-nim --model ${model} 2>/dev/null || true`,
       { ignoreError: true }
     );
   } else if (provider === "vllm-local") {
@@ -277,7 +277,7 @@ async function setupInference(sandboxName, model, provider) {
       { ignoreError: true }
     );
     run(
-      `openshell inference set --provider vllm-local --model ${model} 2>/dev/null || true`,
+      `openshell inference set --no-verify --provider vllm-local --model ${model} 2>/dev/null || true`,
       { ignoreError: true }
     );
   }
