@@ -89,10 +89,10 @@ sudo usermod -aG docker $USER
 newgrp docker  # or log out and back in
 ```
 
-### Then run normal setup
+### Then run the onboard wizard
 
 ```bash
-nemoclaw setup
+nemoclaw onboard
 ```
 
 ## Known Issues
