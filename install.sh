@@ -113,7 +113,7 @@ install_nodejs() {
   bash "$nvm_tmp"
   rm -f "$nvm_tmp"
   ensure_nvm_loaded
-  nvm install 24
+  nvm install 22
   info "Node.js installed: $(node --version)"
 }
 
