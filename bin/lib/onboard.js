@@ -42,7 +42,7 @@ function isOpenshellInstalled() {
 
 function installOpenshell() {
   console.log("  Installing openshell CLI...");
-  run(`bash "${path.join(SCRIPTS, "install.sh")}"`, { ignoreError: true });
+  run(`bash "${path.join(SCRIPTS, "install-openshell.sh")}"`, { ignoreError: true });
   return isOpenshellInstalled();
 }
 
