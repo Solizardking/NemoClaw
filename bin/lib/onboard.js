@@ -150,8 +150,17 @@ async function startGateway(gpu) {
 async function createSandbox(gpu) {
   step(3, 7, "Creating sandbox");
 
-  const nameAnswer = await prompt("  Sandbox name [my-assistant]: ");
-  const sandboxName = nameAnswer || "my-assistant";
+  const nameAnswer = await prompt("  Sandbox name (lowercase, numbers, hyphens) [my-assistant]: ");
+  const sandboxName = (nameAnswer || "my-assistant").trim().toLowerCase();
+
+  // Validate: RFC 1123 subdomain — lowercase alphanumeric and hyphens,
+  // must start and end with alphanumeric (required by Kubernetes/OpenShell)
+  if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(sandboxName)) {
+    console.error(`  Invalid sandbox name: '${sandboxName}'`);
+    console.error("  Names must be lowercase, contain only letters, numbers, and hyphens,");
+    console.error("  and must start and end with a letter or number.");
+    process.exit(1);
+  }
 
   // Check if sandbox already exists in registry
   const existing = registry.getSandbox(sandboxName);
@@ -162,7 +171,7 @@ async function createSandbox(gpu) {
       return sandboxName;
     }
     // Destroy old sandbox
-    run(`openshell sandbox delete ${sandboxName} 2>/dev/null || true`, { ignoreError: true });
+    run(`openshell sandbox delete "${sandboxName}" 2>/dev/null || true`, { ignoreError: true });
     registry.removeSandbox(sandboxName);
   }
 
@@ -181,7 +190,7 @@ async function createSandbox(gpu) {
   const basePolicyPath = path.join(ROOT, "nemoclaw-blueprint", "policies", "openclaw-sandbox.yaml");
   const createArgs = [
     `--from "${buildCtx}/Dockerfile"`,
-    `--name ${sandboxName}`,
+    `--name "${sandboxName}"`,
     `--policy "${basePolicyPath}"`,
   ];
   if (gpu && gpu.nimCapable) createArgs.push("--gpu");
@@ -195,7 +204,7 @@ async function createSandbox(gpu) {
   run(`openshell sandbox create ${createArgs.join(" ")} -- env ${envArgs.join(" ")} nemoclaw-start 2>&1 | awk '/Sandbox allocated/{if(!seen){print;seen=1}next}1'`);
 
   // Forward dashboard port separately
-  run(`openshell forward start --background 18789 ${sandboxName}`, { ignoreError: true });
+  run(`openshell forward start --background 18789 "${sandboxName}"`, { ignoreError: true });
 
   // Clean up build context
   run(`rm -rf "${buildCtx}"`, { ignoreError: true });
