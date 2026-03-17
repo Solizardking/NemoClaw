@@ -24,7 +24,6 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_design",
     "sphinxcontrib.mermaid",
-    "sphinx_llm.txt",
     "json_output",
     "search_assets",
 ]
@@ -99,7 +98,7 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "GitHub",
-            "url": "https://github.com/NVIDIA/openshell-openclaw-plugin",
+            "url": "https://github.com/NVIDIA/NemoClaw",
             "icon": "fa-brands fa-github",
             "type": "fontawesome",
         },
