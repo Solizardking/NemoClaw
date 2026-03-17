@@ -125,7 +125,7 @@ install_nemoclaw() {
     npm install && npm link
   else
     info "Installing NemoClaw from npm…"
-    npm install -g nemoclaw
+    npm install -g git+ssh://git@github.com/nvidia/NemoClaw.git
   fi
 }
 
