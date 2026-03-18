@@ -10,6 +10,7 @@ const { prompt, ensureApiKey, getCredential } = require("./credentials");
 const registry = require("./registry");
 const nim = require("./nim");
 const policies = require("./policies");
+const { checkPortAvailable } = require("./preflight");
 const HOST_GATEWAY_URL = "http://host.openshell.internal";
 const EXPERIMENTAL = process.env.NEMOCLAW_EXPERIMENTAL === "1";
 
@@ -67,6 +68,41 @@ async function preflight() {
     }
   }
   console.log(`  ✓ openshell CLI: ${runCapture("openshell --version 2>/dev/null || echo unknown", { ignoreError: true })}`);
+
+  // Required ports — gateway (8080) and dashboard (18789)
+  const requiredPorts = [
+    { port: 8080, label: "OpenShell gateway" },
+    { port: 18789, label: "NemoClaw dashboard" },
+  ];
+  for (const { port, label } of requiredPorts) {
+    const portCheck = await checkPortAvailable(port);
+    if (!portCheck.ok) {
+      console.error("");
+      console.error(`  !! Port ${port} is not available.`);
+      console.error(`     ${label} needs this port.`);
+      console.error("");
+      if (portCheck.process && portCheck.process !== "unknown") {
+        console.error(`     Blocked by: ${portCheck.process}${portCheck.pid ? ` (PID ${portCheck.pid})` : ""}`);
+        console.error("");
+        console.error("     To fix, stop the conflicting process:");
+        console.error("");
+        if (portCheck.pid) {
+          console.error(`       sudo kill ${portCheck.pid}`);
+        } else {
+          console.error(`       lsof -i :${port} -sTCP:LISTEN -P -n`);
+        }
+        console.error("       # or, if it's a systemd service:");
+        console.error("       systemctl --user stop openclaw-gateway.service");
+      } else {
+        console.error(`     Could not identify the process using port ${port}.`);
+        console.error(`     Run: lsof -i :${port} -sTCP:LISTEN`);
+      }
+      console.error("");
+      console.error(`     Detail: ${portCheck.reason}`);
+      process.exit(1);
+    }
+    console.log(`  ✓ Port ${port} available (${label})`);
+  }
 
   // GPU
   const gpu = nim.detectGpu();
