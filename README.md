@@ -60,6 +60,9 @@ The script installs Node.js if it is not already present, then runs the guided o
 $ curl -fsSL https://nvidia.com/nemoclaw.sh | bash
 ```
 
+If you use nvm or fnm to manage Node.js, the installer may not update your current shell's PATH.
+If `nemoclaw` is not found after install, run `source ~/.bashrc` (or `source ~/.zshrc` for zsh) or open a new terminal.
+
 When the install completes, a summary confirms the running environment:
 
 ```
@@ -200,6 +203,7 @@ Refer to the documentation for more information on NemoClaw.
 - [Inference Profiles](https://docs.nvidia.com/nemoclaw/latest/reference/inference-profiles.html): NVIDIA cloud inference configuration
 - [Network Policies](https://docs.nvidia.com/nemoclaw/latest/reference/network-policies.html): egress control and policy customization
 - [CLI Commands](https://docs.nvidia.com/nemoclaw/latest/reference/commands.html): full command reference
+- [Troubleshooting](https://docs.nvidia.com/nemoclaw/latest/reference/troubleshooting.html): common issues and resolution steps
 
 ## License
 
