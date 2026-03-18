@@ -28,9 +28,17 @@ const GLOBAL_COMMANDS = new Set([
 
 // ── Commands ─────────────────────────────────────────────────────
 
-async function onboard() {
+async function onboard(args) {
   const { onboard: runOnboard } = require("./lib/onboard");
-  await runOnboard();
+  const allowedArgs = new Set(["--non-interactive"]);
+  const unknownArgs = args.filter((arg) => !allowedArgs.has(arg));
+  if (unknownArgs.length > 0) {
+    console.error(`  Unknown onboard option(s): ${unknownArgs.join(", ")}`);
+    console.error("  Usage: nemoclaw onboard [--non-interactive]");
+    process.exit(1);
+  }
+  const nonInteractive = args.includes("--non-interactive");
+  await runOnboard({ nonInteractive });
 }
 
 async function setup() {
@@ -318,7 +326,7 @@ const [cmd, ...args] = process.argv.slice(2);
   // Global commands
   if (GLOBAL_COMMANDS.has(cmd)) {
     switch (cmd) {
-      case "onboard":     await onboard(); break;
+      case "onboard":     await onboard(args); break;
       case "setup":       await setup(); break;
       case "setup-spark": await setupSpark(); break;
       case "deploy":      await deploy(args[0]); break;
