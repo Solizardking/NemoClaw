@@ -48,8 +48,17 @@ The sandbox image is approximately 2.4 GB compressed. During image push, the Doc
 | Linux      | Ubuntu 22.04 LTS or later |
 | Node.js    | 20 or later |
 | npm        | 10 or later |
-| Docker     | Installed and running |
+| Container runtime | Supported runtime installed and running |
 | [OpenShell](https://github.com/NVIDIA/OpenShell) | Installed |
+
+#### Container Runtime Support
+
+| Platform | Supported runtimes | Notes |
+|----------|--------------------|-------|
+| Linux | Docker | Primary supported path today |
+| macOS (Apple Silicon) | Colima, Docker Desktop | Recommended runtimes for supported macOS setups |
+| macOS | Podman | Not supported yet. NemoClaw currently depends on OpenShell support for Podman on macOS. |
+| Windows WSL | Docker Desktop (WSL backend) | Supported target path |
 
 ### Install NemoClaw and Onboard OpenClaw Agent
 
@@ -143,6 +152,8 @@ Inference requests from the agent never leave the sandbox directly. OpenShell in
 | NVIDIA cloud | `nvidia/nemotron-3-super-120b-a12b` | Production. Requires an NVIDIA API key.         |
 
 Get an API key from [build.nvidia.com](https://build.nvidia.com). The `nemoclaw onboard` command prompts for this key during setup.
+
+Local inference options such as Ollama and vLLM are still experimental. On macOS, they also depend on OpenShell host-routing support in addition to the local service itself being reachable on the host.
 
 ---
 
