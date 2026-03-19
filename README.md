@@ -6,7 +6,7 @@
 [![Project Status](https://img.shields.io/badge/status-alpha-orange)](https://github.com/NVIDIA/NemoClaw/blob/main/docs/about/release-notes.md)
 <!-- end-badges -->
 
-NVIDIA NemoClaw is an open source reference stack that simplifies running [OpenClaw](https://openclaw.ai) always-on assistants safely. It installs the [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell) runtime, part of [NVIDIA Agent Toolkit](https://docs.nvidia.com/nemo/agent-toolkit/latest), a secure environment for running autonomous agents, and open source models such as [NVIDIA Nemotron](https://build.nvidia.com).
+NVIDIA NemoClaw is an open source reference stack that simplifies running [OpenClaw](https://openclaw.ai) always-on assistants safely. It installs the [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell) runtime, part of NVIDIA Agent Toolkit, a secure environment for running autonomous agents, and open source models such as [NVIDIA Nemotron](https://build.nvidia.com).
 
 > **Alpha software**
 > 
@@ -117,13 +117,7 @@ Send a test message to the agent and verify you receive a response.
 
 > **ℹ️ Note**
 >
-> The TUI is best for interactive back-and-forth. If you need the full text of a long response (for example, large code generation output), use the CLI instead:
->
-> ```bash
-> openclaw agent --agent main --local -m "<prompt>" --session-id <id>
-> ```
->
-> This prints the complete response directly in the terminal and avoids relying on the TUI view for long output.
+> The TUI is best for interactive back-and-forth. If you need the full text of a long response such as a large code generation output, use the CLI instead.
 
 #### OpenClaw CLI
 
@@ -132,6 +126,8 @@ In the sandbox shell, run the following command to send a single message and pri
 ```bash
 openclaw agent --agent main --local -m "hello" --session-id test
 ```
+
+This prints the complete response directly in the terminal and avoids relying on the TUI view for long output.
 
 ### Uninstall
 
