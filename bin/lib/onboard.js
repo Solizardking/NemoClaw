@@ -6,6 +6,7 @@
 // NEMOCLAW_NON_INTERACTIVE=1 env var for CI/CD pipelines.
 
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 const { ROOT, SCRIPTS, run, runCapture } = require("./runner");
 const {
@@ -113,6 +114,12 @@ ${JSON.stringify(selectionConfig, null, 2)}
 EOF_NEMOCLAW_CFG
 exit
 `.trim();
+}
+
+function writeSandboxConfigSyncFile(script, tmpDir = os.tmpdir(), now = Date.now()) {
+  const scriptFile = path.join(tmpDir, `nemoclaw-sync-${now}.sh`);
+  fs.writeFileSync(scriptFile, `${script}\n`, { mode: 0o600 });
+  return scriptFile;
 }
 
 async function promptCloudModel() {
@@ -776,9 +783,14 @@ async function setupOpenclaw(sandboxName, model, provider) {
       onboardedAt: new Date().toISOString(),
     };
     const script = buildSandboxConfigSyncScript(sandboxConfig);
-    run(`cat <<'EOF_NEMOCLAW_SYNC' | openshell sandbox connect "${sandboxName}"
-${script}
-EOF_NEMOCLAW_SYNC`, { stdio: ["ignore", "ignore", "inherit"] });
+    const scriptFile = writeSandboxConfigSyncFile(script);
+    try {
+      run(`openshell sandbox connect "${sandboxName}" < ${shellQuote(scriptFile)}`, {
+        stdio: ["ignore", "ignore", "inherit"],
+      });
+    } finally {
+      fs.unlinkSync(scriptFile);
+    }
   }
 
   console.log("  ✓ OpenClaw gateway launched inside sandbox");
@@ -948,4 +960,5 @@ module.exports = {
   isSandboxReady,
   onboard,
   setupNim,
+  writeSandboxConfigSyncFile,
 };
