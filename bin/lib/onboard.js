@@ -3325,6 +3325,131 @@ function arePolicyPresetsApplied(sandboxName, selectedPresets = []) {
   return selectedPresets.every((preset) => applied.has(preset));
 }
 
+/**
+ * Raw-mode TUI preset selector.
+ * Keys: ↑/↓ or k/j to move, Space to toggle, a to select/unselect all, Enter to confirm.
+ * Falls back to a simple line-based prompt when stdin is not a TTY.
+ */
+async function presetsCheckboxSelector(allPresets, initialSelected) {
+  const selected = new Set(initialSelected);
+  const n = allPresets.length;
+
+  // ── Zero-presets guard ────────────────────────────────────────────
+  if (n === 0) {
+    console.log("  No policy presets are available.");
+    return [];
+  }
+
+  const GREEN_CHECK = USE_COLOR ? "[\x1b[32m✓\x1b[0m]" : "[✓]";
+
+  // ── Fallback: non-TTY or redirected stdout (piped input) ──────────
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    console.log("");
+    console.log("  Available policy presets:");
+    allPresets.forEach((p) => {
+      const marker = selected.has(p.name) ? GREEN_CHECK : "[ ]";
+      console.log(`    ${marker} ${p.name.padEnd(14)} — ${p.description}`);
+    });
+    console.log("");
+    const raw = await prompt("  Select presets (comma-separated names, Enter to skip): ");
+    if (!raw.trim()) {
+      console.log("  Skipping policy presets.");
+      return [];
+    }
+    const knownNames = new Set(allPresets.map((p) => p.name));
+    const chosen = [];
+    for (const name of raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)) {
+      if (knownNames.has(name)) {
+        chosen.push(name);
+      } else {
+        console.error(`  Unknown preset name ignored: ${name}`);
+      }
+    }
+    return chosen;
+  }
+
+  // ── Raw-mode TUI ─────────────────────────────────────────────────
+  let cursor = 0;
+
+  const HINT = "  ↑/↓ j/k  move    Space  toggle    a  all/none    Enter  confirm";
+
+  const renderLines = () => {
+    const lines = ["  Available policy presets:"];
+    allPresets.forEach((p, i) => {
+      const check = selected.has(p.name) ? GREEN_CHECK : "[ ]";
+      const arrow = i === cursor ? ">" : " ";
+      lines.push(`   ${arrow} ${check} ${p.name.padEnd(14)} — ${p.description}`);
+    });
+    lines.push("");
+    lines.push(HINT);
+    return lines;
+  };
+
+  // Initial paint
+  process.stdout.write("\n");
+  const initial = renderLines();
+  for (const line of initial) process.stdout.write(`${line}\n`);
+  let lineCount = initial.length;
+
+  const redraw = () => {
+    process.stdout.write(`\x1b[${lineCount}A`);
+    const lines = renderLines();
+    for (const line of lines) process.stdout.write(`\r\x1b[2K${line}\n`);
+    lineCount = lines.length;
+  };
+
+  process.stdin.setRawMode(true);
+  process.stdin.resume();
+  process.stdin.setEncoding("utf8");
+
+  return new Promise((resolve) => {
+    const cleanup = () => {
+      process.stdin.setRawMode(false);
+      process.stdin.pause();
+      process.stdin.removeListener("data", onData);
+      process.removeListener("SIGTERM", onSigterm);
+    };
+
+    const onSigterm = () => {
+      cleanup();
+      process.exit(1);
+    };
+    process.once("SIGTERM", onSigterm);
+
+    const onData = (key) => {
+      if (key === "\r" || key === "\n") {
+        cleanup();
+        process.stdout.write("\n");
+        resolve([...selected]);
+      } else if (key === "\x03") {
+        // Ctrl+C
+        cleanup();
+        process.exit(1);
+      } else if (key === "\x1b[A" || key === "k") {
+        cursor = (cursor - 1 + n) % n;
+        redraw();
+      } else if (key === "\x1b[B" || key === "j") {
+        cursor = (cursor + 1) % n;
+        redraw();
+      } else if (key === " ") {
+        const name = allPresets[cursor].name;
+        if (selected.has(name)) selected.delete(name);
+        else selected.add(name);
+        redraw();
+      } else if (key === "a") {
+        if (selected.size === n) selected.clear();
+        else for (const p of allPresets) selected.add(p.name);
+        redraw();
+      }
+    };
+
+    process.stdin.on("data", onData);
+  });
+}
+
 // eslint-disable-next-line complexity
 async function setupPoliciesWithSelection(sandboxName, options = {}) {
   const selectedPresets = Array.isArray(options.selectedPresets) ? options.selectedPresets : null;
@@ -3375,9 +3500,7 @@ async function setupPoliciesWithSelection(sandboxName, options = {}) {
       }
     } else if (policyMode === "suggested" || policyMode === "default" || policyMode === "auto") {
       const envPresets = parsePolicyPresetEnv(process.env.NEMOCLAW_POLICY_PRESETS);
-      if (envPresets.length > 0) {
-        chosen = envPresets;
-      }
+      if (envPresets.length > 0) chosen = envPresets;
     } else {
       console.error(`  Unsupported NEMOCLAW_POLICY_MODE: ${policyMode}`);
       console.error("  Valid values: suggested, custom, skip");
@@ -3419,46 +3542,14 @@ async function setupPoliciesWithSelection(sandboxName, options = {}) {
     return chosen;
   }
 
-  console.log("");
-  console.log("  Available policy presets:");
-  allPresets.forEach((p) => {
-    const marker = applied.includes(p.name) ? "●" : "○";
-    const suggested = suggestions.includes(p.name) ? " (suggested)" : "";
-    console.log(`    ${marker} ${p.name} — ${p.description}${suggested}`);
-  });
-  console.log("");
-
-  const answer = await prompt(
-    `  Apply suggested presets (${suggestions.join(", ")})? [Y/n/list]: `,
-  );
-
-  if (answer.toLowerCase() === "n") {
-    console.log("  Skipping policy presets.");
-    return [];
-  }
-
-  let interactiveChoice = suggestions;
-  if (answer.toLowerCase() === "list") {
-    const custom = await prompt("  Enter preset names (comma-separated): ");
-    interactiveChoice = parsePolicyPresetEnv(custom);
-  }
-
-  const knownPresets = new Set(allPresets.map((p) => p.name));
-  let invalidPresets = interactiveChoice.filter((name) => !knownPresets.has(name));
-  while (invalidPresets.length > 0) {
-    console.error(`  Unknown policy preset(s): ${invalidPresets.join(", ")}`);
-    console.log("  Available presets:");
-    for (const p of allPresets) {
-      console.log(`    - ${p.name}`);
-    }
-    const retry = await prompt("  Enter preset names (comma-separated), or leave empty to skip: ");
-    if (!retry.trim()) {
-      console.log("  Skipping policy presets.");
-      return [];
-    }
-    interactiveChoice = parsePolicyPresetEnv(retry);
-    invalidPresets = interactiveChoice.filter((name) => !knownPresets.has(name));
-  }
+  // Interactive: raw-mode TUI checkbox selector
+  // Seed selection with already-applied presets and credential-based suggestions
+  const knownNames = new Set(allPresets.map((p) => p.name));
+  const initialSelected = [
+    ...applied.filter((name) => knownNames.has(name)),
+    ...suggestions.filter((name) => knownNames.has(name) && !applied.includes(name)),
+  ];
+  const interactiveChoice = await presetsCheckboxSelector(allPresets, initialSelected);
 
   if (onSelection) onSelection(interactiveChoice);
   if (!waitForSandboxReady(sandboxName)) {
@@ -3466,8 +3557,25 @@ async function setupPoliciesWithSelection(sandboxName, options = {}) {
     process.exit(1);
   }
 
-  for (const name of interactiveChoice) {
-    policies.applyPreset(sandboxName, name);
+  const newlySelected = interactiveChoice.filter((name) => !applied.includes(name));
+  for (const name of newlySelected) {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        policies.applyPreset(sandboxName, name);
+        break;
+      } catch (err) {
+        const message = err && err.message ? err.message : String(err);
+        if (message.includes("Unimplemented")) {
+          console.error("  OpenShell policy updates are not supported by this gateway build.");
+          console.error("  This is a known issue tracked in NemoClaw #536.");
+          throw err;
+        }
+        if (!message.includes("sandbox not found") || attempt === 2) {
+          throw err;
+        }
+        sleep(2);
+      }
+    }
   }
   return interactiveChoice;
 }
@@ -4011,6 +4119,7 @@ module.exports = {
   isInferenceRouteReady,
   isOpenclawReady,
   arePolicyPresetsApplied,
+  presetsCheckboxSelector,
   setupPoliciesWithSelection,
   summarizeCurlFailure,
   summarizeProbeFailure,
