@@ -68,6 +68,100 @@ describe("nemoclaw-start non-root fallback", () => {
   });
 });
 
+describe("nemoclaw-start gateway token export (#1114)", () => {
+  const src = fs.readFileSync(START_SCRIPT, "utf-8");
+
+  it("defines _read_gateway_token helper used by both export and dashboard", () => {
+    expect(src).toMatch(/_read_gateway_token\(\) \{/);
+    // export_gateway_token calls the helper
+    expect(src).toMatch(/token="\$\(_read_gateway_token\)"/);
+    // print_dashboard_urls also calls the helper
+    const dashboardFn = src.match(/print_dashboard_urls\(\) \{([\s\S]*?)^\}/m);
+    expect(dashboardFn).toBeTruthy();
+    expect(dashboardFn[1]).toContain("_read_gateway_token");
+  });
+
+  it("uses with-open context manager in the Python snippet", () => {
+    const helperFn = src.match(/_read_gateway_token\(\) \{([\s\S]*?)^\}/m);
+    expect(helperFn).toBeTruthy();
+    expect(helperFn[1]).toContain("with open(");
+  });
+
+  it("unsets stale OPENCLAW_GATEWAY_TOKEN when token is empty", () => {
+    const exportFn = src.match(/export_gateway_token\(\) \{([\s\S]*?)^\}/m);
+    expect(exportFn).toBeTruthy();
+    const body = exportFn[1];
+    // Must unset before returning on empty token
+    const unsetPos = body.indexOf("unset OPENCLAW_GATEWAY_TOKEN");
+    const returnPos = body.indexOf("return");
+    expect(unsetPos).toBeGreaterThan(-1);
+    expect(returnPos).toBeGreaterThan(-1);
+    expect(unsetPos).toBeLessThan(returnPos);
+  });
+
+  it("shell-escapes the token before embedding in rc snippet", () => {
+    const exportFn = src.match(/export_gateway_token\(\) \{([\s\S]*?)^\}/m);
+    expect(exportFn).toBeTruthy();
+    const body = exportFn[1];
+    // Must use single quotes around the escaped token value
+    expect(body).toContain("escaped_token");
+    expect(body).toMatch(/export OPENCLAW_GATEWAY_TOKEN='\$\{escaped_token\}'/);
+  });
+
+  it("calls export_gateway_token in both root and non-root paths", () => {
+    const calls = src.match(/export_gateway_token/g) || [];
+    // definition + 2 call sites
+    expect(calls.length).toBeGreaterThanOrEqual(3);
+  });
+});
+
+describe("nemoclaw-start configure guard (#1114)", () => {
+  const src = fs.readFileSync(START_SCRIPT, "utf-8");
+
+  it("defines install_configure_guard function", () => {
+    expect(src).toMatch(/install_configure_guard\(\) \{/);
+  });
+
+  it("intercepts openclaw configure with an actionable error", () => {
+    // The guard installs a heredoc containing a shell function — extract the
+    // full block between the function definition and the next top-level function.
+    const guardBlock = src.match(
+      /install_configure_guard\(\) \{([\s\S]*?)^validate_openclaw_symlinks/m,
+    );
+    expect(guardBlock).toBeTruthy();
+    const body = guardBlock[1];
+    expect(body).toContain("configure)");
+    expect(body).toContain("nemoclaw onboard --resume");
+    expect(body).toContain("return 1");
+  });
+
+  it("passes non-configure subcommands through to the real binary", () => {
+    const guardBlock = src.match(
+      /install_configure_guard\(\) \{([\s\S]*?)^validate_openclaw_symlinks/m,
+    );
+    expect(guardBlock).toBeTruthy();
+    expect(guardBlock[1]).toContain('command openclaw "$@"');
+  });
+
+  it("uses idempotent marker blocks", () => {
+    const guardBlock = src.match(
+      /install_configure_guard\(\) \{([\s\S]*?)^validate_openclaw_symlinks/m,
+    );
+    expect(guardBlock).toBeTruthy();
+    const body = guardBlock[1];
+    expect(body).toContain("nemoclaw-configure-guard begin");
+    expect(body).toContain("nemoclaw-configure-guard end");
+    // Uses awk to strip existing block before re-inserting
+    expect(body).toContain("awk");
+  });
+
+  it("calls install_configure_guard in both root and non-root paths", () => {
+    const calls = src.match(/install_configure_guard/g) || [];
+    // definition + 2 call sites
+    expect(calls.length).toBeGreaterThanOrEqual(3);
+  });
+});
+
 describe("nemoclaw-start auto-pair client whitelisting (#117)", () => {
   const src = fs.readFileSync(START_SCRIPT, "utf-8");
 
