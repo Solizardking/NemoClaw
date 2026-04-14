@@ -5275,6 +5275,7 @@ async function onboard(opts = {}) {
         agent,
         dangerouslySkipPermissions,
       );
+      registry.updateSandbox(sandboxName, { model, provider });
       onboardSession.markStepComplete("sandbox", { sandboxName, provider, model, nimContainer });
     }
 
