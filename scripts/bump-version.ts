@@ -52,7 +52,7 @@ const DOCS_VERSIONS_JSON = path.join(REPO_ROOT, "docs", "versions1.json");
 const INSTALL_SH = path.join(REPO_ROOT, "scripts", "install.sh");
 const README_MD = path.join(REPO_ROOT, "README.md");
 const QUICKSTART_MD = path.join(REPO_ROOT, "docs", "get-started", "quickstart.md");
-const VERSIONED_DOC_LINK_FILES = [README_MD];
+const VERSIONED_DOC_LINK_FILES = [README_MD, QUICKSTART_MD];
 const FILES_TO_STAGE = [
   ROOT_PACKAGE_JSON,
   PLUGIN_PACKAGE_JSON,
@@ -62,7 +62,6 @@ const FILES_TO_STAGE = [
   DOCS_VERSIONS_JSON,
   INSTALL_SH,
   ...VERSIONED_DOC_LINK_FILES,
-  QUICKSTART_MD,
 ];
 
 function main(): void {
