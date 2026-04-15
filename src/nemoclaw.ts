@@ -1455,6 +1455,35 @@ async function sandboxSkillInstall(sandboxName, args = []) {
   }
 }
 
+async function sandboxPolicyRemove(sandboxName, args = []) {
+  const dryRun = args.includes("--dry-run");
+  const allPresets = policies.listPresets();
+  const applied = policies.getAppliedPresets(sandboxName);
+
+  const answer = await policies.selectForRemoval(allPresets, { applied });
+  if (!answer) return;
+
+  const presetContent = policies.loadPreset(answer);
+  if (!presetContent) return;
+
+  const endpoints = policies.getPresetEndpoints(presetContent);
+  if (endpoints.length > 0) {
+    console.log(`  Endpoints that would be removed: ${endpoints.join(", ")}`);
+  }
+
+  if (dryRun) {
+    console.log("  --dry-run: no changes applied.");
+    return;
+  }
+
+  const confirm = await askPrompt(`  Remove '${answer}' from sandbox '${sandboxName}'? [Y/n]: `);
+  if (confirm.toLowerCase() === "n") return;
+
+  if (!policies.removePreset(sandboxName, answer)) {
+    process.exit(1);
+  }
+}
+
 function cleanupSandboxServices(sandboxName, { stopHostServices = false } = {}) {
   if (stopHostServices) {
     const { stopAll } = require("./lib/services");
@@ -1799,6 +1828,7 @@ function help() {
 
   ${G}Policy Presets:${R}
     nemoclaw <name> policy-add       Add a network or filesystem policy preset ${D}(--dry-run to preview)${R}
+    nemoclaw <name> policy-remove    Remove an applied policy preset ${D}(--dry-run to preview)${R}
     nemoclaw <name> policy-list      List presets ${D}(● = applied)${R}
 
   ${G}Compatibility Commands:${R}
@@ -1928,6 +1958,9 @@ const [cmd, ...args] = process.argv.slice(2);
       case "policy-add":
         await sandboxPolicyAdd(cmd, actionArgs);
         break;
+      case "policy-remove":
+        await sandboxPolicyRemove(cmd, actionArgs);
+        break;
       case "policy-list":
         sandboxPolicyList(cmd);
         break;
@@ -1942,7 +1975,7 @@ const [cmd, ...args] = process.argv.slice(2);
         break;
       default:
         console.error(`  Unknown action: ${action}`);
-        console.error(`  Valid actions: connect, status, logs, policy-add, policy-list, skill, rebuild, destroy`);
+        console.error(`  Valid actions: connect, status, logs, policy-add, policy-remove, policy-list, skill, rebuild, destroy`);
         process.exit(1);
     }
     return;
