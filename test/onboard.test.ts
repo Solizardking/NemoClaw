@@ -414,7 +414,44 @@ describe("onboard helpers", () => {
     expect(command).toContain("forward");
     expect(command).toContain("start");
     expect(command).toContain("--background");
+    // On WSL, bind to all interfaces so the Windows-side browser can reach the port.
+    // The sandbox image is built with CHAT_UI_URL=http://127.0.0.1:19999, so the
+    // gateway listens on 19999 inside the sandbox — openshell maps host:19999 →
+    // sandbox:19999 (same port both sides, the only mapping openshell supports).
     expect(command).toContain("0.0.0.0:19999");
+    expect(command).toContain("the-crucible");
+  });
+
+  it("uses the default port as-is when NEMOCLAW_DASHBOARD_PORT is not overridden", () => {
+    const command = getDashboardForwardStartCommand("the-crucible", {
+      chatUiUrl: "http://127.0.0.1:18789",
+      openshellBinary: "/usr/bin/openshell",
+    });
+
+    expect(command).toContain("--background");
+    // Default port — forward same port on both sides using the bare port number.
+    // Must not regress to all-interfaces (0.0.0.0:18789) or port:port (18789:18789) forms.
+    expect(command).toContain("18789");
+    expect(command).not.toContain("0.0.0.0:18789");
+    expect(command).not.toContain("18789:18789");
+    expect(command).toContain("the-crucible");
+  });
+
+  it("forwards a custom port as-is on non-WSL loopback", () => {
+    const command = getDashboardForwardStartCommand("the-crucible", {
+      chatUiUrl: "http://127.0.0.1:19000",
+      openshellBinary: "/usr/bin/openshell",
+    });
+
+    expect(command).toContain("--background");
+    // The gateway is configured to listen on the same port (via CHAT_UI_URL baked at
+    // onboard time), so host:19000 → sandbox:19000 is the correct mapping.
+    // Non-WSL loopback must use the plain port — not the all-interfaces (0.0.0.0:19000)
+    // form and not any port:port variant (openshell does not support asymmetric mapping).
+    expect(command).toContain("19000");
+    expect(command).not.toContain("0.0.0.0:19000");
+    expect(command).not.toContain("19000:19000");
+    expect(command).not.toContain("19000:18789");
     expect(command).toContain("the-crucible");
   });
 
@@ -2382,6 +2419,129 @@ const { createSandbox } = require(${onboardPath});
         entry.command.includes("'forward' 'start' '--background' '0.0.0.0:18789' 'my-assistant'"),
       ),
       "expected remote dashboard forward target",
+    );
+  });
+
+  it("injects NEMOCLAW_DASHBOARD_PORT into sandbox create envArgs when set (#1925)", async () => {
+    const repoRoot = path.join(import.meta.dirname, "..");
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "nemoclaw-onboard-dashboard-port-"));
+    const fakeBin = path.join(tmpDir, "bin");
+    const scriptPath = path.join(tmpDir, "dashboard-port-envargs.js");
+    const onboardPath = JSON.stringify(path.join(repoRoot, "dist", "lib", "onboard.js"));
+    const runnerPath = JSON.stringify(path.join(repoRoot, "dist", "lib", "runner.js"));
+    const registryPath = JSON.stringify(path.join(repoRoot, "dist", "lib", "registry.js"));
+    const preflightPath = JSON.stringify(path.join(repoRoot, "dist", "lib", "preflight.js"));
+    const credentialsPath = JSON.stringify(path.join(repoRoot, "dist", "lib", "credentials.js"));
+
+    fs.mkdirSync(fakeBin, { recursive: true });
+    fs.writeFileSync(path.join(fakeBin, "openshell"), "#!/usr/bin/env bash\nexit 0\n", {
+      mode: 0o755,
+    });
+
+    const script = String.raw`
+const runner = require(${runnerPath});
+const registry = require(${registryPath});
+const preflight = require(${preflightPath});
+const credentials = require(${credentialsPath});
+const childProcess = require("node:child_process");
+const { EventEmitter } = require("node:events");
+
+const commands = [];
+runner.run = (command, opts = {}) => {
+  commands.push({ command, env: opts.env || null });
+  return { status: 0 };
+};
+runner.runCapture = (command) => {
+  if (command.includes("'sandbox' 'get' 'my-assistant'")) return "";
+  if (command.includes("'sandbox' 'list'")) return "my-assistant Ready";
+  // Custom port: dashboard readiness curl uses 19000 (DASHBOARD_PORT from env)
+  if (command.includes("sandbox exec 'my-assistant' curl -sf http://localhost:19000/")) return "ok";
+  if (command.includes("'forward' 'list'")) return "19000 -> my-assistant:19000";
+  return "";
+};
+registry.registerSandbox = () => true;
+registry.removeSandbox = () => true;
+preflight.checkPortAvailable = async () => ({ ok: true });
+credentials.prompt = async () => "";
+
+childProcess.spawn = (...args) => {
+  const child = new EventEmitter();
+  child.stdout = new EventEmitter();
+  child.stderr = new EventEmitter();
+  commands.push({ command: args[1][1], env: args[2]?.env || null });
+  process.nextTick(() => {
+    child.stdout.emit("data", Buffer.from("Created sandbox: my-assistant\n"));
+    child.emit("close", 0);
+  });
+  return child;
+};
+
+const { createSandbox } = require(${onboardPath});
+
+(async () => {
+  process.env.OPENSHELL_GATEWAY = "nemoclaw";
+  const sandboxName = await createSandbox(null, "gpt-5.4");
+  console.log(JSON.stringify({ sandboxName, commands }));
+})().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+`;
+    fs.writeFileSync(scriptPath, script);
+
+    // Strip CHAT_UI_URL so createSandbox falls back to http://127.0.0.1:19000.
+    // Without this, a CHAT_UI_URL set in the developer's shell or CI would be
+    // inherited, causing chatUiUrl to use the wrong port and making the forward
+    // command assertion below fail spuriously.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { CHAT_UI_URL: _stripped, ...inheritedEnv } = process.env;
+    const result = spawnSync(process.execPath, [scriptPath], {
+      cwd: repoRoot,
+      encoding: "utf-8",
+      env: {
+        ...inheritedEnv,
+        HOME: tmpDir,
+        PATH: `${fakeBin}:${process.env.PATH || ""}`,
+        NEMOCLAW_NON_INTERACTIVE: "1",
+        NEMOCLAW_DASHBOARD_PORT: "19000",
+      },
+    });
+
+    assert.equal(result.status, 0, result.stderr);
+    const payloadLine = result.stdout
+      .trim()
+      .split("\n")
+      .slice()
+      .reverse()
+      .find((line) => line.startsWith("{") && line.endsWith("}"));
+    assert.ok(payloadLine, `expected JSON payload in stdout:\n${result.stdout}`);
+    const payload = JSON.parse(payloadLine);
+    const createCommand = payload.commands.find((entry) =>
+      entry.command.includes("'sandbox' 'create'"),
+    );
+    assert.ok(createCommand, "expected sandbox create command");
+    // Part 1 of fix (#1925): NEMOCLAW_DASHBOARD_PORT must be in envArgs so
+    // nemoclaw-start.sh can unconditionally override CHAT_UI_URL at runtime,
+    // overriding whatever value the Docker image had baked in.
+    assert.match(createCommand.command, /'NEMOCLAW_DASHBOARD_PORT=19000'/);
+    // Forward must use same-port mapping (openshell does not support asymmetric)
+    assert.ok(
+      payload.commands.some(
+        (entry) =>
+          entry.command.includes("'forward' 'start' '--background' '19000' 'my-assistant'") ||
+          entry.command.includes(
+            "'forward' 'start' '--background' '0.0.0.0:19000' 'my-assistant'",
+          ),
+      ),
+      "expected dashboard forward for port 19000",
+    );
+    assert.ok(
+      !payload.commands.some((entry) => entry.command.includes("19000:18789")),
+      "forward must not use asymmetric 19000:18789 mapping",
+    );
+    assert.ok(
+      !payload.commands.some((entry) => entry.command.includes("19000:19000")),
+      "forward must not use port:port form (openshell does not support it)",
     );
   });
 

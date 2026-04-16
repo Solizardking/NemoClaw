@@ -2877,6 +2877,13 @@ async function createSandbox(
   // subprocesses (gateway start, openshell CLI) but the sandbox should
   // never have access to the host's Kubernetes cluster or SSH agent.
   const envArgs = [formatEnvAssignment("CHAT_UI_URL", chatUiUrl)];
+  // Pass the configured dashboard port into the sandbox so nemoclaw-start.sh
+  // can unconditionally override CHAT_UI_URL even when the Docker image was
+  // built with a different default. Without this, the baked-in Docker ENV
+  // value takes precedence and the gateway starts on the wrong port. (#1925)
+  if (process.env.NEMOCLAW_DASHBOARD_PORT) {
+    envArgs.push(formatEnvAssignment("NEMOCLAW_DASHBOARD_PORT", String(DASHBOARD_PORT)));
+  }
   if (webSearchConfig?.fetchEnabled) {
     const braveKey =
       getCredential(webSearch.BRAVE_API_KEY_ENV) || process.env[webSearch.BRAVE_API_KEY_ENV];
@@ -4863,10 +4870,19 @@ function ensureDashboardForward(sandboxName, chatUiUrl = `http://127.0.0.1:${CON
   // Use stdio "ignore" to prevent spawnSync from waiting on inherited pipe fds.
   // The --background flag forks a child that inherits stdout/stderr; if those are
   // pipes, spawnSync blocks until the background process exits (never).
-  runOpenshell(["forward", "start", "--background", forwardTarget, sandboxName], {
+  const fwdResult = runOpenshell(["forward", "start", "--background", forwardTarget, sandboxName], {
     ignoreError: true,
     stdio: ["ignore", "ignore", "ignore"],
   });
+  // A non-zero exit from the parent means forward start rejected before forking —
+  // typically because the port is already bound by another process (e.g. a local
+  // Docker test container with -p PORT:PORT). The error is otherwise swallowed by
+  // ignoreError + stdio:ignore, leaving the dashboard URL silently unreachable (#1925).
+  if (fwdResult && fwdResult.status !== 0) {
+    console.warn(`! Port ${portToStop} forward did not start — port may be in use by another process.`);
+    console.warn(`  Check: docker ps --format 'table {{.Names}}\\t{{.Ports}}' | grep ${portToStop}`);
+    console.warn(`  Free the port, then reconnect: nemoclaw ${sandboxName} connect`);
+  }
 }
 
 function findOpenclawJsonPath(dir) {

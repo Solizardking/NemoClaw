@@ -238,7 +238,7 @@ function isSandboxGatewayRunning(sandboxName) {
  */
 function recoverSandboxProcesses(sandboxName) {
   const agent = agentRuntime.getSessionAgent(sandboxName);
-  const agentScript = agentRuntime.buildRecoveryScript(agent);
+  const agentScript = agentRuntime.buildRecoveryScript(agent, agent?.forwardPort ?? DASHBOARD_PORT);
   // The recovery script runs as the sandbox user (non-root). This matches
   // the non-root fallback path in nemoclaw-start.sh — no privilege
   // separation, but the gateway runs and inference works.
@@ -259,7 +259,7 @@ function recoverSandboxProcesses(sandboxName) {
       // Resolve and start gateway
       'OPENCLAW="$(command -v openclaw)";',
       'if [ -z "$OPENCLAW" ]; then echo OPENCLAW_MISSING; exit 1; fi;',
-      'nohup "$OPENCLAW" gateway run > /tmp/gateway.log 2>&1 &',
+      `nohup "$OPENCLAW" gateway run --port ${DASHBOARD_PORT} > /tmp/gateway.log 2>&1 &`,
       "GPID=$!; sleep 2;",
       // Verify the gateway actually started (didn't crash immediately)
       'if kill -0 "$GPID" 2>/dev/null; then echo "GATEWAY_PID=$GPID"; else echo GATEWAY_FAILED; cat /tmp/gateway.log 2>/dev/null | tail -5; fi',
