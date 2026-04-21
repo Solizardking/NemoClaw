@@ -65,6 +65,9 @@ const {
 // Shared constant so getSuggestedPolicyPresets() and setupPoliciesWithSelection()
 // stay in sync.
 const LOCAL_INFERENCE_PROVIDERS = ["ollama-local", "vllm-local"];
+const {
+  sleepSeconds,
+} = require("./wait");
 const { inferContainerRuntime, isWsl, shouldPatchCoredns } = require("./platform");
 const { resolveOpenshell } = require("./resolve-openshell");
 const {
@@ -2233,7 +2236,7 @@ function installOpenshell() {
 }
 
 function sleep(seconds) {
-  require("child_process").spawnSync("sleep", [String(seconds)]);
+  sleepSeconds(seconds);
 }
 
 function destroyGateway() {
