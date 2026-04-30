@@ -4212,6 +4212,19 @@ async function createSandbox(
       providerCredentialHashes[envKey] = hash;
     }
   }
+  // openshell tags images with seconds; buildId is ms. Parse actual tag from output. Fixes #2672.
+  const builtImageMatch = createResult.output.match(
+    /Built image (openshell\/sandbox-from:\d+)/,
+  );
+  if (!builtImageMatch) {
+    console.warn(
+      "  Warning: could not parse image tag from build output; imageTag may be stale. Run 'nemoclaw gc' if destroy fails.",
+    );
+  }
+  const resolvedImageTag = builtImageMatch
+    ? builtImageMatch[1]
+    : `openshell/sandbox-from:${buildId}`;
+
   registry.registerSandbox({
     name: sandboxName,
     model: model || null,
@@ -4219,7 +4232,7 @@ async function createSandbox(
     gpuEnabled: !!gpu,
     agent: agent ? agent.name : null,
     agentVersion: fromDockerfile ? null : effectiveAgent.expectedVersion || null,
-    imageTag: `openshell/sandbox-from:${buildId}`,
+    imageTag: resolvedImageTag,
     providerCredentialHashes:
       Object.keys(providerCredentialHashes).length > 0 ? providerCredentialHashes : undefined,
     messagingChannels: activeMessagingChannels,
