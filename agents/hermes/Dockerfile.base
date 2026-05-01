@@ -26,6 +26,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Calver tag v2026.4.23 = semver 0.11.0.
 ARG HERMES_VERSION=v2026.4.23
 ARG HERMES_TARBALL_SHA256=1ee1be80a2112b7edc581770cee8858e725ba110cc423979cd7102492504bc6b
+ARG HERMES_UV_EXTRAS="messaging web"
 ARG UV_VERSION=0.11.8
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -108,7 +109,13 @@ RUN mkdir -p /opt/hermes \
     && tar -xzf /tmp/hermes.tar.gz -C /opt/hermes --strip-components=1 \
     && rm /tmp/hermes.tar.gz /tmp/hermes.tar.gz.sha256
 WORKDIR /opt/hermes
-RUN uv sync --frozen --no-dev --extra messaging --extra web --no-cache \
+# hadolint ignore=SC2086
+RUN set -eu; \
+    set --; \
+    for extra in ${HERMES_UV_EXTRAS}; do \
+        set -- "$@" --extra "$extra"; \
+    done; \
+    uv sync --frozen --no-dev "$@" --no-cache \
     && ln -sf /opt/hermes/.venv/bin/hermes /usr/local/bin/hermes \
     && ln -sf /opt/hermes/.venv/bin/hermes-agent /usr/local/bin/hermes-agent \
     && ln -sf /opt/hermes/.venv/bin/hermes-acp /usr/local/bin/hermes-acp

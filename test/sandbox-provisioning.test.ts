@@ -22,6 +22,7 @@ const DOCKERFILE_BASE = path.join(ROOT, "Dockerfile.base");
 const DOCKERFILE_SANDBOX = path.join(ROOT, "test", "Dockerfile.sandbox");
 const HERMES_DOCKERFILE = path.join(ROOT, "agents", "hermes", "Dockerfile");
 const HERMES_DOCKERFILE_BASE = path.join(ROOT, "agents", "hermes", "Dockerfile.base");
+const HERMES_START = path.join(ROOT, "agents", "hermes", "start.sh");
 
 describe("sandbox provisioning: unified .openclaw layout (#2227)", () => {
   const src = fs.readFileSync(DOCKERFILE_BASE, "utf-8");
@@ -73,6 +74,7 @@ describe("sandbox provisioning: procps debug tools (#2343)", () => {
 describe("Hermes sandbox provisioning", () => {
   const src = fs.readFileSync(HERMES_DOCKERFILE, "utf-8");
   const baseSrc = fs.readFileSync(HERMES_DOCKERFILE_BASE, "utf-8");
+  const startSrc = fs.readFileSync(HERMES_START, "utf-8");
 
   it("final image validates the manifest-declared hermes binary path", () => {
     expect(src).toContain('hermes_path="$(command -v hermes 2>/dev/null || true)"');
@@ -83,6 +85,9 @@ describe("Hermes sandbox provisioning", () => {
 
   it("grants the Hermes gateway group write access to runtime state directories", () => {
     expect(baseSrc).toContain("usermod -a -G sandbox root");
+    expect(startSrc).toContain(
+      `nohup gosu gateway sh -c 'exec "$@" >/tmp/gateway.log 2>&1' sh "$HERMES" gateway run`,
+    );
     for (const dockerSrc of [src, baseSrc]) {
       expect(dockerSrc).toContain("chmod 770 /sandbox/.hermes");
       expect(dockerSrc).toContain("/sandbox/.hermes/logs");

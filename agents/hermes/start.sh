@@ -516,7 +516,7 @@ HERMES_HOME="${HERMES_DIR}" \
   HTTP_PROXY="http://127.0.0.1:${DECODE_PROXY_PORT}" \
   https_proxy="http://127.0.0.1:${DECODE_PROXY_PORT}" \
   http_proxy="http://127.0.0.1:${DECODE_PROXY_PORT}" \
-  nohup gosu gateway "$HERMES" gateway run >/tmp/gateway.log 2>&1 &
+  nohup gosu gateway sh -c 'exec "$@" >/tmp/gateway.log 2>&1' sh "$HERMES" gateway run &
 GATEWAY_PID=$!
 echo "[gateway] hermes gateway launched as 'gateway' user (pid $GATEWAY_PID)" >&2
 # NOTE: PIDs are collected after launch; a signal arriving between trap
