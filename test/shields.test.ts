@@ -421,8 +421,9 @@ describe("NC-2227-05: shields.ts locks state directories", () => {
     expect(fnBody).toContain('["chmod", "g-s", target.configDir]');
     expect(src).toContain('["chmod", "g-s", dirPath]');
     expect(src).toContain("Best effort; do not skip recursive write stripping.");
-    expect(src).toContain('if [ "$dir_mode" = "755" ]; then chmod g-s "$dir"');
+    expect(src).toContain('[ "$clear_setgid" = "1" ] && chmod g-s "$dir"');
     expect(fnBody).toContain("chown");
+    expect(fnBody).toContain("g-s");
     expect(fnBody).toContain("root:root");
   });
 

@@ -86,7 +86,7 @@ function mkdtempOnPosixFs(prefix: string): string {
 }
 
 describe("Issue #2681 — mutable OpenClaw config permissions", () => {
-  it("restores group-write and setgid on mutable config trees during root startup", () => {
+  it("restores group-write and setgid on mutable config trees during non-root startup", () => {
     const tmpDir = mkdtempOnPosixFs("nemoclaw-2681-perms-");
     const configDir = path.join(tmpDir, ".openclaw");
     const nestedDir = path.join(configDir, "agents", "main");
@@ -105,7 +105,7 @@ describe("Issue #2681 — mutable OpenClaw config permissions", () => {
           "-c",
           [
             "set -euo pipefail",
-            'id() { if [ "${1:-}" = "-u" ]; then printf "0"; else command id "$@"; fi; }',
+            'id() { if [ "${1:-}" = "-u" ]; then printf "1000"; else command id "$@"; fi; }',
             'stat() { if [ "${1:-}" = "-c" ] && [ "${2:-}" = "%U" ]; then printf "sandbox\\n"; else command stat "$@"; fi; }',
             normalizeMutableConfigPermsFor(configDir),
             "normalize_mutable_config_perms",
@@ -115,9 +115,14 @@ describe("Issue #2681 — mutable OpenClaw config permissions", () => {
       );
 
       expect(result.status).toBe(0);
+      expect(modeBits(configDir) & 0o7777).toBe(0o2770);
+      expect(modeBits(configFile) & 0o7777).toBe(0o660);
+      expect(modeBits(configDir) & 0o070).toBe(0o070);
       expect(modeBits(configDir) & 0o020).toBe(0o020);
+      expect(modeBits(configFile) & 0o060).toBe(0o060);
       expect(modeBits(configFile) & 0o020).toBe(0o020);
       expect(modeBits(configDir) & 0o2000).toBe(0o2000);
+      expect(modeBits(nestedDir) & 0o070).toBe(0o070);
       expect(modeBits(nestedDir) & 0o2000).toBe(0o2000);
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -151,11 +156,73 @@ describe("Issue #2681 — mutable OpenClaw config permissions", () => {
     expect(commands).toContainEqual(["chmod", "660", "/sandbox/.openclaw/openclaw.json"]);
     expect(commands).toContainEqual(["chmod", "660", "/sandbox/.openclaw/.config-hash"]);
     expect(commands).toContainEqual(["chmod", "2770", "/sandbox/.openclaw"]);
-    expect(commands).toContainEqual(["chmod", "2775", "/sandbox/.openclaw/workspace"]);
-    expect(commands).toContainEqual(["chmod", "-R", "g+w,o-w", "/sandbox/.openclaw/workspace"]);
+    expect(commands).toContainEqual(["chmod", "2770", "/sandbox/.openclaw/workspace"]);
+    expect(commands).toContainEqual(["chmod", "-R", "g+rwX,o-rwx", "/sandbox/.openclaw/workspace"]);
     expect(commands.find((command) => command[0] === "sh" && command[1] === "-c")).toEqual(
-      expect.arrayContaining(["/sandbox/.openclaw", "sandbox:sandbox", "g+w,o-w", "2775"]),
+      expect.arrayContaining(["/sandbox/.openclaw", "sandbox:sandbox", "g+rwX,o-rwx", "2770"]),
     );
+  });
+
+  it("shields-up strips setgid from the OpenClaw config root before verifying lock", () => {
+    const probe = spawnSync(
+      process.execPath,
+      [
+        "-e",
+        String.raw`
+const Module = require("node:module");
+const originalLoad = Module._load;
+const calls = [];
+Module._load = function patchedLoad(request, parent, isMain) {
+  if (request === "./docker/exec") {
+    return {
+      dockerExecFileSync(args) {
+        const separator = args.indexOf("--");
+        const command = separator >= 0 ? args.slice(separator + 1) : args;
+        calls.push(command);
+        if (command[0] === "stat" && command[1] === "-c") {
+          return command.at(-1) === "/sandbox/.openclaw"
+            ? "755 root:root\n"
+            : "444 root:root\n";
+        }
+        if (command[0] === "lsattr") {
+          return "----i----------------- " + command.at(-1) + "\n";
+        }
+        return "";
+      },
+    };
+  }
+  return originalLoad.call(this, request, parent, isMain);
+};
+const { lockAgentConfig } = require("./dist/lib/shields.js");
+lockAgentConfig("sandbox-pod", {
+  agentName: "openclaw",
+  configPath: "/sandbox/.openclaw/openclaw.json",
+  configDir: "/sandbox/.openclaw",
+  sensitiveFiles: ["/sandbox/.openclaw/.config-hash"],
+});
+process.stdout.write(JSON.stringify(calls));
+`,
+      ],
+      { encoding: "utf-8", timeout: 5000 },
+    );
+
+    expect(probe.status).toBe(0);
+    const commands = JSON.parse(probe.stdout) as string[][];
+    const stateDirLockIndex = commands.findIndex(
+      (command) =>
+        command[0] === "sh" &&
+        command[1] === "-c" &&
+        command.includes("/sandbox/.openclaw") &&
+        command.includes("root:root") &&
+        command.includes("go-w") &&
+        command.includes("755"),
+    );
+    const stripSetgidIndex = commands.findIndex((command) =>
+      command.join("\0") === ["chmod", "g-s", "/sandbox/.openclaw"].join("\0"),
+    );
+    expect(stateDirLockIndex).toBeGreaterThan(-1);
+    expect(stripSetgidIndex).toBeGreaterThan(stateDirLockIndex);
+    expect(commands).toContainEqual(["chmod", "755", "/sandbox/.openclaw"]);
   });
 
   it("does not relax a root-owned config tree while shields are up", () => {
