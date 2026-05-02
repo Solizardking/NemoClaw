@@ -99,6 +99,11 @@ import {
   OPENSHELL_OPERATION_TIMEOUT_MS,
   OPENSHELL_PROBE_TIMEOUT_MS,
 } from "./lib/openshell-timeouts";
+import {
+  resolveGlobalOclifDispatch,
+  resolveSandboxOclifDispatch,
+  type DispatchResult,
+} from "./lib/legacy-oclif-dispatch";
 const onboardProviders = require("./lib/onboard-providers");
 
 // ── Global commands (derived from command registry) ──────────────
@@ -1295,17 +1300,8 @@ async function listSandboxes(args: string[] = []): Promise<void> {
   await runOclif("list", args);
 }
 
-function hasHelpFlag(args: string[]): boolean {
-  return args.includes("--help") || args.includes("-h");
-}
-
 function printSandboxActionUsage(action: string): void {
   console.log(`  Usage: ${CLI_NAME} <name> ${action}`);
-}
-
-function hasMissingFlagValue(args: string[], flagName: string): boolean {
-  const index = args.indexOf(flagName);
-  return index !== -1 && (!args[index + 1] || args[index + 1].startsWith("--"));
 }
 
 // ── Sandbox-scoped actions ───────────────────────────────────────
@@ -4765,6 +4761,85 @@ function printConnectOrderHint(candidate: string | null): void {
   }
 }
 
+const VALID_SANDBOX_ACTIONS =
+  "connect, status, doctor, logs, policy-add, policy-remove, policy-list, skill, snapshot, share, rebuild, shields, config, channels, gateway-token, destroy";
+
+function printDispatchUsageError(
+  result: Extract<DispatchResult, { kind: "usageError" }>,
+  sandboxName?: string,
+): never {
+  if (result.lines.length === 0) {
+    help();
+    process.exit(1);
+  }
+
+  const [usage, ...details] = result.lines;
+  console.error(`  Usage: ${CLI_NAME} ${sandboxName ? `${sandboxName} ` : ""}${usage}`);
+  for (const line of details) {
+    console.error(`    ${line}`);
+  }
+  process.exit(1);
+}
+
+async function runDispatchResult(
+  result: DispatchResult,
+  opts: { sandboxName?: string; actionArgs?: string[] } = {},
+): Promise<void> {
+  switch (result.kind) {
+    case "oclif":
+      await runOclif(result.commandId, result.args);
+      return;
+    case "help":
+      printSandboxActionUsage(result.usage);
+      return;
+    case "usageError":
+      printDispatchUsageError(result, opts.sandboxName);
+    case "unknownSubcommand":
+      if (result.command === "credentials") {
+        console.error(`  Unknown credentials subcommand: ${result.subcommand}`);
+        console.error(`  Run '${CLI_NAME} credentials help' for usage.`);
+      } else {
+        console.error(`  Unknown channels subcommand: ${result.subcommand}`);
+        console.error(
+          `  Usage: ${CLI_NAME} <name> channels <list|add|remove|stop|start> [args]`,
+        );
+        console.error("    list                  List supported messaging channels");
+        console.error("    add <channel>         Store credentials and rebuild the sandbox");
+        console.error("    remove <channel>      Clear credentials and rebuild the sandbox");
+        console.error("    stop <channel>        Disable channel without wiping credentials");
+        console.error("    start <channel>       Re-enable a previously stopped channel");
+      }
+      process.exit(1);
+    case "unknownAction":
+      console.error(`  Unknown action: ${result.action}`);
+      console.error(`  Valid actions: ${VALID_SANDBOX_ACTIONS}`);
+      process.exit(1);
+    case "legacy": {
+      const sandboxName = opts.sandboxName;
+      const actionArgs = opts.actionArgs ?? [];
+      if (!sandboxName) {
+        throw new Error(`Missing sandbox name for legacy dispatch target ${result.target}`);
+      }
+      switch (result.target) {
+        case "doctor":
+          await sandboxDoctor(sandboxName, actionArgs);
+          return;
+        case "policy-add":
+          await sandboxPolicyAdd(sandboxName, actionArgs);
+          return;
+        case "skill":
+          await sandboxSkillInstall(sandboxName, actionArgs);
+          return;
+        case "snapshot":
+          await sandboxSnapshot(sandboxName, actionArgs);
+          return;
+        default:
+          throw new Error(`Unhandled legacy dispatch target ${result.target}`);
+      }
+    }
+  }
+}
+
 // ── Dispatch ─────────────────────────────────────────────────────
 
 const [cmd, ...args] = process.argv.slice(2);
@@ -4785,60 +4860,7 @@ const mainPromise = (async () => {
 
   // Global commands
   if (GLOBAL_COMMANDS.has(cmd)) {
-    switch (cmd) {
-      case "onboard":
-        await runOclif("onboard", args);
-        break;
-      case "setup":
-        await runOclif("setup", args);
-        break;
-      case "setup-spark":
-        await runOclif("setup-spark", args);
-        break;
-      case "deploy":
-        await runOclif("deploy", args);
-        break;
-      case "start":
-        await start(args);
-        break;
-      case "stop":
-        await stop(args);
-        break;
-      case "tunnel":
-        await tunnel(args);
-        break;
-      case "status":
-        await showStatus(args);
-        break;
-      case "debug":
-        await debug(args);
-        break;
-      case "uninstall":
-        await uninstall(args);
-        break;
-      case "credentials":
-        await credentialsCommand(args);
-        break;
-      case "list":
-        await listSandboxes(args);
-        break;
-      case "backup-all":
-        await runOclif("backup-all", args);
-        break;
-      case "upgrade-sandboxes":
-        await runOclif("upgrade-sandboxes", args);
-        break;
-      case "gc":
-        await runOclif("gc", args);
-        break;
-      case "--version":
-      case "-v":
-        await runOclif("root:version", []);
-        break;
-      default:
-        help();
-        break;
-    }
+    await runDispatchResult(resolveGlobalOclifDispatch(cmd, args));
     return;
   }
 
@@ -4906,260 +4928,13 @@ const mainPromise = (async () => {
     validateName(cmd, "sandbox name");
     const action = requestedSandboxAction;
     const actionArgs = requestedSandboxActionArgs;
-
-    switch (action) {
-      case "connect":
-        parseSandboxConnectArgs(cmd, actionArgs);
-        await runOclif("sandbox:connect", [cmd, ...actionArgs]);
-        break;
-      case "status":
-        if (hasHelpFlag(actionArgs)) {
-          printSandboxActionUsage("status");
-          break;
-        }
-        await runOclif("sandbox:status", [cmd, ...actionArgs]);
-        break;
-      case "doctor":
-        await sandboxDoctor(cmd, actionArgs);
-        break;
-      case "logs":
-        if (hasHelpFlag(actionArgs)) {
-          printSandboxActionUsage("logs [--follow]");
-          break;
-        }
-        await runOclif("sandbox:logs", [cmd, ...actionArgs]);
-        break;
-      case "policy-add":
-        if (hasHelpFlag(actionArgs)) {
-          printSandboxActionUsage(
-            "policy-add [preset] [--yes|-y] [--dry-run] [--from-file <path>] [--from-dir <path>]",
-          );
-          break;
-        }
-        if (
-          hasMissingFlagValue(actionArgs, "--from-file") ||
-          hasMissingFlagValue(actionArgs, "--from-dir")
-        ) {
-          await sandboxPolicyAdd(cmd, actionArgs);
-          break;
-        }
-        await runOclif("sandbox:policy-add", [cmd, ...actionArgs]);
-        break;
-      case "policy-remove":
-        if (hasHelpFlag(actionArgs)) {
-          printSandboxActionUsage("policy-remove [preset] [--yes|-y] [--dry-run]");
-          break;
-        }
-        await runOclif("sandbox:policy-remove", [cmd, ...actionArgs]);
-        break;
-      case "policy-list":
-        if (hasHelpFlag(actionArgs)) {
-          printSandboxActionUsage("policy-list");
-          break;
-        }
-        await runOclif("sandbox:policy-list", [cmd, ...actionArgs]);
-        break;
-      case "destroy":
-        if (hasHelpFlag(actionArgs)) {
-          printSandboxActionUsage("destroy [--yes|--force]");
-          break;
-        }
-        await runOclif("sandbox:destroy", [cmd, ...actionArgs]);
-        break;
-      case "gateway-token":
-        if (actionArgs.includes("--help") || actionArgs.includes("-h")) {
-          console.log(`  Usage: ${CLI_NAME} <name> gateway-token [--quiet|-q]`);
-          break;
-        }
-        await runOclif("sandbox:gateway-token", [cmd, ...actionArgs]);
-        break;
-      case "skill": {
-        const skillSub = actionArgs[0];
-        const skillArgs = actionArgs.slice(1);
-        if (!skillSub || skillSub === "help" || skillSub === "--help" || skillSub === "-h") {
-          await sandboxSkillInstall(cmd, actionArgs);
-        } else if (skillSub === "install") {
-          if (hasHelpFlag(skillArgs)) {
-            await sandboxSkillInstall(cmd, actionArgs);
-          } else {
-            await runOclif("sandbox:skill:install", [cmd, ...skillArgs]);
-          }
-        } else {
-          await sandboxSkillInstall(cmd, actionArgs);
-        }
-        break;
-      }
-      case "rebuild":
-        if (hasHelpFlag(actionArgs)) {
-          printSandboxActionUsage("rebuild [--yes|--force] [--verbose|-v]");
-          break;
-        }
-        await runOclif("sandbox:rebuild", [cmd, ...actionArgs]);
-        break;
-      case "snapshot": {
-        const snapshotSub = actionArgs[0];
-        const snapshotArgs = actionArgs.slice(1);
-        switch (snapshotSub) {
-          case "list":
-            if (hasHelpFlag(snapshotArgs)) {
-              printSandboxActionUsage("snapshot list");
-              break;
-            }
-            await runOclif("sandbox:snapshot:list", [cmd, ...snapshotArgs]);
-            break;
-          case "create":
-            if (hasHelpFlag(snapshotArgs)) {
-              printSandboxActionUsage("snapshot create [--name <name>]");
-              break;
-            }
-            await runOclif("sandbox:snapshot:create", [cmd, ...snapshotArgs]);
-            break;
-          case "restore":
-            if (hasHelpFlag(snapshotArgs)) {
-              printSandboxActionUsage("snapshot restore [selector] [--to <dst>]");
-              break;
-            }
-            await runOclif("sandbox:snapshot:restore", [cmd, ...snapshotArgs]);
-            break;
-          default:
-            await sandboxSnapshot(cmd, actionArgs);
-            break;
-        }
-        break;
-      }
-      case "share":
-        await runRegisteredOclifCommand("share", [cmd, ...actionArgs], {
-          rootDir: ROOT,
-          error: console.error,
-          exit: (code: number) => process.exit(code),
-        });
-        break;
-      case "shields": {
-        const shieldsSub = actionArgs[0];
-        const shieldsArgs = actionArgs.slice(1);
-        switch (shieldsSub) {
-          case "down":
-            if (hasHelpFlag(shieldsArgs)) {
-              printSandboxActionUsage(
-                "shields down [--timeout 5m] [--reason 'text'] [--policy permissive]",
-              );
-              break;
-            }
-            await runOclif("sandbox:shields:down", [cmd, ...shieldsArgs]);
-            break;
-          case "up":
-            if (hasHelpFlag(shieldsArgs)) {
-              printSandboxActionUsage("shields up");
-              break;
-            }
-            await runOclif("sandbox:shields:up", [cmd, ...shieldsArgs]);
-            break;
-          case "status":
-            if (hasHelpFlag(shieldsArgs)) {
-              printSandboxActionUsage("shields status");
-              break;
-            }
-            await runOclif("sandbox:shields:status", [cmd, ...shieldsArgs]);
-            break;
-          default:
-            console.error(`  Usage: ${CLI_NAME} <name> shields <down|up|status>`);
-            console.error("    down  [--timeout 5m] [--reason 'text'] [--policy permissive]");
-            console.error("    up    Restore policy from snapshot");
-            console.error("    status  Show current shields state");
-            process.exit(1);
-        }
-        break;
-      }
-      case "channels": {
-        const channelsSub = actionArgs[0];
-        const channelsArgs = actionArgs.slice(1);
-        switch (channelsSub) {
-          case "list":
-            if (hasHelpFlag(channelsArgs)) {
-              printSandboxActionUsage("channels list");
-              break;
-            }
-            await runOclif("sandbox:channels:list", [cmd, ...channelsArgs]);
-            break;
-          case undefined:
-          case "":
-            await runOclif("sandbox:channels:list", [cmd]);
-            break;
-          case "add":
-            if (hasHelpFlag(channelsArgs)) {
-              printSandboxActionUsage("channels add <channel> [--dry-run]");
-              break;
-            }
-            await runOclif("sandbox:channels:add", [cmd, ...channelsArgs]);
-            break;
-          case "remove":
-            if (hasHelpFlag(channelsArgs)) {
-              printSandboxActionUsage("channels remove <channel> [--dry-run]");
-              break;
-            }
-            await runOclif("sandbox:channels:remove", [cmd, ...channelsArgs]);
-            break;
-          case "stop":
-            if (hasHelpFlag(channelsArgs)) {
-              printSandboxActionUsage("channels stop <channel> [--dry-run]");
-              break;
-            }
-            await runOclif("sandbox:channels:stop", [cmd, ...channelsArgs]);
-            break;
-          case "start":
-            if (hasHelpFlag(channelsArgs)) {
-              printSandboxActionUsage("channels start <channel> [--dry-run]");
-              break;
-            }
-            await runOclif("sandbox:channels:start", [cmd, ...channelsArgs]);
-            break;
-          case "--help":
-          case "-h":
-            printSandboxActionUsage("channels list");
-            break;
-          default:
-            console.error(`  Unknown channels subcommand: ${channelsSub}`);
-            console.error(
-              `  Usage: ${CLI_NAME} <name> channels <list|add|remove|stop|start> [args]`,
-            );
-            console.error("    list                  List supported messaging channels");
-            console.error("    add <channel>         Store credentials and rebuild the sandbox");
-            console.error("    remove <channel>      Clear credentials and rebuild the sandbox");
-            console.error("    stop <channel>        Disable channel without wiping credentials");
-            console.error("    start <channel>       Re-enable a previously stopped channel");
-            process.exit(1);
-        }
-        break;
-      }
-      case "config": {
-        const configSub = actionArgs[0];
-        switch (configSub) {
-          case "get":
-            if (hasHelpFlag(actionArgs.slice(1))) {
-              printSandboxActionUsage("config get [--key dotpath] [--format json|yaml]");
-              break;
-            }
-            await runOclif("sandbox:config:get", [cmd, ...actionArgs.slice(1)]);
-            break;
-          case "--help":
-          case "-h":
-            printSandboxActionUsage("config get [--key dotpath] [--format json|yaml]");
-            break;
-          default:
-            console.error(
-              `  Usage: ${CLI_NAME} <name> config get [--key dotpath] [--format json|yaml]`,
-            );
-            process.exit(1);
-        }
-        break;
-      }
-      default:
-        console.error(`  Unknown action: ${action}`);
-        console.error(
-          `  Valid actions: connect, status, doctor, logs, policy-add, policy-remove, policy-list, skill, snapshot, share, rebuild, shields, config, channels, gateway-token, destroy`,
-        );
-        process.exit(1);
+    if (action === "connect") {
+      parseSandboxConnectArgs(cmd, actionArgs);
     }
+    await runDispatchResult(resolveSandboxOclifDispatch(cmd, action, actionArgs), {
+      sandboxName: cmd,
+      actionArgs,
+    });
     return;
   }
 
