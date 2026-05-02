@@ -646,6 +646,7 @@ exports.garbageCollectImages = garbageCollectImages;
 exports.recoverNamedGatewayRuntime = recoverNamedGatewayRuntime;
 exports.recoverRegistryEntries = recoverRegistryEntries;
 exports.runOpenshell = runOpenshell;
+exports.sandboxDestroy = sandboxDestroy;
 exports.sandboxChannelsAdd = sandboxChannelsAdd;
 exports.sandboxChannelsList = sandboxChannelsList;
 exports.sandboxChannelsRemove = sandboxChannelsRemove;
@@ -4943,7 +4944,11 @@ const mainPromise = (async () => {
         await runOclif("sandbox:policy-list", [cmd, ...actionArgs]);
         break;
       case "destroy":
-        await sandboxDestroy(cmd, actionArgs);
+        if (hasHelpFlag(actionArgs)) {
+          printSandboxActionUsage("destroy [--yes|--force]");
+          break;
+        }
+        await runOclif("sandbox:destroy", [cmd, ...actionArgs]);
         break;
       case "gateway-token":
         if (actionArgs.includes("--help") || actionArgs.includes("-h")) {
