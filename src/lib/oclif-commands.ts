@@ -14,6 +14,7 @@ import {
 } from "./credentials-cli-command";
 import ConnectCliCommand from "./connect-cli-command";
 import DebugCliCommand from "./debug-cli-command";
+import DeployCliCommand from "./deploy-cli-command";
 import DestroyCliCommand from "./destroy-cli-command";
 import GatewayTokenCliCommand from "./gateway-token-cli-command";
 import ListCommand from "./list-command";
@@ -58,6 +59,7 @@ export default {
   "credentials:list": CredentialsListCommand,
   "credentials:reset": CredentialsResetCommand,
   debug: DebugCliCommand,
+  deploy: DeployCliCommand,
   list: ListCommand,
   "sandbox:channels:add": ChannelsAddCommand,
   "sandbox:channels:list": SandboxChannelsListCommand,

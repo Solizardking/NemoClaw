@@ -646,6 +646,7 @@ async function recoverRegistryEntries({
 
 exports.captureOpenshell = captureOpenshell;
 exports.backupAll = backupAll;
+exports.deploy = deploy;
 exports.garbageCollectImages = garbageCollectImages;
 exports.recoverNamedGatewayRuntime = recoverNamedGatewayRuntime;
 exports.recoverRegistryEntries = recoverRegistryEntries;
@@ -4786,7 +4787,7 @@ const mainPromise = (async () => {
         await setupSpark(args);
         break;
       case "deploy":
-        await deploy(args[0]);
+        await runOclif("deploy", args);
         break;
       case "start":
         await start(args);

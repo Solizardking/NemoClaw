@@ -851,6 +851,13 @@ describe("CLI dispatch", () => {
     expect(r.out.includes("No resumable onboarding session was found")).toBeTruthy();
   });
 
+  it("deploy --help exits 0 and shows deprecated usage", () => {
+    const r = run("deploy --help");
+    expect(r.code).toBe(0);
+    expect(r.out).toContain("deploy [instance-name]");
+    expect(r.out).toContain("Deprecated Brev-specific bootstrap path");
+  });
+
   it("debug --help exits 0 and shows usage", () => {
     const r = run("debug --help");
     expect(r.code).toBe(0);
