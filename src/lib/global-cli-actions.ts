@@ -15,6 +15,7 @@ import {
 } from "./onboard-action";
 import { recoverNamedGatewayRuntime as recoverNamedGatewayRuntimeAction } from "./gateway-runtime-action";
 import { getNemoClawRuntimeBridge } from "./nemoclaw-runtime-bridge";
+import { runOpenshell } from "./openshell-runtime";
 import { help, version } from "./root-help-action";
 
 export async function runOnboardAction(args: string[] = []): Promise<void> {
@@ -72,5 +73,11 @@ export function runOpenshellProviderCommand(
     timeout?: number;
   },
 ) {
-  return getNemoClawRuntimeBridge().runOpenshell(args, opts);
+  const runtime = getNemoClawRuntimeBridge() as {
+    runOpenshell?: typeof runOpenshell;
+  };
+  if (typeof runtime.runOpenshell === "function") {
+    return runtime.runOpenshell(args, opts);
+  }
+  return runOpenshell(args, opts);
 }

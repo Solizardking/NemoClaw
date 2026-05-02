@@ -3,26 +3,11 @@
 
 /* v8 ignore start -- transitional bridge until command actions are extracted from src/nemoclaw.ts. */
 
-export interface SpawnLikeResult {
-  status: number | null;
-  stdout?: string | Buffer;
-  stderr?: string | Buffer;
-}
-
 export interface SandboxConnectOptions {
   probeOnly?: boolean;
 }
 
 export interface NemoClawRuntimeBridge {
-  runOpenshell: (
-    args: string[],
-    opts?: {
-      env?: Record<string, string | undefined>;
-      ignoreError?: boolean;
-      stdio?: import("node:child_process").StdioOptions;
-      timeout?: number;
-    },
-  ) => SpawnLikeResult;
   sandboxConnect: (sandboxName: string, options?: SandboxConnectOptions) => Promise<void>;
   sandboxDestroy: (sandboxName: string, args?: string[]) => Promise<void>;
   sandboxLogs: (sandboxName: string, follow: boolean) => void;
