@@ -6,18 +6,7 @@
 import { Args, Command, Flags } from "@oclif/core";
 
 import { CLI_NAME } from "./branding";
-
-type SandboxConnectOptions = {
-  probeOnly?: boolean;
-};
-
-type RuntimeBridge = {
-  sandboxConnect: (sandboxName: string, options?: SandboxConnectOptions) => Promise<void>;
-};
-
-function getRuntimeBridge(): RuntimeBridge {
-  return require("../nemoclaw") as RuntimeBridge;
-}
+import { getNemoClawRuntimeBridge } from "./nemoclaw-runtime-bridge";
 
 export default class ConnectCliCommand extends Command {
   static id = "sandbox:connect";
@@ -41,7 +30,7 @@ export default class ConnectCliCommand extends Command {
       console.error(`  Usage: ${CLI_NAME} <name> connect [--probe-only]`);
       process.exit(1);
     }
-    await getRuntimeBridge().sandboxConnect(args.sandboxName, {
+    await getNemoClawRuntimeBridge().sandboxConnect(args.sandboxName, {
       probeOnly: Boolean(flags["probe-only"]),
     });
   }
