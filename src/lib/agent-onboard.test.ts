@@ -128,10 +128,10 @@ describe("handleAgentSetup guards", () => {
     const source = fs.readFileSync(path.join(import.meta.dirname, "agent-onboard.ts"), "utf-8");
 
     expect(source).toContain("verifyAgentBinaryAvailable");
-    expect(source).toContain("[ -e ${shellQuote(binaryPath)} ]");
-    expect(source).toContain("[ -x ${shellQuote(binaryPath)} ]");
-    expect(source).not.toContain('[ -n "$resolved" ] || { echo not_found');
-    expect(source).not.toContain("path_mismatch");
+    expect(source).toContain("AGENT_BINARY_CHECK_PREFIX");
+    expect(source).toContain("if [ -x ${shellQuote(binaryPath)} ]; then");
+    expect(source).toContain("exit 0");
+    expect(source).toContain(".find((line) => line.startsWith(AGENT_BINARY_CHECK_PREFIX))");
     expect(source).toMatch(
       /"sandbox",\s*"exec",\s*"-n",\s*sandboxName,\s*"--",\s*"sh",\s*"-lc",\s*script/,
     );
@@ -158,14 +158,13 @@ describe("handleAgentSetup guards", () => {
       makeAgent({ name: "hermes", binary_path: "/usr/local/bin/hermes" }),
       (args) => {
         script = String(args[7] || "");
-        return "ok";
+        return "openshell noise\nNEMOCLAW_AGENT_BINARY_CHECK:ok";
       },
     );
 
     expect(result).toEqual({ available: true });
-    expect(script).toContain("[ -e '/usr/local/bin/hermes' ]");
-    expect(script).toContain("[ -x '/usr/local/bin/hermes' ]");
-    expect(script).not.toContain("command -v 'hermes'");
+    expect(script).toContain("if [ -x '/usr/local/bin/hermes' ]; then");
+    expect(script).toContain("NEMOCLAW_AGENT_BINARY_CHECK:ok");
   });
 
   it("does not reject a configured binary when PATH resolves the symlink target", () => {
@@ -175,11 +174,11 @@ describe("handleAgentSetup guards", () => {
       makeAgent({ name: "hermes", binary_path: "/usr/local/bin/hermes" }),
       (args) => {
         script = String(args[7] || "");
-        return "ok";
+        return "openshell noise\nNEMOCLAW_AGENT_BINARY_CHECK:ok";
       },
     );
 
     expect(result).toEqual({ available: true });
-    expect(script).not.toContain("path_mismatch");
+    expect(script).toContain("NEMOCLAW_AGENT_BINARY_CHECK:ok");
   });
 });

@@ -48,6 +48,23 @@ export function getHealthProbeUrl(agent: AgentDefinition | null): string {
   return agent.healthProbe?.url || `http://127.0.0.1:${DASHBOARD_PORT}/`;
 }
 
+function escapeEre(value: string): string {
+  return value.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&");
+}
+
+function escapeCharClass(value: string): string {
+  return value.replace(/[\\\]\[\^\-]/g, "\\$&");
+}
+
+function selfSafeGatewayProcessPattern(command: string): string {
+  const [executable = "", ...args] = command.trim().split(/\s+/).filter(Boolean);
+  const [first = "", ...rest] = Array.from(executable);
+  if (!first) return "";
+  const executablePattern = `[${escapeCharClass(first)}]${escapeEre(rest.join(""))}`;
+  const commandPattern = [executablePattern, ...args.map(escapeEre)].join("[[:space:]]+");
+  return `${commandPattern}([[:space:]]|$)`;
+}
+
 function buildNoFollowLogSetupCommand(
   path: string,
   logOwnerUser?: string,
@@ -125,16 +142,19 @@ function gatewayLaunchCommand(command: string, runAsUser?: string): string {
  * Build the OpenClaw recovery shell script used by the default sandbox.
  */
 export function buildOpenClawRecoveryScript(port: number): string {
+  const staleGatewayPattern = "[o]penclaw([ -]gateway| gateway run|$)";
   return [
     "if [ -r /tmp/nemoclaw-proxy-env.sh ]; then . /tmp/nemoclaw-proxy-env.sh; _PE_MISSING=0; else _PE_MISSING=1; fi;",
     "[ -f ~/.bashrc ] && . ~/.bashrc;",
-    'case "${NODE_OPTIONS:-}" in *nemoclaw-sandbox-safety-net*) _SN_MISSING=0 ;; *) _SN_MISSING=1 ;; esac; case "${NODE_OPTIONS:-}" in *nemoclaw-ciao-network-guard*) _CIAO_MISSING=0 ;; *) _CIAO_MISSING=1 ;; esac; if [ "$_SN_MISSING" = "0" ] && [ "$_CIAO_MISSING" = "0" ]; then _GUARDS_MISSING=0; else _GUARDS_MISSING=1; fi;',
+    'if [ "$_PE_MISSING" = "0" ]; then case "${NODE_OPTIONS:-}" in *nemoclaw-sandbox-safety-net*) _SN_MISSING=0 ;; *) _SN_MISSING=1 ;; esac; case "${NODE_OPTIONS:-}" in *nemoclaw-ciao-network-guard*) _CIAO_MISSING=0 ;; *) _CIAO_MISSING=1 ;; esac; if [ "$_SN_MISSING" = "0" ] && [ "$_CIAO_MISSING" = "0" ]; then _GUARDS_MISSING=0; else _GUARDS_MISSING=1; fi; else _GUARDS_MISSING=0; fi;',
     `if curl -sf --max-time 3 http://127.0.0.1:${port}/ > /dev/null 2>&1; then echo ALREADY_RUNNING; exit 0; fi;`,
     "rm -rf /tmp/openclaw-*/gateway.*.lock 2>/dev/null;",
     ...buildGatewayLogSetup(true, "gateway"),
     buildGatewayLogSelection(),
+    `_GATEWAY_PROC_PATTERN=${shellQuote(staleGatewayPattern)};`,
+    'if [ -n "$_GATEWAY_PROC_PATTERN" ]; then pkill -TERM -f "$_GATEWAY_PROC_PATTERN" 2>/dev/null || true; for _i in 1 2 3 4 5; do pgrep -f "$_GATEWAY_PROC_PATTERN" >/dev/null 2>&1 || break; sleep 1; done; pkill -KILL -f "$_GATEWAY_PROC_PATTERN" 2>/dev/null || true; for _i in 1 2 3 4 5; do pgrep -f "$_GATEWAY_PROC_PATTERN" >/dev/null 2>&1 || break; sleep 1; done; if pgrep -f "$_GATEWAY_PROC_PATTERN" >/dev/null 2>&1; then echo GATEWAY_STALE_PROCESSES; exit 1; fi; fi;',
     '[ "$_PE_MISSING" = "1" ] && { _W="[gateway-recovery] WARNING: /tmp/nemoclaw-proxy-env.sh missing - gateway launching without library guards (#2478)"; echo "$_W" >&2; echo "$_W" >> "$_GATEWAY_LOG"; };',
-    '[ "$_GUARDS_MISSING" = "1" ] && { _W="[gateway-recovery] WARNING: NODE_OPTIONS missing safety-net preload or ciao preload - gateway may crash on unhandled library errors (#2478)"; echo "$_W" >&2; echo "$_W" >> "$_GATEWAY_LOG"; };',
+    '[ "$_PE_MISSING" = "0" ] && [ "$_GUARDS_MISSING" = "1" ] && { _E="[gateway-recovery] ERROR: /tmp/nemoclaw-proxy-env.sh present but NODE_OPTIONS missing safety-net preload or ciao preload - refusing unguarded gateway relaunch (#2478)"; echo "$_E" >&2; echo "$_E" >> "$_GATEWAY_LOG"; exit 1; };',
     'OPENCLAW="$(command -v openclaw)";',
     'if [ -z "$OPENCLAW" ]; then echo OPENCLAW_MISSING; exit 1; fi;',
     gatewayLaunchCommand('"$OPENCLAW" gateway run --port ' + port, "gateway"),
@@ -158,6 +178,7 @@ export function buildRecoveryScript(agent: AgentDefinition | null, port: number)
   const configuredGatewayCommand = agent.gateway_command?.trim() || defaultGatewayCommand;
   const usesValidatedBinary = configuredGatewayCommand === defaultGatewayCommand;
   const customGatewayExecutable = configuredGatewayCommand.split(/\s+/)[0] ?? binaryName;
+  const staleGatewayPattern = selfSafeGatewayProcessPattern(configuredGatewayCommand);
   const validationSteps = usesValidatedBinary
     ? [
         `AGENT_BIN=${shellQuote(binaryPath)}; if [ ! -x "$AGENT_BIN" ]; then AGENT_BIN="$(command -v ${shellQuote(binaryName)})"; fi;`,
@@ -178,34 +199,26 @@ export function buildRecoveryScript(agent: AgentDefinition | null, port: number)
   const isHermes = agent.name === "hermes";
   const hermesHome = isHermes ? "export HERMES_HOME=/sandbox/.hermes; " : "";
 
-  // Source /tmp/nemoclaw-proxy-env.sh explicitly before launching. That file
+  // Source /tmp/nemoclaw-proxy-env.sh immediately before launching. That file
   // is the single source of truth for NODE_OPTIONS preload guards (safety-net,
-  // ciao networkInterfaces, slack, http-proxy, ws-proxy, nemotron). On the
-  // first start it reaches the gateway transitively via .bashrc, but on
-  // gateway respawn (laptop sleep, health-monitor restart) silent sourcing
-  // failures left guards out of NODE_OPTIONS and the gateway crash-looped
-  // on the next library error (#2478). Source it explicitly, log when the
-  // file is missing, and warn when the safety-net preload is not in the
-  // resulting NODE_OPTIONS so future regressions stay observable instead
-  // of silently regressing into a crash loop.
-  // Source proxy-env.sh and check NODE_OPTIONS first, but defer warning
-  // emission until AFTER touch+chmod gateway.log so warnings land in the
-  // fresh log a sysadmin would tail. Writing to stderr alone hides them
-  // because the recovery script's stderr is captured by executeSandboxCommand
-  // (returned to nemoclaw status, not displayed). Routing them through
-  // /tmp/gateway.log makes the diagnostic discoverable for both real users
-  // and the #2478 e2e regression test.
+  // ciao networkInterfaces, slack, http-proxy, ws-proxy, nemotron). Recovery
+  // also stops stale launcher/gateway processes that may have respawned
+  // between the health probe and relaunch. A missing env file remains warning-
+  // only; a present env file that does not install required guards is a hard
+  // failure because launching would create an unguarded gateway.
   return [
-    "if [ -r /tmp/nemoclaw-proxy-env.sh ]; then . /tmp/nemoclaw-proxy-env.sh; _PE_MISSING=0; else _PE_MISSING=1; fi;",
     "[ -f ~/.bashrc ] && . ~/.bashrc;",
-    'case "${NODE_OPTIONS:-}" in *nemoclaw-sandbox-safety-net*) _SN_MISSING=0 ;; *) _SN_MISSING=1 ;; esac; case "${NODE_OPTIONS:-}" in *nemoclaw-ciao-network-guard*) _CIAO_MISSING=0 ;; *) _CIAO_MISSING=1 ;; esac; if [ "$_SN_MISSING" = "0" ] && [ "$_CIAO_MISSING" = "0" ]; then _GUARDS_MISSING=0; else _GUARDS_MISSING=1; fi;',
     hermesHome,
     `if curl -sf --max-time 3 ${shellQuote(probeUrl)} > /dev/null 2>&1; then echo ALREADY_RUNNING; exit 0; fi;`,
     ...buildGatewayLogSetup(false),
     buildGatewayLogSelection(),
-    '[ "$_PE_MISSING" = "1" ] && { _W="[gateway-recovery] WARNING: /tmp/nemoclaw-proxy-env.sh missing - gateway launching without library guards (#2478)"; echo "$_W" >&2; echo "$_W" >> "$_GATEWAY_LOG"; };',
-    '[ "$_GUARDS_MISSING" = "1" ] && { _W="[gateway-recovery] WARNING: NODE_OPTIONS missing safety-net preload or ciao preload - gateway may crash on unhandled library errors (#2478)"; echo "$_W" >&2; echo "$_W" >> "$_GATEWAY_LOG"; };',
+    `_GATEWAY_PROC_PATTERN=${shellQuote(staleGatewayPattern)};`,
+    'if [ -n "$_GATEWAY_PROC_PATTERN" ]; then pkill -TERM -f "$_GATEWAY_PROC_PATTERN" 2>/dev/null || true; for _i in 1 2 3 4 5; do pgrep -f "$_GATEWAY_PROC_PATTERN" >/dev/null 2>&1 || break; sleep 1; done; pkill -KILL -f "$_GATEWAY_PROC_PATTERN" 2>/dev/null || true; for _i in 1 2 3 4 5; do pgrep -f "$_GATEWAY_PROC_PATTERN" >/dev/null 2>&1 || break; sleep 1; done; if pgrep -f "$_GATEWAY_PROC_PATTERN" >/dev/null 2>&1; then echo GATEWAY_STALE_PROCESSES; exit 1; fi; fi;',
     ...validationSteps,
+    "if [ -r /tmp/nemoclaw-proxy-env.sh ]; then . /tmp/nemoclaw-proxy-env.sh; _PE_MISSING=0; else _PE_MISSING=1; fi;",
+    'if [ "$_PE_MISSING" = "0" ]; then case "${NODE_OPTIONS:-}" in *nemoclaw-sandbox-safety-net*) _SN_MISSING=0 ;; *) _SN_MISSING=1 ;; esac; case "${NODE_OPTIONS:-}" in *nemoclaw-ciao-network-guard*) _CIAO_MISSING=0 ;; *) _CIAO_MISSING=1 ;; esac; if [ "$_SN_MISSING" = "0" ] && [ "$_CIAO_MISSING" = "0" ]; then _GUARDS_MISSING=0; else _GUARDS_MISSING=1; fi; else _GUARDS_MISSING=0; fi;',
+    '[ "$_PE_MISSING" = "1" ] && { _W="[gateway-recovery] WARNING: /tmp/nemoclaw-proxy-env.sh missing - gateway launching without library guards (#2478)"; echo "$_W" >&2; echo "$_W" >> "$_GATEWAY_LOG"; };',
+    '[ "$_PE_MISSING" = "0" ] && [ "$_GUARDS_MISSING" = "1" ] && { _E="[gateway-recovery] ERROR: /tmp/nemoclaw-proxy-env.sh present but NODE_OPTIONS missing safety-net preload or ciao preload - refusing unguarded gateway relaunch (#2478)"; echo "$_E" >&2; echo "$_E" >> "$_GATEWAY_LOG"; exit 1; };',
     launchCommand,
     "GPID=$!; sleep 2;",
     'if kill -0 "$GPID" 2>/dev/null; then echo "GATEWAY_PID=$GPID"; else echo GATEWAY_FAILED; tail -5 "$_GATEWAY_LOG" 2>/dev/null; fi',

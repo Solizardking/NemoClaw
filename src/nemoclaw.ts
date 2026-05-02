@@ -292,6 +292,9 @@ function executeSandboxExecCommand(
   timeout = 15000,
 ): SandboxCommandResult | null {
   const markedCommand = `printf '%s\\n' '${SANDBOX_EXEC_STARTED_MARKER}'; ${command}`;
+  const timeoutOverride = Number(process.env.NEMOCLAW_SANDBOX_EXEC_TIMEOUT_MS || "");
+  const effectiveTimeout =
+    Number.isFinite(timeoutOverride) && timeoutOverride > 0 ? timeoutOverride : timeout;
   try {
     const result = spawnSync(
       getOpenshellBinary(),
@@ -301,16 +304,17 @@ function executeSandboxExecCommand(
         encoding: "utf-8",
         env: process.env,
         stdio: ["ignore", "pipe", "pipe"],
-        timeout,
+        timeout: effectiveTimeout,
       },
     );
+    if (result.error) return null;
     const stdout = (result.stdout || "").trim();
     const stdoutLines = stdout.split(/\r?\n/);
     const markerIndex = stdoutLines.indexOf(SANDBOX_EXEC_STARTED_MARKER);
     if (markerIndex === -1) return null;
     const commandStdoutLines = stdoutLines.slice(markerIndex + 1);
     return {
-      status: result.error ? 1 : (result.status ?? 1),
+      status: result.status ?? 1,
       stdout: commandStdoutLines.join("\n").trim(),
       stderr: (result.stderr || "").trim(),
     };

@@ -42,6 +42,16 @@ function makeAgent(overrides: Partial<AgentDefinition> = {}): AgentDefinition {
 
 const minimalAgent = makeAgent();
 
+function extractGatewayProcessPattern(script: string | null): string {
+  const match = script?.match(/_GATEWAY_PROC_PATTERN='([^']+)'/);
+  expect(match).toBeTruthy();
+  return match?.[1] ?? "";
+}
+
+function toJsRegex(pattern: string): RegExp {
+  return new RegExp(pattern.replaceAll("[[:space:]]", "\\s"));
+}
+
 describe("buildRecoveryScript", () => {
   it("returns null for null agent (OpenClaw inline script handles it)", () => {
     expect(buildRecoveryScript(null, 18789)).toBeNull();
@@ -74,6 +84,12 @@ describe("buildRecoveryScript", () => {
     const script = buildRecoveryScript(agent, 19000);
     expect(script).toContain("GATEWAY_CMD_BIN='custom-launch'");
     expect(script).toContain('command -v "$GATEWAY_CMD_BIN" >/dev/null 2>&1');
+    expect(script).toContain(
+      "_GATEWAY_PROC_PATTERN='[c]ustom-launch[[:space:]]+--mode[[:space:]]+recovery([[:space:]]|$)'",
+    );
+    expect("custom-launch --mode recovery --port 19000").toMatch(
+      toJsRegex(extractGatewayProcessPattern(script)),
+    );
     expect(script).toContain("nohup custom-launch --mode recovery --port 19000");
   });
 
@@ -111,14 +127,34 @@ describe("buildRecoveryScript", () => {
       expect(script).toContain("or ciao preload");
     });
 
+    it("stops stale launcher and gateway processes before relaunch", () => {
+      const script = buildRecoveryScript(minimalAgent, 19000);
+      expect(script).toContain(
+        "_GATEWAY_PROC_PATTERN='[t]est-agent[[:space:]]+gateway[[:space:]]+run([[:space:]]|$)'",
+      );
+      expect(script).toContain('pkill -TERM -f "$_GATEWAY_PROC_PATTERN"');
+      expect(script).toContain('pkill -KILL -f "$_GATEWAY_PROC_PATTERN"');
+      expect(script).toContain("GATEWAY_STALE_PROCESSES");
+    });
+
     it("sources proxy-env.sh BEFORE launching the gateway binary", () => {
       const script = buildRecoveryScript(minimalAgent, 19000);
       expect(script).not.toBeNull();
-      const sourceIdx = script!.indexOf("/tmp/nemoclaw-proxy-env.sh");
-      const launchIdx = script!.indexOf("gateway run");
+      const staleStopIdx = script!.indexOf('pkill -TERM -f "$_GATEWAY_PROC_PATTERN"');
+      const sourceIdx = script!.indexOf("then . /tmp/nemoclaw-proxy-env.sh");
+      const launchIdx = script!.indexOf("nohup");
+      expect(staleStopIdx).toBeGreaterThanOrEqual(0);
       expect(sourceIdx).toBeGreaterThanOrEqual(0);
       expect(launchIdx).toBeGreaterThanOrEqual(0);
+      expect(staleStopIdx).toBeLessThan(sourceIdx);
       expect(sourceIdx).toBeLessThan(launchIdx);
+    });
+
+    it("fails recovery when an existing proxy-env.sh does not install required guards", () => {
+      const script = buildRecoveryScript(minimalAgent, 19000);
+      expect(script).toContain('if [ "$_PE_MISSING" = "0" ]');
+      expect(script).toContain("refusing unguarded gateway relaunch");
+      expect(script).toContain('echo "$_E" >> "$_GATEWAY_LOG"; exit 1');
     });
 
     it("writes the warning to gateway.log so it persists for sysadmin tail", () => {

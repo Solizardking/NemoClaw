@@ -2376,6 +2376,84 @@ describe("CLI dispatch", () => {
     expect(sshLog).not.toMatch(/(^|\s)-tt?(\s|$)/);
   });
 
+  it("connect --probe-only falls back to SSH when sandbox exec times out after starting", () => {
+    const home = fs.mkdtempSync(
+      path.join(os.tmpdir(), "nemoclaw-cli-connect-probe-exec-timeout-"),
+    );
+    const localBin = path.join(home, "bin");
+    const openshellCalls = path.join(home, "openshell-calls");
+    const sshCalls = path.join(home, "ssh-calls");
+    const stateFile = path.join(home, "probe-state");
+    fs.mkdirSync(localBin, { recursive: true });
+    writeSandboxRegistry(home);
+    fs.writeFileSync(stateFile, "stopped");
+    fs.writeFileSync(
+      path.join(localBin, "openshell"),
+      [
+        "#!/usr/bin/env bash",
+        `calls=${JSON.stringify(openshellCalls)}`,
+        'printf \'%s\\n\' "$*" >> "$calls"',
+        'if [ "$1" = "sandbox" ] && [ "$2" = "get" ] && [ "$3" = "alpha" ]; then',
+        "  echo 'Sandbox:'",
+        "  echo",
+        "  echo '  Id: abc'",
+        "  echo '  Name: alpha'",
+        "  echo '  Namespace: openshell'",
+        "  echo '  Phase: Ready'",
+        "  exit 0",
+        "fi",
+        'if [ "$1" = "sandbox" ] && [ "$2" = "exec" ]; then',
+        "  echo '__NEMOCLAW_SANDBOX_EXEC_STARTED__'",
+        "  sleep 1",
+        "  exit 0",
+        "fi",
+        'if [ "$1" = "sandbox" ] && [ "$2" = "ssh-config" ] && [ "$3" = "alpha" ]; then',
+        "  echo 'Host openshell-alpha'",
+        "  echo '  HostName 127.0.0.1'",
+        "  echo '  User sandbox'",
+        "  exit 0",
+        "fi",
+        "exit 0",
+      ].join("\n"),
+      { mode: 0o755 },
+    );
+    fs.writeFileSync(
+      path.join(localBin, "ssh"),
+      [
+        "#!/usr/bin/env bash",
+        `calls=${JSON.stringify(sshCalls)}`,
+        `state_file=${JSON.stringify(stateFile)}`,
+        'cmd="${@: -1}"',
+        'printf \'CMD %s\\n\' "$cmd" >> "$calls"',
+        'if [[ "$cmd" == *"OPENCLAW="* ]]; then',
+        '  echo recovered > "$state_file"',
+        "  echo 'GATEWAY_PID=789'",
+        "  exit 0",
+        "fi",
+        'if [[ "$cmd" == *"curl -sf"* ]]; then',
+        '  if [ "$(cat "$state_file")" = recovered ]; then echo RUNNING; else echo STOPPED; fi',
+        "  exit 0",
+        "fi",
+        "exit 1",
+      ].join("\n"),
+      { mode: 0o755 },
+    );
+
+    const r = runWithEnv("alpha connect --probe-only", {
+      HOME: home,
+      PATH: `${localBin}:${process.env.PATH || ""}`,
+      NEMOCLAW_SANDBOX_EXEC_TIMEOUT_MS: "50",
+    });
+
+    expect(r.code).toBe(0);
+    expect(r.out).toContain("Probe complete: recovered OpenClaw gateway");
+    const openshellLog = fs.readFileSync(openshellCalls, "utf8");
+    const sshLog = fs.readFileSync(sshCalls, "utf8");
+    expect(openshellLog).toContain("sandbox exec --name alpha -- sh -c");
+    expect(openshellLog).toContain("sandbox ssh-config alpha");
+    expect(sshLog).toContain('OPENCLAW="$(command -v openclaw)"');
+  });
+
   it("recovers non-OpenClaw agents over SSH instead of root sandbox exec", () => {
     const home = fs.mkdtempSync(path.join(os.tmpdir(), "nemoclaw-cli-connect-probe-agent-"));
     const localBin = path.join(home, "bin");
