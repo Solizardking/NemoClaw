@@ -4845,48 +4845,30 @@ const [cmd, ...args] = process.argv.slice(2);
         break;
       case "shields": {
         const shieldsSub = actionArgs[0];
-        const shieldsFlags = actionArgs.slice(1);
+        const shieldsArgs = actionArgs.slice(1);
         switch (shieldsSub) {
-          case "down": {
-            const opts: { timeout: string | null; reason: string | null; policy: string } = {
-              timeout: null,
-              reason: null,
-              policy: "permissive",
-            };
-            for (let i = 0; i < shieldsFlags.length; i++) {
-              if (shieldsFlags[i] === "--timeout") {
-                if (i + 1 >= shieldsFlags.length || shieldsFlags[i + 1].startsWith("--")) {
-                  console.error("  --timeout requires a value (e.g. 5m, 30m, 300)");
-                  process.exit(1);
-                }
-                opts.timeout = shieldsFlags[++i];
-              } else if (shieldsFlags[i] === "--reason") {
-                if (i + 1 >= shieldsFlags.length || shieldsFlags[i + 1].startsWith("--")) {
-                  console.error("  --reason requires a value");
-                  process.exit(1);
-                }
-                opts.reason = shieldsFlags[++i];
-              } else if (shieldsFlags[i] === "--policy") {
-                if (i + 1 >= shieldsFlags.length || shieldsFlags[i + 1].startsWith("--")) {
-                  console.error(
-                    "  --policy requires a value (e.g. permissive, /path/to/policy.yaml)",
-                  );
-                  process.exit(1);
-                }
-                opts.policy = shieldsFlags[++i];
-              } else {
-                console.error(`  Unknown flag: ${shieldsFlags[i]}`);
-                process.exit(1);
-              }
+          case "down":
+            if (hasHelpFlag(shieldsArgs)) {
+              printSandboxActionUsage(
+                "shields down [--timeout 5m] [--reason 'text'] [--policy permissive]",
+              );
+              break;
             }
-            shields.shieldsDown(cmd, opts);
+            await runOclif("sandbox:shields:down", [cmd, ...shieldsArgs]);
             break;
-          }
           case "up":
-            shields.shieldsUp(cmd);
+            if (hasHelpFlag(shieldsArgs)) {
+              printSandboxActionUsage("shields up");
+              break;
+            }
+            await runOclif("sandbox:shields:up", [cmd, ...shieldsArgs]);
             break;
           case "status":
-            shields.shieldsStatus(cmd);
+            if (hasHelpFlag(shieldsArgs)) {
+              printSandboxActionUsage("shields status");
+              break;
+            }
+            await runOclif("sandbox:shields:status", [cmd, ...shieldsArgs]);
             break;
           default:
             console.error(`  Usage: ${CLI_NAME} <name> shields <down|up|status>`);

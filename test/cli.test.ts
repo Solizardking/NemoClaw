@@ -1042,6 +1042,26 @@ describe("CLI dispatch", () => {
     expect(config.out).not.toContain("sandbox:config:get");
   });
 
+  it("shields help keeps public sandbox-scoped usage", () => {
+    const home = fs.mkdtempSync(path.join(os.tmpdir(), "nemoclaw-cli-shields-help-"));
+    writeSandboxRegistry(home);
+
+    const down = runWithEnv("alpha shields down --help", { HOME: home });
+    expect(down.code).toBe(0);
+    expect(down.out).toContain("<name> shields down");
+    expect(down.out).not.toContain("sandbox:shields:down");
+
+    const up = runWithEnv("alpha shields up --help", { HOME: home });
+    expect(up.code).toBe(0);
+    expect(up.out).toContain("<name> shields up");
+    expect(up.out).not.toContain("sandbox:shields:up");
+
+    const status = runWithEnv("alpha shields status --help", { HOME: home });
+    expect(status.code).toBe(0);
+    expect(status.out).toContain("<name> shields status");
+    expect(status.out).not.toContain("sandbox:shields:status");
+  });
+
   it("snapshot list/create help keeps public sandbox-scoped usage", () => {
     const home = fs.mkdtempSync(path.join(os.tmpdir(), "nemoclaw-cli-snapshot-help-"));
     writeSandboxRegistry(home);
