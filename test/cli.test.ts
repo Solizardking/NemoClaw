@@ -3,6 +3,7 @@
 
 import { describe, it, expect } from "vitest";
 import { execSync, spawn, spawnSync } from "node:child_process";
+import type { ChildProcess } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -53,6 +54,23 @@ function readCliErrorOutput(error: CliErrorShape | string | null | undefined): C
     code: typeof error.status === "number" ? error.status : 1,
     out: `${toText(error.stdout)}${toText(error.stderr)}`,
   };
+}
+
+function normalizeChildExit(code: number | null, signal: NodeJS.Signals | null): number | null {
+  if (code !== null) return code;
+  if (signal === "SIGTERM") return 143;
+  if (signal === "SIGINT") return 130;
+  return null;
+}
+
+function waitForChildExit(child: ChildProcess): Promise<number | null> {
+  return new Promise((resolve) => {
+    child.once("exit", (code, signal) => resolve(normalizeChildExit(code, signal)));
+  });
+}
+
+function isChildRunning(child: ChildProcess): boolean {
+  return child.exitCode === null && child.signalCode === null;
 }
 
 function run(args: string): CliRunResult {
@@ -1073,6 +1091,11 @@ describe("CLI dispatch", () => {
     expect(destroy.out).toContain("<name> destroy [--yes|--force]");
     expect(destroy.out).not.toContain("sandbox:destroy");
 
+    const rebuild = runWithEnv("alpha rebuild --help", { HOME: home });
+    expect(rebuild.code).toBe(0);
+    expect(rebuild.out).toContain("<name> rebuild [--yes|--force] [--verbose|-v]");
+    expect(rebuild.out).not.toContain("sandbox:rebuild");
+
     for (const action of ["policy-add", "policy-remove", "policy-list"]) {
       const policy = runWithEnv(`alpha ${action} --help`, { HOME: home });
       expect(policy.code).toBe(0);
@@ -1352,9 +1375,7 @@ describe("CLI dispatch", () => {
       env: { ...process.env, HOME: home, PATH: `${localBin}:${process.env.PATH || ""}` },
       stdio: "ignore",
     });
-    const exitPromise = new Promise<number | null>((resolve) => {
-      child.once("exit", (code) => resolve(code));
-    });
+    const exitPromise = waitForChildExit(child);
     const readCalls = () =>
       fs.existsSync(markerFile) ? fs.readFileSync(markerFile, "utf8").trim().split(/\n/) : [];
 
@@ -1372,11 +1393,11 @@ describe("CLI dispatch", () => {
         }
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
-      expect(child.exitCode).toBeNull();
+      expect(isChildRunning(child)).toBe(true);
       expect(calls).toContain("logs alpha -n 200 --source all --tail");
       expect(calls).toContain("sandbox exec -n alpha -- tail -n 200 -f /tmp/gateway.log");
     } finally {
-      if (child.exitCode === null) {
+      if (isChildRunning(child)) {
         child.kill("SIGTERM");
       }
       expect(await exitPromise).toBe(143);
@@ -1387,6 +1408,7 @@ describe("CLI dispatch", () => {
     const home = fs.mkdtempSync(path.join(os.tmpdir(), "nemoclaw-cli-logs-follow-sigterm-wait-"));
     const localBin = path.join(home, "bin");
     const markerFile = path.join(home, "logs-follow-sigterm-wait-args");
+    const releaseFile = path.join(home, "release-log-children");
     fs.mkdirSync(localBin, { recursive: true });
     writeSandboxRegistry(home);
     fs.writeFileSync(
@@ -1394,12 +1416,13 @@ describe("CLI dispatch", () => {
       [
         "#!/usr/bin/env bash",
         `marker_file=${JSON.stringify(markerFile)}`,
+        `release_file=${JSON.stringify(releaseFile)}`,
         'printf \'%s\\n\' "$*" >> "$marker_file"',
         'if [ "$1" = "settings" ]; then',
         "  exit 0",
         "fi",
         'if [ "$1" = "logs" ] || [ "$1" = "sandbox" ]; then',
-        "  trap 'sleep 0.3; exit 0' TERM INT",
+        "  trap 'printf \"%s term-start\\n\" \"$*\" >> \"$marker_file\"; while [ ! -f \"$release_file\" ]; do sleep 0.05; done; printf \"%s term-end\\n\" \"$*\" >> \"$marker_file\"; exit 0' TERM INT",
         "  while true; do sleep 1; done",
         "fi",
         "exit 0",
@@ -1412,8 +1435,10 @@ describe("CLI dispatch", () => {
       env: { ...process.env, HOME: home, PATH: `${localBin}:${process.env.PATH || ""}` },
       stdio: "ignore",
     });
-    const exitPromise = new Promise<number | null>((resolve) => {
-      child.once("exit", (code) => resolve(code));
+    let hasExited = false;
+    const exitPromise = waitForChildExit(child).then((code) => {
+      hasExited = true;
+      return code;
     });
     const readCalls = () =>
       fs.existsSync(markerFile) ? fs.readFileSync(markerFile, "utf8").trim().split(/\n/) : [];
@@ -1435,14 +1460,24 @@ describe("CLI dispatch", () => {
       expect(calls).toContain("logs alpha -n 200 --source all --tail");
       expect(calls).toContain("sandbox exec -n alpha -- tail -n 200 -f /tmp/gateway.log");
       child.kill("SIGTERM");
-      const exitedEarly = await Promise.race([
-        exitPromise.then(() => true),
-        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 100)),
-      ]);
-      expect(exitedEarly).toBe(false);
+
+      let callsAfterTerm: string[] = [];
+      const termDeadline = Date.now() + Math.min(testTimeout(5_000), Math.max(1_000, testTimeout() - 5_000));
+      while (Date.now() < termDeadline) {
+        callsAfterTerm = readCalls();
+        if (callsAfterTerm.some((call) => call.endsWith("term-start")) || hasExited) {
+          break;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+
+      expect(callsAfterTerm.some((call) => call.endsWith("term-start"))).toBe(true);
+      expect(hasExited).toBe(false);
+      fs.writeFileSync(releaseFile, "1");
       expect(await exitPromise).toBe(143);
     } finally {
-      if (child.exitCode === null) {
+      fs.writeFileSync(releaseFile, "1");
+      if (isChildRunning(child)) {
         child.kill("SIGKILL");
       }
     }
