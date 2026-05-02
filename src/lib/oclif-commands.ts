@@ -16,6 +16,7 @@ import ConnectCliCommand from "./connect-cli-command";
 import DebugCliCommand from "./debug-cli-command";
 import DeployCliCommand from "./deploy-cli-command";
 import DestroyCliCommand from "./destroy-cli-command";
+import { RootHelpCommand, VersionCommand } from "./help-version-cli-commands";
 import GatewayTokenCliCommand from "./gateway-token-cli-command";
 import ListCommand from "./list-command";
 import {
@@ -67,6 +68,8 @@ export default {
   deploy: DeployCliCommand,
   list: ListCommand,
   onboard: OnboardCliCommand,
+  "root:help": RootHelpCommand,
+  "root:version": VersionCommand,
   "sandbox:channels:add": ChannelsAddCommand,
   "sandbox:channels:list": SandboxChannelsListCommand,
   "sandbox:channels:remove": ChannelsRemoveCommand,
