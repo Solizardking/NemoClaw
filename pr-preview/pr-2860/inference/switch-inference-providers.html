@@ -435,7 +435,8 @@
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../reference/architecture.html">Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../reference/commands.html">Commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/commands.html">CLI Commands Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/cli-selection-guide.html">CLI Selection Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/network-policies.html">Network Policies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/troubleshooting.html">Troubleshooting</a></li>
 </ul>
@@ -514,7 +515,8 @@ No restart is required.</p>
 <section id="switch-to-a-different-model">
 <h2>Switch to a Different Model<a class="headerlink" href="#switch-to-a-different-model" title="Link to this heading">#</a></h2>
 <p>Switching happens through the OpenShell inference route.
-Use the provider and model that match the upstream you want to use.</p>
+Use the provider and model that match the upstream you want to use.
+This is one of the cases where a NemoClaw workflow intentionally uses <code class="docutils literal notranslate"><span class="pre">openshell</span></code>; see <a class="reference internal" href="../reference/cli-selection-guide.html"><span class="std std-doc">CLI Selection Guide</span></a> for the general boundary.</p>
 <section id="nvidia-endpoints">
 <h3>NVIDIA Endpoints<a class="headerlink" href="#nvidia-endpoints" title="Link to this heading">#</a></h3>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>openshell<span class="w"> </span>inference<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--provider<span class="w"> </span>nvidia-prod<span class="w"> </span>--model<span class="w"> </span>nvidia/nemotron-3-super-120b-a12b

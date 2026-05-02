@@ -435,7 +435,8 @@
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="commands.html">Commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="commands.html">CLI Commands Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli-selection-guide.html">CLI Selection Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="network-policies.html">Network Policies</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Troubleshooting</a></li>
 </ul>
@@ -1060,7 +1061,7 @@ If logs show errors such as <code class="docutils literal notranslate"><span cla
 <h3>Messaging bridge appears running but no messages arrive<a class="headerlink" href="#messaging-bridge-appears-running-but-no-messages-arrive" title="Link to this heading">#</a></h3>
 <p>Bot tokens for Telegram (<code class="docutils literal notranslate"><span class="pre">getUpdates</span></code>), Discord (gateway), and Slack (Socket Mode) only allow one active consumer per token. If two NemoClaw sandboxes are configured with the same bot token, each one kicks the other off its polling connection and neither delivers messages. <code class="docutils literal notranslate"><span class="pre">nemoclaw</span> <span class="pre">status</span></code> still reports the bridge as running because the gateway process itself is alive.</p>
 <p>To diagnose, open a shell in the sandbox and inspect the gateway log:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>openshell<span class="w"> </span>term<span class="w"> </span>&lt;sandbox-name&gt;
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>nemoclaw<span class="w"> </span>&lt;sandbox-name&gt;<span class="w"> </span>connect
 <span class="gp">$ </span>tail<span class="w"> </span>-f<span class="w"> </span>/tmp/gateway.log
 </pre></div>
 </div>

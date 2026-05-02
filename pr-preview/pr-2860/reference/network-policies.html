@@ -66,7 +66,7 @@
 
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Troubleshooting" href="troubleshooting.html" />
-    <link rel="prev" title="Commands" href="commands.html" />
+    <link rel="prev" title="CLI Selection Guide" href="cli-selection-guide.html" />
 
 
 
@@ -435,7 +435,8 @@
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="commands.html">Commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="commands.html">CLI Commands Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli-selection-guide.html">CLI Selection Guide</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Network Policies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
 </ul>
@@ -658,6 +659,10 @@ providers are reached through the OpenShell gateway, not by direct sandbox egres
 <section id="dynamic-changes">
 <h3>Dynamic Changes<a class="headerlink" href="#dynamic-changes" title="Link to this heading">#</a></h3>
 <p>Apply policy updates to a running sandbox without restarting:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>openshell<span class="w"> </span>policy<span class="w"> </span>update<span class="w"> </span>&lt;sandbox-name&gt;<span class="w"> </span>--add-endpoint<span class="w"> </span>api.example.com:443:read-only:rest:enforce
+</pre></div>
+</div>
+<p>To replace the live policy with a complete raw policy file, use <code class="docutils literal notranslate"><span class="pre">openshell</span> <span class="pre">policy</span> <span class="pre">set</span></code>:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>openshell<span class="w"> </span>policy<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--policy<span class="w"> </span>&lt;policy-file&gt;<span class="w"> </span>&lt;sandbox-name&gt;
 </pre></div>
 </div>
@@ -676,12 +681,12 @@ providers are reached through the OpenShell gateway, not by direct sandbox egres
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="commands.html"
+       href="cli-selection-guide.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Commands</p>
+        <p class="prev-next-title">CLI Selection Guide</p>
       </div>
     </a>
     <a class="right-next"

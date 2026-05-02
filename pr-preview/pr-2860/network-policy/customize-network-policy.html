@@ -435,7 +435,8 @@
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">Reference</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../reference/architecture.html">Architecture</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../reference/commands.html">Commands</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/commands.html">CLI Commands Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference/cli-selection-guide.html">CLI Selection Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/network-policies.html">Network Policies</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../reference/troubleshooting.html">Troubleshooting</a></li>
 </ul>
@@ -693,8 +694,8 @@ You can add or remove individual presets in the interactive preset screen that f
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Preset selection is interactive.
-Positional preset arguments are ignored.</p>
+<p>Preset selection is interactive when you omit a preset name.
+Pass a preset name with <code class="docutils literal notranslate"><span class="pre">--yes</span></code> for scripted workflows.</p>
 </div>
 <p>For example, to interactively add PyPI access to a running sandbox:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>nemoclaw<span class="w"> </span>my-assistant<span class="w"> </span>policy-add
