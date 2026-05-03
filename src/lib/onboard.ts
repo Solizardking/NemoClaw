@@ -2384,13 +2384,19 @@ function getResumeSandboxConflict(
   // is impossible). Falling back to the env var here would fire spurious
   // conflicts for interactive resume runs whose shell happens to export
   // NEMOCLAW_SANDBOX_NAME but which never actually consult it.
+  // #2753: only treat session.sandboxName as a conflict source if the
+  // sandbox step actually completed. A pre-fix incomplete session would
+  // otherwise reject a legitimate `--resume --name <new>` that the user
+  // is supplying precisely to recover from the phantom.
   const raw = typeof opts.sandboxName === "string" ? opts.sandboxName.trim().toLowerCase() : "";
   const requestedSandboxName = raw || null;
-  if (!requestedSandboxName || !session?.sandboxName) {
+  const recordedSandboxName =
+    session?.steps?.sandbox?.status === "complete" ? session?.sandboxName ?? null : null;
+  if (!requestedSandboxName || !recordedSandboxName) {
     return null;
   }
-  return requestedSandboxName !== session.sandboxName
-    ? { requestedSandboxName, recordedSandboxName: session.sandboxName }
+  return requestedSandboxName !== recordedSandboxName
+    ? { requestedSandboxName, recordedSandboxName }
     : null;
 }
 
@@ -8523,6 +8529,26 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
         return current;
       });
       session = onboardSession.loadSession();
+      // #2753: a resumed onboard whose sandbox step did not complete has no
+      // recorded sandboxName (the onboard fix only persists it after
+      // createSandbox succeeds). Falling through would silently default to
+      // the agent's `my-assistant` instead of the user's original --name.
+      // Use `cannotPrompt` so non-TTY runs without explicit --non-interactive
+      // are also caught, and `requestedSandboxName` (already env-var-resolved
+      // and trimmed above, lines 8302-8308) so whitespace-only env values
+      // can't satisfy the guard.
+      const sandboxStepCompleted = session?.steps?.sandbox?.status === "complete";
+      const recoveredSandboxName =
+        requestedSandboxName || (sandboxStepCompleted ? session?.sandboxName || null : null);
+      if (cannotPrompt && !recoveredSandboxName) {
+        console.error(
+          "  Cannot resume non-interactive onboard: the previous run was interrupted before sandbox creation completed,",
+        );
+        console.error(
+          "  so no sandbox name was recorded. Re-run with --name <sandbox> (or set NEMOCLAW_SANDBOX_NAME).",
+        );
+        process.exit(1);
+      }
     } else {
       // --fresh asks for an explicit fresh start. createSession + saveSession
       // already overwrites any existing file, but clearing first removes the
@@ -8661,7 +8687,14 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
       onboardSession.markStepComplete("gateway");
     }
 
-    let sandboxName = session?.sandboxName || requestedSandboxName || null;
+    // #2753: prefer requestedSandboxName over an unconfirmed session name.
+    // A pre-fix session may carry sandboxName even though sandbox creation
+    // never completed; users supplying `--name` / NEMOCLAW_SANDBOX_NAME on
+    // the resume run must win, otherwise the stale name silently overrides
+    // their explicit recovery input.
+    const recordedSandboxName =
+      session?.steps?.sandbox?.status === "complete" ? session?.sandboxName || null : null;
+    let sandboxName = recordedSandboxName || requestedSandboxName || null;
     if (sandboxName && RESERVED_SANDBOX_NAMES.has(sandboxName)) {
       console.error(
         `  Reserved name in resumed session: '${sandboxName}' is a ${cliDisplayName()} CLI command.`,
@@ -8688,7 +8721,12 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
         skippedStepMessage("provider_selection", `${provider} / ${model}`);
         hydrateCredentialEnv(credentialEnv);
       } else {
-        startRecordedStep("provider_selection", { sandboxName });
+        // #2753: do not persist sandboxName to onboard-session.json before
+        // the sandbox actually exists in the gateway (Step 6 markStepComplete
+        // below). A SIGINT between any earlier step and createSandbox would
+        // otherwise leave a phantom that `nemoclaw list` resurrects until
+        // manually destroyed.
+        startRecordedStep("provider_selection");
         const selection = await setupNim(gpu, sandboxName);
         model = selection.model;
         provider = selection.provider;
@@ -8699,7 +8737,6 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
         onboardSession.markStepComplete(
           "provider_selection",
           toSessionUpdates({
-            sandboxName,
             provider,
             model,
             endpointUrl,
@@ -8724,7 +8761,7 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
         }
         onboardSession.markStepComplete(
           "inference",
-          toSessionUpdates({ sandboxName, provider, model, nimContainer }),
+          toSessionUpdates({ provider, model, nimContainer }),
         );
         break;
       }
@@ -8760,7 +8797,7 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
         }
       }
 
-      startRecordedStep("inference", { sandboxName, provider, model });
+      startRecordedStep("inference", { provider, model });
       const inferenceResult = await setupInference(
         sandboxName,
         model,
@@ -8778,7 +8815,7 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
       }
       onboardSession.markStepComplete(
         "inference",
-        toSessionUpdates({ sandboxName, provider, model, nimContainer }),
+        toSessionUpdates({ provider, model, nimContainer }),
       );
       break;
     }
@@ -8864,7 +8901,7 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
       } else {
         nextWebSearchConfig = await configureWebSearch(null, agent, webSearchSupportProbePath);
       }
-      startRecordedStep("sandbox", { sandboxName, provider, model });
+      startRecordedStep("sandbox", { provider, model });
       selectedMessagingChannels = await setupMessagingChannels();
       onboardSession.updateSession((current: Session) => {
         current.messagingChannels = selectedMessagingChannels;

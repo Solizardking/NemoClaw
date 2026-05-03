@@ -1884,7 +1884,7 @@ startGateway(null).catch(() => {});
   it("detects resume conflicts when --name does not match the recorded sandbox", () => {
     expect(
       getResumeConfigConflicts(
-        { sandboxName: "my-assistant" },
+        { sandboxName: "my-assistant", steps: { sandbox: { status: "complete" } } },
         { sandboxName: "second-assistant" },
       ),
     ).toEqual([
@@ -1898,13 +1898,19 @@ startGateway(null).catch(() => {});
 
   it("detects resume conflicts when a different sandbox is requested", () => {
     expect(
-      getResumeSandboxConflict({ sandboxName: "my-assistant" }, { sandboxName: "other-sandbox" }),
+      getResumeSandboxConflict(
+        { sandboxName: "my-assistant", steps: { sandbox: { status: "complete" } } },
+        { sandboxName: "other-sandbox" },
+      ),
     ).toEqual({
       requestedSandboxName: "other-sandbox",
       recordedSandboxName: "my-assistant",
     });
     expect(
-      getResumeSandboxConflict({ sandboxName: "other-sandbox" }, { sandboxName: "other-sandbox" }),
+      getResumeSandboxConflict(
+        { sandboxName: "other-sandbox", steps: { sandbox: { status: "complete" } } },
+        { sandboxName: "other-sandbox" },
+      ),
     ).toBe(null);
   });
 
@@ -1916,7 +1922,12 @@ startGateway(null).catch(() => {});
     const previous = process.env.NEMOCLAW_SANDBOX_NAME;
     process.env.NEMOCLAW_SANDBOX_NAME = "other-sandbox";
     try {
-      expect(getResumeSandboxConflict({ sandboxName: "my-assistant" })).toBe(null);
+      expect(
+        getResumeSandboxConflict({
+          sandboxName: "my-assistant",
+          steps: { sandbox: { status: "complete" } },
+        }),
+      ).toBe(null);
     } finally {
       if (previous === undefined) {
         delete process.env.NEMOCLAW_SANDBOX_NAME;
@@ -1924,6 +1935,24 @@ startGateway(null).catch(() => {});
         process.env.NEMOCLAW_SANDBOX_NAME = previous;
       }
     }
+  });
+
+  it("#2753: ignores an incomplete session sandbox name when checking resume conflicts", () => {
+    // A pre-fix on-disk session may carry sandboxName even though the
+    // sandbox step never completed. Treating that as a conflict source
+    // would block users from running `--resume --name <new>` to recover.
+    expect(
+      getResumeSandboxConflict(
+        { sandboxName: "interrupt-test", steps: { sandbox: { status: "pending" } } },
+        { sandboxName: "fresh-name" },
+      ),
+    ).toBe(null);
+    expect(
+      getResumeConfigConflicts(
+        { sandboxName: "interrupt-test", steps: { sandbox: { status: "pending" } } },
+        { sandboxName: "fresh-name" },
+      ),
+    ).toEqual([]);
   });
 
   it("returns provider and model hints only for non-interactive runs", () => {
@@ -2974,7 +3003,43 @@ const { setupInference } = require(${onboardPath});
 
     assert.match(
       source,
-      /startRecordedStep\("sandbox", \{ sandboxName, provider, model \}\);\s*selectedMessagingChannels = await setupMessagingChannels\(\);\s*onboardSession\.updateSession\(\(current[^)]*\) => \{\s*current\.messagingChannels = selectedMessagingChannels;\s*return current;\s*\}\);[\s\S]*?sandboxName = await createSandbox\(\s*gpu,\s*model,\s*provider,\s*preferredInferenceApi,\s*sandboxName,\s*nextWebSearchConfig,\s*selectedMessagingChannels,\s*fromDockerfile,\s*agent,\s*opts\.controlUiPort \|\| null,\s*\);/,
+      // #2753: sandboxName is intentionally absent from the options here so
+      // the session does not record a name before createSandbox completes.
+      /startRecordedStep\("sandbox", \{ provider, model \}\);\s*selectedMessagingChannels = await setupMessagingChannels\(\);\s*onboardSession\.updateSession\(\(current[^)]*\) => \{\s*current\.messagingChannels = selectedMessagingChannels;\s*return current;\s*\}\);[\s\S]*?sandboxName = await createSandbox\(\s*gpu,\s*model,\s*provider,\s*preferredInferenceApi,\s*sandboxName,\s*nextWebSearchConfig,\s*selectedMessagingChannels,\s*fromDockerfile,\s*agent,\s*opts\.controlUiPort \|\| null,\s*\);/,
+    );
+  });
+
+  it("does not persist sandboxName to onboard-session.json before createSandbox completes (#2753)", () => {
+    const source = fs.readFileSync(
+      path.join(import.meta.dirname, "..", "src", "lib", "onboard.ts"),
+      "utf-8",
+    );
+
+    // Steps that run before `openshell sandbox create` succeeds must not
+    // write sandboxName into the session — otherwise a SIGINT in between
+    // leaves a phantom name that `nemoclaw list` resurrects until the user
+    // manually destroys it. sandboxName is only persisted at the sandbox
+    // step's markStepComplete, which runs after createSandbox returns.
+    assert.match(source, /startRecordedStep\("provider_selection"\);/);
+    assert.match(source, /startRecordedStep\("inference", \{ provider, model \}\);/);
+    assert.match(source, /startRecordedStep\("sandbox", \{ provider, model \}\);/);
+    assert.doesNotMatch(
+      source,
+      /startRecordedStep\("(?:provider_selection|inference|sandbox)",\s*\{[^}]*\bsandboxName\b/,
+    );
+    // The first markStepComplete that records sandboxName is the sandbox
+    // step, after createSandbox(). Locked in by checking createSandbox
+    // appears before the first sandboxName-bearing markStepComplete. The
+    // toSessionUpdates({ ... }) options object is matched non-greedily so a
+    // later sandboxName reference from a different call site cannot leak
+    // into the match.
+    const createIdx = source.indexOf("sandboxName = await createSandbox(");
+    const firstSandboxNameMarkComplete = source.search(
+      /onboardSession\.markStepComplete\(\s*"[^"]+",\s*toSessionUpdates\(\{[^}]*\bsandboxName\b/,
+    );
+    assert.ok(
+      createIdx > 0 && firstSandboxNameMarkComplete > createIdx,
+      `createSandbox (${createIdx}) must precede the first sandboxName-bearing markStepComplete (${firstSandboxNameMarkComplete})`,
     );
   });
 
@@ -3002,7 +3067,10 @@ const { setupInference } = require(${onboardPath});
 
     assert.match(
       source,
-      /let sandboxName = session\?\.sandboxName \|\| requestedSandboxName \|\| null;\s*if \(sandboxName && RESERVED_SANDBOX_NAMES\.has\(sandboxName\)\) \{[\s\S]*?process\.exit\(1\);\s*\}/,
+      // #2753: a stale `session.sandboxName` from an interrupted onboard
+      // must not override a fresh `--name` / NEMOCLAW_SANDBOX_NAME, so the
+      // session value participates only when its sandbox step completed.
+      /const recordedSandboxName =\s*session\?\.steps\?\.sandbox\?\.status === "complete" \? session\?\.sandboxName \|\| null : null;\s*let sandboxName = recordedSandboxName \|\| requestedSandboxName \|\| null;\s*if \(sandboxName && RESERVED_SANDBOX_NAMES\.has\(sandboxName\)\) \{[\s\S]*?process\.exit\(1\);\s*\}/,
     );
   });
   it("delegates sandbox-create progress streaming to the extracted helper module", () => {
