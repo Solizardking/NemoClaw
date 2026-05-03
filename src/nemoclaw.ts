@@ -1770,16 +1770,25 @@ async function sandboxDoctor(sandboxName: string, args: string[] = []): Promise<
 // eslint-disable-next-line complexity
 async function sandboxStatus(sandboxName: string) {
   const sb = registry.getSandbox(sandboxName);
-  const liveResult = await captureOpenshellForStatus(["inference", "get"], {
-    ignoreError: true,
+  const lookup = await getReconciledSandboxGatewayState(sandboxName, {
+    getState: getSandboxGatewayStateForStatus,
   });
-  const live = parseGatewayInference(
-    isCommandTimeout(liveResult) ? "" : liveResult.output,
-  );
+  const liveResult =
+    lookup.state === "present"
+      ? await captureOpenshellForStatus(["inference", "get"], {
+          ignoreError: true,
+        })
+      : null;
+  const live =
+    liveResult && !isCommandTimeout(liveResult)
+      ? parseGatewayInference(liveResult.output)
+      : null;
   const currentModel = (live && live.model) || (sb && sb.model) || "unknown";
   const currentProvider = (live && live.provider) || (sb && sb.provider) || "unknown";
   const inferenceHealth =
-    typeof currentProvider === "string" ? probeProviderHealth(currentProvider) : null;
+    lookup.state === "present" && typeof currentProvider === "string"
+      ? probeProviderHealth(currentProvider)
+      : null;
   if (sb) {
     console.log("");
     console.log(`  Sandbox: ${sb.name}`);
@@ -1794,6 +1803,9 @@ async function sandboxStatus(sandboxName: string) {
         console.log(`    Inference: ${_RD}unreachable${R} (${inferenceHealth.endpoint})`);
         console.log(`      ${inferenceHealth.detail}`);
       }
+    }
+    if (lookup.state !== "present") {
+      console.log("    Inference: not verified (gateway/sandbox state not verified)");
     }
     console.log(`    GPU:      ${sb.gpuEnabled ? "yes" : "no"}`);
     console.log(`    Policies: ${(sb.policies || []).join(", ") || "none"}`);
@@ -1838,9 +1850,6 @@ async function sandboxStatus(sandboxName: string) {
     }
   }
 
-  const lookup = await getReconciledSandboxGatewayState(sandboxName, {
-    getState: getSandboxGatewayStateForStatus,
-  });
   if (lookup.state === "present") {
     console.log("");
     if ("recoveredGateway" in lookup && lookup.recoveredGateway) {
@@ -1869,6 +1878,7 @@ async function sandboxStatus(sandboxName: string) {
         : undefined;
     console.log("");
     printWrongGatewayActiveGuidance(sandboxName, activeGateway, console.log);
+    process.exit(1);
   } else if (lookup.state === "missing") {
     // Belt-and-suspenders: only destroy registry state if the nemoclaw gateway
     // is demonstrably the healthy active gateway. Guards against regressions
@@ -1894,6 +1904,7 @@ async function sandboxStatus(sandboxName: string) {
       console.log(`  Sandbox '${sandboxName}' is not present in the live OpenShell gateway.`);
       console.log("  Removed stale local registry entry.");
     }
+    process.exit(1);
   } else if (lookup.state === "identity_drift") {
     console.log("");
     console.log(
@@ -1908,6 +1919,7 @@ async function sandboxStatus(sandboxName: string) {
     console.log(
       `  Recreate this sandbox with \`${CLI_NAME} onboard\` once the gateway runtime is stable.`,
     );
+    process.exit(1);
   } else if (lookup.state === "gateway_unreachable_after_restart") {
     console.log("");
     console.log(
@@ -1922,6 +1934,7 @@ async function sandboxStatus(sandboxName: string) {
     console.log(
       "  If the gateway never becomes healthy, rebuild the gateway and then recreate the affected sandbox.",
     );
+    process.exit(1);
   } else if (lookup.state === "gateway_missing_after_restart") {
     console.log("");
     console.log(
@@ -1936,6 +1949,7 @@ async function sandboxStatus(sandboxName: string) {
     console.log(
       "  If the gateway had to be rebuilt from scratch, recreate the affected sandbox afterward.",
     );
+    process.exit(1);
   } else {
     console.log("");
     console.log(`  Could not verify sandbox '${sandboxName}' against the live OpenShell gateway.`);
@@ -1943,6 +1957,7 @@ async function sandboxStatus(sandboxName: string) {
       console.log(lookup.output);
     }
     printGatewayLifecycleHint(lookup.output, sandboxName, console.log);
+    process.exit(1);
   }
 
   // OpenClaw process health inside the sandbox
