@@ -3,6 +3,7 @@
 
 import { AGENT_PRODUCT_NAME, CLI_DISPLAY_NAME, CLI_NAME } from "./branding";
 import { commandsByGroup } from "./command-registry";
+import { getRegisteredOclifCommandSummary } from "./oclif-metadata";
 import { getVersion } from "./version";
 
 const useColor = !process.env.NO_COLOR && !!process.stdout.isTTY;
@@ -34,7 +35,7 @@ export function help(): void {
     let isFirstInGroup = true;
     for (const cmd of cmds) {
       const usage = cmd.usage;
-      const desc = cmd.description;
+      const desc = getRegisteredOclifCommandSummary(cmd.commandId) ?? cmd.description;
       const flags = cmd.flags ? ` ${D}${cmd.flags}${R}` : "";
 
       const prefix = isFirstInGroup ? B : "";
