@@ -67,6 +67,10 @@ const {
 const {
   executeSandboxCommand,
 } = require("./lib/sandbox-process-recovery-action");
+const {
+  getSandboxDeleteOutcome,
+  removeSandboxRegistryEntry,
+} = require("./lib/sandbox-destroy-action");
 const { runRegisteredOclifCommand } = require("./lib/oclif-runner");
 const { isErrnoException }: typeof import("./lib/errno") = require("./lib/errno");
 const agentRuntime = require("../bin/lib/agent-runtime");
@@ -115,44 +119,7 @@ const DASHBOARD_FORWARD_PORT = String(DASHBOARD_PORT);
 const DEFAULT_LOGS_PROBE_TIMEOUT_MS = 5000;
 const LOGS_PROBE_TIMEOUT_ENV = "NEMOCLAW_LOGS_PROBE_TIMEOUT_MS";
 
-function cleanupGatewayAfterLastSandbox() {
-  runOpenshell(["forward", "stop", DASHBOARD_FORWARD_PORT], {
-    ignoreError: true,
-    stdio: ["ignore", "ignore", "ignore"],
-  });
-  runOpenshell(["gateway", "destroy", "-g", NEMOCLAW_GATEWAY_NAME], { ignoreError: true });
-  dockerRemoveVolumesByPrefix(`openshell-cluster-${NEMOCLAW_GATEWAY_NAME}`, {
-    ignoreError: true,
-  });
-}
-
-function hasNoLiveSandboxes() {
-  const liveList = captureOpenshell(["sandbox", "list"], {
-    ignoreError: true,
-    timeout: OPENSHELL_PROBE_TIMEOUT_MS,
-  });
-  if (liveList.status !== 0) {
-    return false;
-  }
-  return parseLiveSandboxNames(liveList.output).size === 0;
-}
-
-function isMissingSandboxDeleteResult(output = ""): boolean {
-  return /\bNotFound\b|\bNot Found\b|sandbox not found|sandbox .* not found|sandbox .* not present|sandbox does not exist|no such sandbox/i.test(
-    stripAnsi(output),
-  );
-}
-
-function getSandboxDeleteOutcome(deleteResult: SpawnLikeResult) {
-  const output = `${deleteResult.stdout || ""}${deleteResult.stderr || ""}`.trim();
-  return {
-    output,
-    alreadyGone: deleteResult.status !== 0 && isMissingSandboxDeleteResult(output),
-  };
-}
-
 exports.runtimeBridge = {
-  sandboxDestroy,
   sandboxRebuild,
   upgradeSandboxes,
 };
@@ -182,153 +149,6 @@ async function runOclif(commandId: string, args: string[] = []): Promise<void> {
 
 function printSandboxActionUsage(action: string): void {
   console.log(`  Usage: ${CLI_NAME} <name> ${action}`);
-}
-
-function cleanupSandboxServices(
-  sandboxName: string,
-  { stopHostServices = false }: { stopHostServices?: boolean } = {},
-) {
-  if (stopHostServices) {
-    const { stopAll } = require("./lib/services");
-    stopAll({ sandboxName });
-  }
-
-  const sb = registry.getSandbox(sandboxName);
-  if (sb?.provider?.includes("ollama")) {
-    const { unloadOllamaModels } = require("./lib/onboard-ollama-proxy");
-    unloadOllamaModels();
-  }
-
-  try {
-    fs.rmSync(`/tmp/nemoclaw-services-${sandboxName}`, { recursive: true, force: true });
-  } catch {
-    // PID directory may not exist — ignore.
-  }
-
-  // Delete messaging providers created during onboard. Suppress stderr so
-  // "! Provider not found" noise doesn't appear when messaging was never configured.
-  for (const suffix of ["telegram-bridge", "discord-bridge", "slack-bridge"]) {
-    runOpenshell(["provider", "delete", `${sandboxName}-${suffix}`], {
-      ignoreError: true,
-      stdio: ["ignore", "ignore", "ignore"],
-    });
-  }
-}
-
-/**
- * Remove the host-side Docker image that was built for a sandbox during onboard.
- * Must be called before registry.removeSandbox() since the imageTag is stored there.
- */
-function removeSandboxImage(sandboxName: string) {
-  const sb = registry.getSandbox(sandboxName);
-  if (!sb?.imageTag) return;
-  const result = dockerRmi(sb.imageTag, { ignoreError: true });
-  if (result.status === 0) {
-    console.log(`  Removed Docker image ${sb.imageTag}`);
-  } else {
-    console.warn(
-      `  ${YW}⚠${R} Failed to remove Docker image ${sb.imageTag}; run '${CLI_NAME} gc' to clean up.`,
-    );
-  }
-}
-
-async function sandboxDestroy(sandboxName: string, args: string[] = []): Promise<void> {
-  const skipConfirm = args.includes("--yes") || args.includes("--force");
-
-  // Active session detection — enrich the confirmation prompt if sessions are active
-  let activeSessionCount = 0;
-  const opsBin = resolveOpenshell();
-  if (opsBin) {
-    try {
-      const sessionResult = getActiveSandboxSessions(sandboxName, createSessionDeps(opsBin));
-      if (sessionResult.detected) {
-        activeSessionCount = sessionResult.sessions.length;
-      }
-    } catch {
-      /* non-fatal */
-    }
-  }
-
-  if (!skipConfirm) {
-    console.log(`  ${YW}Destroy sandbox '${sandboxName}'?${R}`);
-    if (activeSessionCount > 0) {
-      const plural = activeSessionCount > 1 ? "sessions" : "session";
-      console.log(
-        `  ${YW}⚠  Active SSH ${plural} detected (${activeSessionCount} connection${activeSessionCount > 1 ? "s" : ""})${R}`,
-      );
-      console.log(
-        `  Destroying will terminate ${activeSessionCount === 1 ? "the" : "all"} active ${plural} with a Broken pipe error.`,
-      );
-    }
-    console.log("  This will permanently delete the sandbox and all workspace files inside it.");
-    console.log("  This cannot be undone.");
-    const answer = await askPrompt("  Type 'yes' to confirm, or press Enter to cancel [y/N]: ");
-    if (answer.trim().toLowerCase() !== "y" && answer.trim().toLowerCase() !== "yes") {
-      console.log("  Cancelled.");
-      return;
-    }
-  }
-
-  const sb = registry.getSandbox(sandboxName);
-  if (sb && sb.nimContainer) {
-    console.log(`  Stopping NIM for '${sandboxName}'...`);
-    nim.stopNimContainerByName(sb.nimContainer);
-  } else {
-    // Best-effort cleanup of convention-named NIM containers that may not
-    // be recorded in the registry (e.g. older sandboxes).  Suppress output
-    // so the user doesn't see "No such container" noise when no NIM exists.
-    nim.stopNimContainer(sandboxName, { silent: true });
-  }
-
-  if (sb?.provider?.includes("ollama")) {
-    const { unloadOllamaModels, killStaleProxy } = require("./lib/onboard-ollama-proxy");
-    unloadOllamaModels();
-    killStaleProxy();
-  }
-
-  console.log(`  Deleting sandbox '${sandboxName}'...`);
-  const deleteResult = runOpenshell(["sandbox", "delete", sandboxName], {
-    ignoreError: true,
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  const { output: deleteOutput, alreadyGone } = getSandboxDeleteOutcome(deleteResult);
-
-  if (deleteResult.status !== 0 && !alreadyGone) {
-    if (deleteOutput) {
-      console.error(`  ${deleteOutput}`);
-    }
-    console.error(`  Failed to destroy sandbox '${sandboxName}'.`);
-    process.exit(deleteResult.status || 1);
-  }
-
-  const shouldStopHostServices =
-    (deleteResult.status === 0 || alreadyGone) &&
-    registry.listSandboxes().sandboxes.length === 1 &&
-    !!registry.getSandbox(sandboxName);
-
-  cleanupSandboxServices(sandboxName, { stopHostServices: shouldStopHostServices });
-  removeSandboxImage(sandboxName);
-
-  const removed = registry.removeSandbox(sandboxName);
-  const session = onboardSession.loadSession();
-  if (session && session.sandboxName === sandboxName) {
-    onboardSession.updateSession((s: Session) => {
-      s.sandboxName = null;
-      return s;
-    });
-  }
-  if (
-    (deleteResult.status === 0 || alreadyGone) &&
-    removed &&
-    registry.listSandboxes().sandboxes.length === 0 &&
-    hasNoLiveSandboxes()
-  ) {
-    cleanupGatewayAfterLastSandbox();
-  }
-  if (alreadyGone) {
-    console.log(`  Sandbox '${sandboxName}' was already absent from the live gateway.`);
-  }
-  console.log(`  ${G}✓${R} Sandbox '${sandboxName}' destroyed`);
 }
 
 // ── Rebuild ──────────────────────────────────────────────────────
@@ -567,8 +387,7 @@ async function sandboxRebuild(
     bail("Failed to delete sandbox.", deleteResult.status || 1);
     return;
   }
-  removeSandboxImage(sandboxName);
-  registry.removeSandbox(sandboxName);
+  removeSandboxRegistryEntry(sandboxName);
   log(
     `Registry after remove: ${JSON.stringify(registry.listSandboxes().sandboxes.map((s: { name: string }) => s.name))}`,
   );
