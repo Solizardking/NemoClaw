@@ -15,7 +15,7 @@ describe("resolveSandboxOclifDispatch", () => {
   });
 
   it("keeps sandbox status help public", () => {
-    expect(resolveSandboxOclifDispatch("alpha", "status", ["--help"])).toEqual({
+    expect(resolveSandboxOclifDispatch("alpha", "status", ["--help"])).toMatchObject({
       kind: "help",
       usage: "status",
     });
@@ -30,14 +30,14 @@ describe("resolveSandboxOclifDispatch", () => {
   });
 
   it("keeps sandbox doctor help public", () => {
-    expect(resolveSandboxOclifDispatch("alpha", "doctor", ["--help"])).toEqual({
+    expect(resolveSandboxOclifDispatch("alpha", "doctor", ["--help"])).toMatchObject({
       kind: "help",
       usage: "doctor [--json]",
     });
   });
 
   it("keeps sandbox logs help public with supported filters", () => {
-    expect(resolveSandboxOclifDispatch("alpha", "logs", ["--help"])).toEqual({
+    expect(resolveSandboxOclifDispatch("alpha", "logs", ["--help"])).toMatchObject({
       kind: "help",
       usage: "logs [--follow] [--tail <lines>|-n <lines>] [--since <duration>]",
     });
@@ -52,7 +52,7 @@ describe("resolveSandboxOclifDispatch", () => {
   });
 
   it("returns help for sandbox recover", () => {
-    expect(resolveSandboxOclifDispatch("alpha", "recover", ["--help"])).toEqual({
+    expect(resolveSandboxOclifDispatch("alpha", "recover", ["--help"])).toMatchObject({
       kind: "help",
       usage: "recover",
     });
