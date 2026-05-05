@@ -365,6 +365,10 @@ describe("CLI dispatch", () => {
     expect(r.out).toContain("(--check, --auto, --yes|-y)");
     expect(r.out).toContain("nemoclaw gc");
     expect(r.out).toContain("(--yes|-y|--force, --dry-run)");
+    expect(r.out).toContain("nemoclaw onboard");
+    expect(r.out).toContain("Configure inference endpoint and credentials");
+    expect(r.out).toContain("nemoclaw onboard --from");
+    expect(r.out).toContain("Use a custom Dockerfile for the sandbox image");
   });
 
   it("--help exits 0", () => {
