@@ -68,9 +68,6 @@ on:
 permissions:
   contents: read
 
-env:
-  NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces
-
 concurrency:
   group: nightly-e2e-${{ github.event_name }}-${{ github.event_name == 'workflow_dispatch' && github.ref || 'schedule' }}
   cancel-in-progress: true
@@ -84,6 +81,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',cloud-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -103,7 +102,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -125,6 +124,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',cloud-onboard-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -147,7 +148,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -168,6 +169,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',cloud-inference-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -186,7 +189,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -207,6 +210,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',skill-agent-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -225,7 +230,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -281,6 +286,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',messaging-providers-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -304,7 +311,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -326,6 +333,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',messaging-compatible-endpoint-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -345,7 +354,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -369,6 +378,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',token-rotation-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -395,7 +406,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -414,6 +425,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',sandbox-survival-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -432,7 +445,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -454,6 +467,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',issue-2478-crash-loop-recovery-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -472,7 +487,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -494,6 +509,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',hermes-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -514,7 +531,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -536,6 +553,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',hermes-discord-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -561,7 +580,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -583,6 +602,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',sandbox-operations-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -806,7 +827,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload sandbox gateway logs on failure
         if: failure()
@@ -836,6 +857,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',inference-routing-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -853,7 +876,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload test log on failure
         if: failure()
@@ -874,6 +897,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',network-policy-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -892,7 +917,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload test log on failure
         if: failure()
@@ -914,6 +939,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',deployment-services-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -931,7 +958,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload test log on failure
         if: failure()
@@ -953,6 +980,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',diagnostics-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -970,7 +999,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload test log on failure
         if: failure()
@@ -994,6 +1023,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',credential-migration-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -1013,7 +1044,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -1034,6 +1065,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',snapshot-commands-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -1052,7 +1085,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -1073,6 +1106,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',shields-config-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -1091,7 +1126,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -1112,6 +1147,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',rebuild-openclaw-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -1130,7 +1167,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -1152,6 +1189,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',upgrade-stale-sandbox-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -1170,7 +1209,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install logs on failure
         if: failure()
@@ -1192,6 +1231,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',rebuild-hermes-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -1211,7 +1252,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -1230,6 +1271,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',double-onboard-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -1255,7 +1298,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload test log on failure
         if: failure()
@@ -1274,6 +1317,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',onboard-repair-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -1299,7 +1344,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload test log on failure
         if: failure()
@@ -1318,6 +1363,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',onboard-resume-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -1343,7 +1390,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload test log on failure
         if: failure()
@@ -1362,6 +1409,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',runtime-overrides-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -1387,7 +1436,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload test log on failure
         if: failure()
@@ -1407,6 +1456,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',credential-sanitization-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -1435,7 +1486,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload test log on failure
         if: failure()
@@ -1455,6 +1506,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',telegram-injection-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -1483,7 +1536,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload test log on failure
         if: failure()
@@ -1506,6 +1559,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',overlayfs-autofix-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -1524,7 +1579,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload onboard logs on failure
         if: failure()
@@ -1551,6 +1606,8 @@ jobs:
        contains(format(',{0},', inputs.jobs), ',launchable-smoke-e2e,'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -1571,7 +1628,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -1610,6 +1667,7 @@ jobs:
     runs-on: linux-amd64-gpu-rtxpro6000-latest-1
     timeout-minutes: 30
     env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
       NEMOCLAW_NON_INTERACTIVE: "1"
       NEMOCLAW_ACCEPT_THIRD_PARTY_SOFTWARE: "1"
       NEMOCLAW_SANDBOX_NAME: "e2e-gpu-ollama"
@@ -1638,7 +1696,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()
@@ -1670,6 +1728,7 @@ jobs:
     runs-on: linux-amd64-gpu-rtxpro6000-latest-1
     timeout-minutes: 30
     env:
+      NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/${{ github.job }}
       NEMOCLAW_NON_INTERACTIVE: "1"
       NEMOCLAW_ACCEPT_THIRD_PARTY_SOFTWARE: "1"
       NEMOCLAW_SANDBOX_NAME: "e2e-gpu-double-onboard"
@@ -1698,7 +1757,7 @@ jobs:
         uses: ./.github/actions/upload-nemoclaw-traces
         with:
           name: nemoclaw-traces-${{ github.job }}
-          path: /tmp/nemoclaw-traces
+          path: /tmp/nemoclaw-traces/${{ github.job }}
 
       - name: Upload install log on failure
         if: failure()

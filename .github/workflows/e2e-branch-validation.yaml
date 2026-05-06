@@ -201,7 +201,6 @@ jobs:
           LAUNCHABLE_SETUP_SCRIPT: ${{ inputs.setup_script_url || '' }}
           BREV_PROVIDER: gcp
           KEEP_ALIVE: ${{ inputs.keep_alive }}
-          NEMOCLAW_TRACE_DIR: /tmp/nemoclaw-traces/e2e-branch-validation
         run: npx vitest run --project e2e-branch-validation
 
       - name: Update check run (completed)
