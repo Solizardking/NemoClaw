@@ -227,12 +227,54 @@ describe("onboard helpers", () => {
       expect(getSandboxPromptDefault(hermes)).toBe("hermes");
 
       process.env.NEMOCLAW_SANDBOX_NAME = "custom-hermes";
-      expect(getSandboxPromptDefault(hermes)).toBe("hermes");
+      expect(getSandboxPromptDefault(hermes)).toBe("custom-hermes");
     } finally {
       if (previousSandboxName === undefined) {
         delete process.env.NEMOCLAW_SANDBOX_NAME;
       } else {
         process.env.NEMOCLAW_SANDBOX_NAME = previousSandboxName;
+      }
+    }
+  });
+
+  it("uses NEMOCLAW_SANDBOX_NAME as the interactive prompt default", () => {
+    const previous = process.env.NEMOCLAW_SANDBOX_NAME;
+    try {
+      process.env.NEMOCLAW_SANDBOX_NAME = "mythos";
+      expect(getSandboxPromptDefault(null)).toBe("mythos");
+    } finally {
+      if (previous === undefined) {
+        delete process.env.NEMOCLAW_SANDBOX_NAME;
+      } else {
+        process.env.NEMOCLAW_SANDBOX_NAME = previous;
+      }
+    }
+  });
+
+  it("falls back to agent default when NEMOCLAW_SANDBOX_NAME is invalid", () => {
+    const previous = process.env.NEMOCLAW_SANDBOX_NAME;
+    try {
+      process.env.NEMOCLAW_SANDBOX_NAME = "123-leading-digit-invalid";
+      expect(getSandboxPromptDefault(null)).toBe("my-assistant");
+    } finally {
+      if (previous === undefined) {
+        delete process.env.NEMOCLAW_SANDBOX_NAME;
+      } else {
+        process.env.NEMOCLAW_SANDBOX_NAME = previous;
+      }
+    }
+  });
+
+  it("falls back to agent default when NEMOCLAW_SANDBOX_NAME contains spaces", () => {
+    const previous = process.env.NEMOCLAW_SANDBOX_NAME;
+    try {
+      process.env.NEMOCLAW_SANDBOX_NAME = "bad name";
+      expect(getSandboxPromptDefault(null)).toBe("my-assistant");
+    } finally {
+      if (previous === undefined) {
+        delete process.env.NEMOCLAW_SANDBOX_NAME;
+      } else {
+        process.env.NEMOCLAW_SANDBOX_NAME = previous;
       }
     }
   });
