@@ -67,7 +67,7 @@ const {
 const {
   getSandboxDeleteOutcome,
 } = require("./lib/actions/sandbox/destroy");
-const { runRegisteredOclifCommand } = require("./lib/cli/oclif-runner");
+const { runOclifArgv, runRegisteredOclifCommand } = require("./lib/cli/oclif-runner");
 const { isErrnoException }: typeof import("./lib/errno") = require("./lib/errno");
 const agentRuntime = require("../bin/lib/agent-runtime");
 const sandboxState = require("./lib/state/sandbox");
@@ -77,7 +77,6 @@ const {
   createSystemDeps: createSessionDeps,
   parseForwardList,
 } = require("./lib/state/sandbox-session");
-
 const {
   canonicalUsageList,
   globalCommandTokens,
@@ -232,6 +231,15 @@ async function runDispatchResult(
 
 // eslint-disable-next-line complexity
 async function main(argv: string[] = process.argv.slice(2)): Promise<void> {
+  if (argv[0] === "internal") {
+    await runOclifArgv(argv, {
+      rootDir: ROOT,
+      error: console.error,
+      exit: (code: number) => process.exit(code),
+    });
+    return;
+  }
+
   const normalized = normalizeArgv(argv, {
     globalCommands: GLOBAL_COMMANDS,
     isSandboxConnectFlag,
