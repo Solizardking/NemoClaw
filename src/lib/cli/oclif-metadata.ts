@@ -15,9 +15,9 @@ export type OclifCommandMetadata = {
 
 function loadOclifCommands(): Record<string, OclifCommandMetadata> | null {
   for (const modulePath of [
-    "../oclif-commands",
-    "../oclif-commands.js",
-    "../../../dist/lib/oclif-commands.js",
+    "../commands",
+    "../commands/index.js",
+    "../../../dist/lib/commands/index.js",
   ]) {
     try {
       const registry = require(modulePath) as {
