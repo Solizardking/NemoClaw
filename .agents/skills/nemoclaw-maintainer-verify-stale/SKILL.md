@@ -1,6 +1,6 @@
 ---
 name: nemoclaw-maintainer-verify-stale
-description: Verify whether old NVIDIA/NemoClaw bug reports still reproduce against the latest tag. Picks candidate issues opened against older versions, runs the reproducer locally first when possible (Linux or macOS), otherwise reuses or provisions a Brev Linux box (CPU or GPU), detects behavior that was intentionally changed, scores confidence, and posts an evidence-backed comment with a label (fixed-on-latest, wontfix-by-design, or verify-inconclusive). Tag-only — never auto-closes. Brev verification is Linux-only in v1; Windows and integration-token-dependent issues are skipped. Trigger keywords - verify stale, verify fixed, reproduce on latest, stale issue, old bug, fixed-on-latest, wontfix-by-design, verify-inconclusive, drain backlog, brev verify.
+description: Verify whether old NVIDIA/NemoClaw bug reports still reproduce against the latest tag. Picks candidate issues opened against older versions, runs the reproducer locally first when possible (Linux or macOS), otherwise reuses or provisions a Brev Linux box (CPU or GPU), detects behavior that was intentionally changed, scores confidence, and posts an evidence-backed comment with a label (fixed-on-latest, wontfix, or verify-inconclusive). Tag-only — never auto-closes. Brev verification is Linux-only in v1; Windows and integration-token-dependent issues are skipped. Trigger keywords - verify stale, verify fixed, reproduce on latest, stale issue, old bug, fixed-on-latest, wontfix, verify-inconclusive, drain backlog, brev verify.
 user_invocable: true
 ---
 
@@ -71,7 +71,7 @@ Apply these rules in order. Drop any issue that fails a rule.
 
 **Idempotency:** drop if **either** of these is true:
 
-- The issue carries a `fixed-on-latest`, `verify-inconclusive`, or `wontfix-by-design` label. (Cleared by the release sweep in `nemoclaw-maintainer-cut-release-tag` so the issue re-opens on each release.)
+- The issue carries a `fixed-on-latest` or `verify-inconclusive` label. (Cleared by the release sweep in `nemoclaw-maintainer-cut-release-tag` so the issue re-opens on each release.) The by-design path uses the existing repo `wontfix` label, which is already covered by the issue-type skip rule above — no separate idempotency clause needed for that path.
 - A comment matching `<!-- nemoclaw-verify-stale v\d+ YYYY-MM-DD -->` was posted **within the last 7 days**. The regex matches any marker version (`v1`, `v2`, …) so future skill versions can re-verify older-marked issues by tightening the regex (e.g. require a specific marker version). The marker carries a date so the candidate filter can apply a TTL — useful for the still-reproduces case (Step 9), where no label is applied and we want next week's run to re-verify rather than skip forever.
 
 **Candidate rule:** keep the issue if **either**:
@@ -514,7 +514,7 @@ Re-run every grep / git / `gh` command cited in the evidence blocks before compo
 
 - **Skip the Step 9 score table** entirely. The "exit 0 + expected output" axis doesn't apply when the expected output is no longer the contract.
 - **Skip Brev provisioning** if the signal fires before Step 7 — a remote run would just confirm what static analysis already proved. (Signals 2 and 3 can run as soon as the reported version is parsed in Step 4.)
-- **Apply label `wontfix-by-design`** (`gh label create wontfix-by-design ...` if it doesn't exist; coordinate with maintainers on the canonical name before first use).
+- **Apply label `wontfix`** (the existing repo label, not a verify-stale-specific variant). `wontfix` is already in the Step 3 issue-type skip list, so a labelled issue is automatically excluded from future runs without needing a separate idempotency clause.
 - **Use the by-design comment template below** instead of the standard Step 10 template.
 - **@-mention the reporter** so they can object if the framing is wrong.
 - **Never auto-close.** A maintainer pulls the trigger, same as the other label paths.
@@ -523,11 +523,14 @@ Re-run every grep / git / `gh` command cited in the evidence blocks before compo
 
 Mandatory sections in this order. Omit only the sections explicitly noted as omittable.
 
+**Tag-anchoring rule.** All `file:line` citations in the rendered comment MUST refer to the verified-on tag (e.g., `v0.0.35`), not the maintainer's working `HEAD`. Lines drift between tags and main; pinning to the tag keeps the citations reproducible by anyone reading the comment later. When greping for evidence, use `git grep -n "<symbol>" "$LATEST" -- ...` rather than working-tree grep.
+
 ````markdown
 ## Stale-issue verification — behavior is by-design
 
 **Reported on:** v0.0.<X>
 **Verified on:** v0.0.<Y> (PR #<NNNN> first shipped in v0.0.<Z>)
+**Verification mode:** static analysis at the verified-on tag — no runtime reproduction. Step 8.5 by-design short-circuits Brev provisioning because the responsible code change is already proven by the diff between `$REPORTED_VERSION` and `$LATEST`.
 **Outcome:** symptom reproduces against the reproducer as filed, but the implicated behavior was intentionally changed.
 
 ### What's structurally fixed
@@ -827,7 +830,7 @@ After each issue (verified, inconclusive, by-design, or infra-failed), append to
 **Latest install:** succeeded | failed (infra error)
 **Latest result:** not-reproduced (clean) | still-reproduces | partial / flake | n/a (skipped 8d)
 **Confidence:** 88 / 100 | n/a (still-reproduces)
-**Label applied:** fixed-on-latest | verify-inconclusive | wontfix-by-design | none (still-reproduces) | none (infra)
+**Label applied:** fixed-on-latest | verify-inconclusive | wontfix | none (still-reproduces) | none (infra)
 **Brev wall time (approx):** N min
 
 ---
@@ -850,7 +853,7 @@ At end of a batch session, prepend a session summary:
 ## YYYY-MM-DD — Verify Session
 **Issues considered:** N
 **Verified `fixed-on-latest`:** N
-**Marked `wontfix-by-design`:** N
+**Marked `wontfix` (by-design path):** N
 **Marked `verify-inconclusive`:** N
 **Local-first short-circuits (no Brev cost):** N
 **Skipped (Windows / macOS / integration / no version):** N
@@ -883,4 +886,4 @@ Never stage or commit the log to the NemoClaw repo.
 
 ## Companion Behavior
 
-`nemoclaw-maintainer-cut-release-tag` sweeps `fixed-on-latest`, `verify-inconclusive`, and `wontfix-by-design` from all open issues at release time. Without that sweep, "latest" drifts and verifications go stale silently.
+`nemoclaw-maintainer-cut-release-tag` sweeps `fixed-on-latest` and `verify-inconclusive` from all open issues at release time. Without that sweep, "latest" drifts and verifications go stale silently. The by-design path uses the existing repo `wontfix` label; that label is **not** swept (it's also applied for non-skill reasons such as scope or priority decisions, and clearing it would erase human triage work).
