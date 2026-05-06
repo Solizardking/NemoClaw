@@ -15,8 +15,8 @@ import {
   getOpenshellBinary,
   isCommandTimeout,
   runOpenshell,
-} from "./openshell-runtime";
-import { OPENSHELL_PROBE_TIMEOUT_MS } from "./openshell-timeouts";
+} from "./adapters/openshell/runtime";
+import { OPENSHELL_PROBE_TIMEOUT_MS } from "./adapters/openshell/timeouts";
 import { ROOT, shellQuote } from "./runner";
 import { parseForwardList } from "./sandbox-session-state";
 import { G, R } from "./terminal-style";
