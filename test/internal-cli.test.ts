@@ -17,4 +17,14 @@ describe("internal oclif namespace", () => {
     expect(result.stdout).toContain("Internal: patch CoreDNS");
     expect(result.stdout).toContain("nemoclaw internal dns fix-coredns [gateway-name]");
   });
+
+  it("exposes setup-proxy as an oclif-routed internal subcommand", () => {
+    const result = spawnSync(process.execPath, [CLI, "internal", "dns", "setup-proxy", "--help"], {
+      encoding: "utf-8",
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Internal: configure sandbox DNS proxy");
+    expect(result.stdout).toContain("nemoclaw internal dns setup-proxy <gateway-name> <sandbox-name>");
+  });
 });
