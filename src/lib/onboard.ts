@@ -55,7 +55,7 @@ const { ROOT, SCRIPTS, redact, run, runShell, runCapture, runFile, shellQuote, v
   runner;
 const nameValidation: typeof import("./name-validation") = require("./name-validation");
 const { NAME_ALLOWED_FORMAT, getNameValidationGuidance } = nameValidation;
-const docker: typeof import("./docker") = require("./docker");
+const docker: typeof import("./adapters/docker") = require("./adapters/docker");
 const {
   dockerContainerInspectFormat,
   dockerExecArgv,

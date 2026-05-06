@@ -33,7 +33,7 @@ const {
   dockerInspect,
   dockerRemoveVolumesByPrefix,
   dockerRmi,
-} = require("./lib/docker");
+} = require("./lib/adapters/docker");
 const { resolveOpenshell } = require("./lib/adapters/openshell/resolve");
 const { hydrateCredentialEnv, isNonInteractive } = require("./lib/onboard");
 const registry = require("./lib/state/registry");
