@@ -24,7 +24,7 @@ gh issue view <number> --repo NVIDIA/NemoClaw \
   --json number,title,body,labels,url,author,createdAt,comments
 ```
 
-**Batch mode** — user says "batch", "weekly", or provides no number. Cap at 20 issues for *processing* per run (enforced after Step 3/4 filters narrow the pool).
+**Batch mode** — user says "batch", "weekly", or provides no number. Cap at **15 issues** for *processing* per run, enforced as a slice after Step 3/4 filters narrow the pool. The cap exists because batch is sequential (Step 7 reuse-or-provision keeps it on 1–2 Brev boxes total) and the wallclock budget is ~2–3 hours per 15-issue run; running larger forces the maintainer to either drop the per-plan approval gate or spread the batch across multiple sessions.
 
 The discovery query needs to see the entire open-bug pool — the per-run processing cap is downstream. Use `--limit 1000` so the skill doesn't silently drop issues beyond the page (the candidate triage run found 129 open bugs; an earlier `--limit 100` would have missed 29 of them).
 
@@ -141,6 +141,21 @@ After validation, **pick the smallest surviving version** as the reported versio
 If no version survives, drop the issue from the candidate set — we cannot establish "previous version".
 
 **Variable format for downstream steps.** Set `REPORTED_VERSION` to the **full tag string** (e.g., `REPORTED_VERSION="v0.0.32"`), not just the patch number. Step 8a's installer expects the full tag via the `NEMOCLAW_INSTALL_TAG` env var.
+
+**Batch cap enforcement.** In batch mode, after Step 3 label filters and the Step 4 version+candidate-rule filters narrow the pool, sort surviving candidates by `(-versions_behind, -age_days)` so the most stale come first, then **slice to the top 15**:
+
+```bash
+# Each candidate has at minimum: number, reported, behind, age_days
+SLICED=$(printf '%s' "$CANDIDATES_JSON" | jq '
+  sort_by([-(.behind // 0), -(.age_days // 0)])
+  | .[0:15]')
+SLICED_COUNT=$(printf '%s' "$SLICED" | jq 'length')
+TOTAL=$(printf '%s' "$CANDIDATES_JSON" | jq 'length')
+echo "Batch run: processing $SLICED_COUNT of $TOTAL eligible candidates (cap: 15)."
+[ "$TOTAL" -gt 15 ] && echo "  Spillover: $((TOTAL - 15)) candidates deferred to next run; the marker-comment TTL (Step 3) keeps them eligible."
+```
+
+The slice is the only enforcement of the cap — without it, "Cap at 15" is policy that nothing actually applies. Single-issue mode bypasses the cap entirely (the user explicitly named one issue).
 
 **NVBugs cross-reference.** Many NV QA bugs include an NVBugs ticket footer like `[NVB#6100043]`. Extract it at the same time as the version so Step 8.5's comment template (and any other comment template that wants to mention it) can include the cross-reference:
 
@@ -1104,7 +1119,7 @@ Never stage or commit the log to the NemoClaw repo.
 
 ## Cadence
 
-- **Weekly cron** — Monday morning, batch mode, ≤20 issues.
+- **Weekly cron** — Monday morning, batch mode, ≤15 issues (the Step 1 cap, sliced after Step 3/4 filters).
 - **Manual** — invoke with a single issue number anytime.
 
 ---
