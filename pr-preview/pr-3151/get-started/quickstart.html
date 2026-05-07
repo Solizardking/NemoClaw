@@ -682,8 +682,8 @@ The router chooses from the model pool in <code class="docutils literal notransl
 </div>
 <p class="sd-card-text">The router listens on the host at port <code class="docutils literal notranslate"><span class="pre">4000</span></code>.
 The sandbox still calls <code class="docutils literal notranslate"><span class="pre">https://inference.local/v1</span></code>, so do not point in-sandbox tools at the host router port directly.</p>
-<div class="docutils">
-<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
+</div>
+</details><details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3">
 <summary class="sd-summary-title sd-card-header">
 <span class="sd-summary-icon"><svg version="1.1" width="1.0em" height="1.0em" class="sd-octicon sd-octicon-beaker" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 5.782V2.5h-.25a.75.75 0 0 1 0-1.5h6.5a.75.75 0 0 1 0 1.5H11v3.282l3.666 5.76C15.619 13.04 14.543 15 12.767 15H3.233c-1.776 0-2.852-1.96-1.899-3.458Zm-2.4 6.565a.75.75 0 0 0 .633 1.153h9.534a.75.75 0 0 0 .633-1.153L12.225 10.5h-8.45ZM9.5 2.5h-3V6c0 .143-.04.283-.117.403L4.73 9h6.54L9.617 6.403A.746.746 0 0 1 9.5 6Z"></path></svg></span><span class="sd-summary-text">Experimental: Local NIM and Local vLLM</span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg version="1.1" width="1.5em" height="1.5em" class="sd-octicon sd-octicon-chevron-right" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
 <p class="sd-card-text">These options appear when <code class="docutils literal notranslate"><span class="pre">NEMOCLAW_EXPERIMENTAL=1</span></code> is set and the prerequisites are met.</p>
@@ -693,9 +693,10 @@ The sandbox still calls <code class="docutils literal notranslate"><span class="
 </ul>
 <p class="sd-card-text">For setup, refer to <a class="reference internal" href="../inference/use-local-inference.html"><span class="std std-doc">Use a Local Inference Server</span></a>.</p>
 </div>
-</details></div>
-<p class="rubric" id="review-the-configuration-before-the-sandbox-build">Review the Configuration Before the Sandbox Build</p>
-<p class="sd-card-text">After you enter the sandbox name, the wizard prints a review summary and asks for final confirmation before registering the provider, prompting for optional integrations, and building the sandbox image.
+</details></section>
+<section id="review-the-configuration-before-the-sandbox-build">
+<h3>Review the Configuration Before the Sandbox Build<a class="headerlink" href="#review-the-configuration-before-the-sandbox-build" title="Link to this heading">#</a></h3>
+<p>After you enter the sandbox name, the wizard prints a review summary and asks for final confirmation before registering the provider, prompting for optional integrations, and building the sandbox image.
 For example, if you picked an OpenAI-compatible endpoint, the summary looks like the following:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>  ──────────────────────────────────────────────────
   Review configuration
@@ -712,23 +713,27 @@ For example, if you picked an OpenAI-compatible endpoint, the summary looks like
   Apply this configuration? [Y/n]:
 </pre></div>
 </div>
-<p class="sd-card-text">The default is <code class="docutils literal notranslate"><span class="pre">Y</span></code>, so you can press Enter once to continue. Answer <code class="docutils literal notranslate"><span class="pre">n</span></code> to abort cleanly, fix the entries, and re-run <code class="docutils literal notranslate"><span class="pre">nemoclaw</span> <span class="pre">onboard</span></code>.</p>
-<p class="sd-card-text">Non-interactive runs (<code class="docutils literal notranslate"><span class="pre">NEMOCLAW_NON_INTERACTIVE=1</span></code>) print the summary for log clarity but skip the prompt.</p>
-<p class="rubric" id="configure-web-search-and-messaging">Configure Web Search and Messaging</p>
-<p class="sd-card-text">After you confirm the summary, NemoClaw registers the selected provider with the OpenShell gateway and sets the <code class="docutils literal notranslate"><span class="pre">inference.local</span></code> route.
+<p>The default is <code class="docutils literal notranslate"><span class="pre">Y</span></code>, so you can press Enter once to continue. Answer <code class="docutils literal notranslate"><span class="pre">n</span></code> to abort cleanly, fix the entries, and re-run <code class="docutils literal notranslate"><span class="pre">nemoclaw</span> <span class="pre">onboard</span></code>.</p>
+<p>Non-interactive runs (<code class="docutils literal notranslate"><span class="pre">NEMOCLAW_NON_INTERACTIVE=1</span></code>) print the summary for log clarity but skip the prompt.</p>
+</section>
+<section id="configure-web-search-and-messaging">
+<h3>Configure Web Search and Messaging<a class="headerlink" href="#configure-web-search-and-messaging" title="Link to this heading">#</a></h3>
+<p>After you confirm the summary, NemoClaw registers the selected provider with the OpenShell gateway and sets the <code class="docutils literal notranslate"><span class="pre">inference.local</span></code> route.
 The wizard then asks whether to enable Brave Web Search.
 If you enable it, enter a Brave Search API key when prompted.</p>
-<p class="sd-card-text">The wizard also offers messaging channels such as Telegram, Discord, and Slack.
+<p>The wizard also offers messaging channels such as Telegram, Discord, and Slack.
 Press a channel number to toggle it, then press Enter to continue.
 If you select a channel, NemoClaw validates the token format before it bakes the channel configuration into the sandbox.
 For example, Slack bot tokens must start with <code class="docutils literal notranslate"><span class="pre">xoxb-</span></code>.</p>
-<p class="rubric" id="choose-network-policy-presets">Choose Network Policy Presets</p>
-<p class="sd-card-text">After the sandbox image builds and OpenClaw starts inside the sandbox, NemoClaw asks which network policy tier to apply.
+</section>
+<section id="choose-network-policy-presets">
+<h3>Choose Network Policy Presets<a class="headerlink" href="#choose-network-policy-presets" title="Link to this heading">#</a></h3>
+<p>After the sandbox image builds and OpenClaw starts inside the sandbox, NemoClaw asks which network policy tier to apply.
 The default <strong>Balanced</strong> tier includes common development presets such as npm, PyPI, Hugging Face, Homebrew, and Brave Search.
 Use the arrow keys or <code class="docutils literal notranslate"><span class="pre">j</span></code> and <code class="docutils literal notranslate"><span class="pre">k</span></code> to move, Space to select, and Enter to confirm.</p>
-<p class="sd-card-text">The preset selector lets you include more destinations, such as GitHub, Jira, Slack, Telegram, or local inference.
+<p>The preset selector lets you include more destinations, such as GitHub, Jira, Slack, Telegram, or local inference.
 Press <code class="docutils literal notranslate"><span class="pre">r</span></code> to toggle a selected preset between read-only and read-write when the preset supports both modes.</p>
-<p class="sd-card-text">When the install completes, a summary confirms the running environment.
+<p>When the install completes, a summary confirms the running environment.
 Before printing the summary, NemoClaw verifies that the sandbox gateway and dashboard port forward are reachable.
 Inference route and messaging bridge checks are reported as warnings when they need more time or additional configuration.
 The <code class="docutils literal notranslate"><span class="pre">Model</span></code> and provider line reflects the inference option you picked during onboarding.
@@ -745,11 +750,15 @@ Logs:        nemoclaw my-gpt-claw logs --follow
 [INFO]  === Installation complete ===
 </pre></div>
 </div>
-<p class="sd-card-text">If you picked a different option, the <code class="docutils literal notranslate"><span class="pre">Model</span></code> line shows that provider’s model and label instead. For example, you might see <code class="docutils literal notranslate"><span class="pre">gpt-5.4</span> <span class="pre">(OpenAI)</span></code>, <code class="docutils literal notranslate"><span class="pre">claude-sonnet-4-6</span> <span class="pre">(Anthropic)</span></code>, <code class="docutils literal notranslate"><span class="pre">gemini-2.5-flash</span> <span class="pre">(Google</span> <span class="pre">Gemini)</span></code>, <code class="docutils literal notranslate"><span class="pre">llama3.1:8b</span> <span class="pre">(Local</span> <span class="pre">Ollama)</span></code>, <code class="docutils literal notranslate"><span class="pre">nvidia-routed</span> <span class="pre">(Model</span> <span class="pre">Router)</span></code>, or <code class="docutils literal notranslate"><span class="pre">&lt;your-model&gt;</span> <span class="pre">(Other</span> <span class="pre">OpenAI-compatible</span> <span class="pre">endpoint)</span></code>.</p>
-<p class="rubric" id="run-your-first-agent-prompt">Run Your First Agent Prompt</p>
-<p class="sd-card-text">You can chat with the agent from the terminal or the browser.</p>
-<p class="rubric" id="open-the-openclaw-ui-in-a-browser-to-chat-with-the-agent">Open the OpenClaw UI in a Browser to Chat with the Agent</p>
-<p class="sd-card-text">The onboard wizard starts a background port forward to the sandbox dashboard, then prints the dashboard URL in the install summary.
+<p>If you picked a different option, the <code class="docutils literal notranslate"><span class="pre">Model</span></code> line shows that provider’s model and label instead. For example, you might see <code class="docutils literal notranslate"><span class="pre">gpt-5.4</span> <span class="pre">(OpenAI)</span></code>, <code class="docutils literal notranslate"><span class="pre">claude-sonnet-4-6</span> <span class="pre">(Anthropic)</span></code>, <code class="docutils literal notranslate"><span class="pre">gemini-2.5-flash</span> <span class="pre">(Google</span> <span class="pre">Gemini)</span></code>, <code class="docutils literal notranslate"><span class="pre">llama3.1:8b</span> <span class="pre">(Local</span> <span class="pre">Ollama)</span></code>, <code class="docutils literal notranslate"><span class="pre">nvidia-routed</span> <span class="pre">(Model</span> <span class="pre">Router)</span></code>, or <code class="docutils literal notranslate"><span class="pre">&lt;your-model&gt;</span> <span class="pre">(Other</span> <span class="pre">OpenAI-compatible</span> <span class="pre">endpoint)</span></code>.</p>
+</section>
+</section>
+<section id="run-your-first-agent-prompt">
+<h2>Run Your First Agent Prompt<a class="headerlink" href="#run-your-first-agent-prompt" title="Link to this heading">#</a></h2>
+<p>You can chat with the agent from the terminal or the browser.</p>
+<section id="open-the-openclaw-ui-in-a-browser-to-chat-with-the-agent">
+<h3>Open the OpenClaw UI in a Browser to Chat with the Agent<a class="headerlink" href="#open-the-openclaw-ui-in-a-browser-to-chat-with-the-agent" title="Link to this heading">#</a></h3>
+<p>The onboard wizard starts a background port forward to the sandbox dashboard, then prints the dashboard URL in the install summary.
 The default host port is <code class="docutils literal notranslate"><span class="pre">18789</span></code>.
 If that port is already taken, NemoClaw uses the next free dashboard port, such as <code class="docutils literal notranslate"><span class="pre">18790</span></code>, and prints that port in the final URL.
 The gateway token is redacted from displayed output; retrieve it explicitly when the browser asks for authentication.</p>
@@ -762,32 +771,35 @@ Token:       nemoclaw my-gpt-claw gateway-token --quiet
 ──────────────────────────────────────────────────
 </pre></div>
 </div>
-<p class="sd-card-text">Open the dashboard URL in your browser.
+<p>Open the dashboard URL in your browser.
 If the browser asks for authentication, run the printed <code class="docutils literal notranslate"><span class="pre">gateway-token</span> <span class="pre">--quiet</span></code> command and append <code class="docutils literal notranslate"><span class="pre">#token=&lt;token&gt;</span></code> locally.
 Treat the token like a password.</p>
-<p class="rubric" id="chat-with-the-agent-from-the-terminal">Chat with the Agent from the Terminal</p>
-<p class="sd-card-text">Connect to the sandbox and use the OpenClaw CLI.</p>
+</section>
+<section id="chat-with-the-agent-from-the-terminal">
+<h3>Chat with the Agent from the Terminal<a class="headerlink" href="#chat-with-the-agent-from-the-terminal" title="Link to this heading">#</a></h3>
+<p>Connect to the sandbox and use the OpenClaw CLI.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>nemoclaw<span class="w"> </span>my-assistant<span class="w"> </span>connect
 </pre></div>
 </div>
-<p class="sd-card-text">In the sandbox shell, send a single message and print the response.</p>
+<p>In the sandbox shell, send a single message and print the response.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>openclaw<span class="w"> </span>agent<span class="w"> </span>--agent<span class="w"> </span>main<span class="w"> </span>--local<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;hello&quot;</span><span class="w"> </span>--session-id<span class="w"> </span><span class="nb">test</span>
 </pre></div>
 </div>
-<p class="rubric" id="next-steps">Next Steps</p>
+</section>
+</section>
+<section id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading">#</a></h2>
 <ul class="simple">
-<li><p class="sd-card-text"><a class="reference internal" href="quickstart-hermes.html"><span class="std std-doc">NemoHermes Quickstart</span></a> to launch Hermes instead of the default OpenClaw agent.</p></li>
-<li><p class="sd-card-text"><a class="reference internal" href="../manage-sandboxes/lifecycle.html"><span class="std std-doc">Manage NemoClaw sandboxes</span></a> for port forwards, rebuilds, upgrades, and uninstall.</p></li>
-<li><p class="sd-card-text"><a class="reference internal" href="../inference/switch-inference-providers.html"><span class="std std-doc">Switch inference providers</span></a> to use a different model or endpoint.</p></li>
-<li><p class="sd-card-text"><a class="reference internal" href="../network-policy/approve-network-requests.html"><span class="std std-doc">Approve or deny network requests</span></a> when the agent tries to reach external hosts.</p></li>
-<li><p class="sd-card-text"><a class="reference internal" href="../network-policy/customize-network-policy.html"><span class="std std-doc">Customize the network policy</span></a> to pre-approve trusted domains.</p></li>
-<li><p class="sd-card-text"><a class="reference internal" href="../network-policy/integration-policy-examples.html"><span class="std std-doc">Common integration policy examples</span></a> for maintained policy presets such as Outlook, messaging, GitHub, Jira, Brave Search, package managers, Hugging Face, and local inference.</p></li>
-<li><p class="sd-card-text"><a class="reference internal" href="../deployment/deploy-to-remote-gpu.html"><span class="std std-doc">Deploy to a remote GPU instance</span></a> for always-on operation.</p></li>
-<li><p class="sd-card-text"><a class="reference internal" href="../monitoring/monitor-sandbox-activity.html"><span class="std std-doc">Monitor sandbox activity</span></a> through the OpenShell TUI.</p></li>
-<li><p class="sd-card-text"><a class="reference internal" href="../reference/troubleshooting.html"><span class="std std-doc">Consult the troubleshooting guide</span></a> for common error messages and resolution steps.</p></li>
+<li><p><a class="reference internal" href="quickstart-hermes.html"><span class="std std-doc">NemoHermes Quickstart</span></a> to launch Hermes instead of the default OpenClaw agent.</p></li>
+<li><p><a class="reference internal" href="../manage-sandboxes/lifecycle.html"><span class="std std-doc">Manage NemoClaw sandboxes</span></a> for port forwards, rebuilds, upgrades, and uninstall.</p></li>
+<li><p><a class="reference internal" href="../inference/switch-inference-providers.html"><span class="std std-doc">Switch inference providers</span></a> to use a different model or endpoint.</p></li>
+<li><p><a class="reference internal" href="../network-policy/approve-network-requests.html"><span class="std std-doc">Approve or deny network requests</span></a> when the agent tries to reach external hosts.</p></li>
+<li><p><a class="reference internal" href="../network-policy/customize-network-policy.html"><span class="std std-doc">Customize the network policy</span></a> to pre-approve trusted domains.</p></li>
+<li><p><a class="reference internal" href="../network-policy/integration-policy-examples.html"><span class="std std-doc">Common integration policy examples</span></a> for maintained policy presets such as Outlook, messaging, GitHub, Jira, Brave Search, package managers, Hugging Face, and local inference.</p></li>
+<li><p><a class="reference internal" href="../deployment/deploy-to-remote-gpu.html"><span class="std std-doc">Deploy to a remote GPU instance</span></a> for always-on operation.</p></li>
+<li><p><a class="reference internal" href="../monitoring/monitor-sandbox-activity.html"><span class="std std-doc">Monitor sandbox activity</span></a> through the OpenShell TUI.</p></li>
+<li><p><a class="reference internal" href="../reference/troubleshooting.html"><span class="std std-doc">Consult the troubleshooting guide</span></a> for common error messages and resolution steps.</p></li>
 </ul>
-</div>
-</details></section>
 </section>
 </section>
 
@@ -842,8 +854,17 @@ Treat the token like a password.</p>
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#install-nemoclaw-and-onboard-openclaw-agent">Install NemoClaw and Onboard OpenClaw Agent</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#respond-to-the-onboard-wizard">Respond to the Onboard Wizard</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#review-the-configuration-before-the-sandbox-build">Review the Configuration Before the Sandbox Build</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#configure-web-search-and-messaging">Configure Web Search and Messaging</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#choose-network-policy-presets">Choose Network Policy Presets</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#run-your-first-agent-prompt">Run Your First Agent Prompt</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#open-the-openclaw-ui-in-a-browser-to-chat-with-the-agent">Open the OpenClaw UI in a Browser to Chat with the Agent</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#chat-with-the-agent-from-the-terminal">Chat with the Agent from the Terminal</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#next-steps">Next Steps</a></li>
 </ul>
   </nav></div>
 
