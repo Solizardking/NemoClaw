@@ -252,9 +252,18 @@ Set `BUG_PROVIDER=<provider>`.
 The reporter's reproducer uses the <provider> provider, which requires a real API key
 to verify faithfully. Three options:
 
-  1. Provide an API key now. Export NVIDIA_API_KEY=<key> (or GEMINI_API_KEY=<key>, etc.)
-     in the environment running this skill, then re-run. The key is propagated to the
-     Brev box via `brev exec` and removed when the box is deleted.
+  1. Provide an API key via file (NEVER on the command line — keys in argv are
+     visible in `ps -ef` to anyone with shell access on either machine). Write
+     the key to a 600-perm file on your laptop:
+
+       printf '%s' '<your-key>' > ~/.nvidia-api-key
+       chmod 600 ~/.nvidia-api-key
+
+     The skill copies the file to the Brev box via `brev copy` (encrypted SSH),
+     reads it inside the box with `NVIDIA_API_KEY=$(cat ~/.nvidia-api-key)`,
+     and never puts the value on a command line. Box deletion removes the file
+     from the box; you should `rm ~/.nvidia-api-key` on your laptop after the
+     run.
 
   2. Substitute Ollama and accept the -30 confidence penalty (per Step 8a.5). The
      verdict will be capped because we're not exercising the real provider's code
@@ -267,6 +276,22 @@ Choose 1, 2, or 3:
 ```
 
 This prompt blocks before Step 7 provisions a box. Don't burn cost on a verification path the maintainer hasn't agreed to.
+
+**API-key propagation pattern (for option 1).** Surfaced during the #2604 e2e run: passing the key as `NVIDIA_API_KEY=<value> brev exec ...` puts the literal value in the brev exec process's argv, which is visible in `ps -ef` on both the maintainer's laptop and the Brev box for the entire duration of the run. That violates the "never logged" promise. The correct pattern is file-based:
+
+```bash
+# After Step 6.5 preconditions, copy the local key file to the Brev box.
+[ -f ~/.nvidia-api-key ] && brev copy ~/.nvidia-api-key "$INSTANCE_NAME":~/.nvidia-api-key
+brev exec "$INSTANCE_NAME" "chmod 600 ~/.nvidia-api-key 2>/dev/null || true"
+
+# In setup / reproducer scripts running on the Brev box, source the key from the file.
+if [ -f ~/.nvidia-api-key ]; then
+  export NVIDIA_API_KEY=$(cat ~/.nvidia-api-key)
+fi
+NEMOCLAW_PROVIDER=build NEMOCLAW_MODEL=<model> nemoclaw onboard ...
+```
+
+Cleanup: when the trap fires `brev delete`, the box (and the key file on it) goes away. On the maintainer's laptop, the file persists until they `rm ~/.nvidia-api-key` — Step 12's session log should remind them. **If the key was previously propagated via cmdline (pre-fix), treat it as exposed and rotate.**
 
 **Pure-CLI / pure-sandbox-build bugs are exempt** — those don't actually exercise inference, so the provider doesn't matter even if the issue body mentions one. Heuristic: if Step 6.7's local-first predicate would have fired (no sandbox state, no model server interaction), skip the prompt.
 
@@ -545,14 +570,16 @@ brev exec "$INSTANCE_NAME" "$RESET"
 # and either succeeds (ideal) or fails on a real Dockerfile/sandbox-build issue (which
 # is what we want to detect). Pass NVIDIA_API_KEY only if the maintainer provided one
 # at Step 5's prompt.
+# Read NVIDIA_API_KEY from ~/.nvidia-api-key on the BOX (not from this shell's argv).
+# The Step 5 propagation block already brev-copy'd the key file with 600 perms.
 brev exec "$INSTANCE_NAME" "
+  if [ -f ~/.nvidia-api-key ]; then export NVIDIA_API_KEY=\$(cat ~/.nvidia-api-key); fi
   NEMOCLAW_INSTALL_TAG=$REPORTED_VERSION \
-  NEMOCLAW_NON_INTERACTIVE=1 \
-  NEMOCLAW_PROVIDER=${NEMOCLAW_PROVIDER:-ollama} \
-  NEMOCLAW_MODEL=${NEMOCLAW_MODEL:-nemotron-3-nano:4b} \
-  NEMOCLAW_SANDBOX_NAME=verify-stale-install \
-  ${NVIDIA_API_KEY:+NVIDIA_API_KEY=$NVIDIA_API_KEY} \
-  bash -c 'curl -fsSL $INSTALL_URL | bash'
+    NEMOCLAW_NON_INTERACTIVE=1 \
+    NEMOCLAW_PROVIDER=${NEMOCLAW_PROVIDER:-ollama} \
+    NEMOCLAW_MODEL=${NEMOCLAW_MODEL:-nemotron-3-nano:4b} \
+    NEMOCLAW_SANDBOX_NAME=verify-stale-install \
+    bash -c 'curl -fsSL $INSTALL_URL | bash'
 " || BASELINE_INSTALL_FAILED=1
 
 # Verify the resolved install version matches the requested version. This guards against the
@@ -764,7 +791,10 @@ brev exec "$INSTANCE_NAME" "bash ~/reproducer.sh" 2>&1 | tee ./baseline-transcri
 
 ```bash
 brev exec "$INSTANCE_NAME" "$RESET"
-brev exec "$INSTANCE_NAME" "curl -fsSL $INSTALL_URL | bash"
+brev exec "$INSTANCE_NAME" "
+  if [ -f ~/.nvidia-api-key ]; then export NVIDIA_API_KEY=\$(cat ~/.nvidia-api-key); fi
+  curl -fsSL $INSTALL_URL | bash
+"
 
 # Same resolved-version check as Step 8a — guard against env-var scoping or default fallthrough
 # silently installing the wrong version. The latest install should resolve to $LATEST.
