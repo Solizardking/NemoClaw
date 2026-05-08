@@ -1352,6 +1352,75 @@ describe("onboard helpers", () => {
     }
   });
 
+  it("#2880: bakes NEMOCLAW_AGENT_HEARTBEAT_EVERY env into the staged Dockerfile", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "nemoclaw-onboard-dockerfile-heartbeat-"));
+    const dockerfilePath = path.join(tmpDir, "Dockerfile");
+    const baseDockerfile = [
+      "ARG NEMOCLAW_MODEL=nvidia/nemotron-3-super-120b-a12b",
+      "ARG NEMOCLAW_PROVIDER_KEY=nvidia",
+      "ARG NEMOCLAW_PRIMARY_MODEL_REF=nvidia/nemotron-3-super-120b-a12b",
+      "ARG CHAT_UI_URL=http://127.0.0.1:18789",
+      "ARG NEMOCLAW_INFERENCE_BASE_URL=https://inference.local/v1",
+      "ARG NEMOCLAW_INFERENCE_API=openai-completions",
+      "ARG NEMOCLAW_INFERENCE_COMPAT_B64=e30=",
+      "ARG NEMOCLAW_WEB_SEARCH_ENABLED=0",
+      "ARG NEMOCLAW_BUILD_ID=default",
+      "ARG NEMOCLAW_AGENT_HEARTBEAT_EVERY=",
+    ].join("\n");
+
+    const prior = process.env.NEMOCLAW_AGENT_HEARTBEAT_EVERY;
+    try {
+      // Valid duration values bake in.
+      for (const value of ["0m", "30m", "5m", "1h", "30s"]) {
+        fs.writeFileSync(dockerfilePath, baseDockerfile);
+        process.env.NEMOCLAW_AGENT_HEARTBEAT_EVERY = value;
+        patchStagedDockerfile(
+          dockerfilePath,
+          "gpt-5.4",
+          "http://127.0.0.1:18789",
+          `build-heartbeat-${value}`,
+          "openai-api",
+        );
+        assert.match(
+          fs.readFileSync(dockerfilePath, "utf8"),
+          new RegExp(`^ARG NEMOCLAW_AGENT_HEARTBEAT_EVERY=${value}$`, "m"),
+          `value="${value}" should bake into the ARG line`,
+        );
+      }
+
+      // Cases that must all leave the empty default untouched (regex rejects
+      // these so the OpenClaw default cadence is preserved).
+      const rejectCases = [undefined, "", "30 minutes", "5", "5x", "fast"];
+      for (const [index, value] of rejectCases.entries()) {
+        fs.writeFileSync(dockerfilePath, baseDockerfile);
+        if (value === undefined) {
+          delete process.env.NEMOCLAW_AGENT_HEARTBEAT_EVERY;
+        } else {
+          process.env.NEMOCLAW_AGENT_HEARTBEAT_EVERY = value;
+        }
+        patchStagedDockerfile(
+          dockerfilePath,
+          "gpt-5.4",
+          "http://127.0.0.1:18789",
+          `build-heartbeat-reject-${index}`,
+          "openai-api",
+        );
+        assert.match(
+          fs.readFileSync(dockerfilePath, "utf8"),
+          /^ARG NEMOCLAW_AGENT_HEARTBEAT_EVERY=$/m,
+          `value="${String(value)}" should not change the empty ARG default`,
+        );
+      }
+    } finally {
+      if (prior === undefined) {
+        delete process.env.NEMOCLAW_AGENT_HEARTBEAT_EVERY;
+      } else {
+        process.env.NEMOCLAW_AGENT_HEARTBEAT_EVERY = prior;
+      }
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  });
+
   it("patches the staged Dockerfile with Brave Search config when enabled", () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "nemoclaw-onboard-dockerfile-web-"));
     const dockerfilePath = path.join(tmpDir, "Dockerfile");

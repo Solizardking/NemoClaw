@@ -2469,6 +2469,16 @@ function patchStagedDockerfile(
       `ARG NEMOCLAW_AGENT_TIMEOUT=${agentTimeout}`,
     );
   }
+  // NEMOCLAW_AGENT_HEARTBEAT_EVERY — override agents.defaults.heartbeat.every
+  // at build time. Accepts Go-style durations with a required s/m/h suffix
+  // ("30m", "1h"); "0m" disables heartbeat. Ref: issue #2880
+  const agentHeartbeat = process.env.NEMOCLAW_AGENT_HEARTBEAT_EVERY;
+  if (agentHeartbeat && /^\d+(s|m|h)$/.test(agentHeartbeat)) {
+    dockerfile = dockerfile.replace(
+      /^ARG NEMOCLAW_AGENT_HEARTBEAT_EVERY=.*$/m,
+      `ARG NEMOCLAW_AGENT_HEARTBEAT_EVERY=${agentHeartbeat}`,
+    );
+  }
   // Honor NEMOCLAW_PROXY_HOST / NEMOCLAW_PROXY_PORT exported in the host
   // shell so the sandbox-side nemoclaw-start.sh sees them via $ENV at runtime.
   // Without this, the host export is silently dropped at image build time and
