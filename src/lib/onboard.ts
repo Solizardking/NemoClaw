@@ -1716,11 +1716,30 @@ const CREATE_TIME_POLICY_PRESETS_BY_CHANNEL: Record<string, string[]> = {
   slack: ["slack"],
 };
 
+function getNetworkPolicyNames(policyContent: string): Set<string> | null {
+  try {
+    // Lazy require: yaml is already a dependency via the policy helpers.
+    const YAML = require("yaml");
+    const parsed = YAML.parse(policyContent);
+    const networkPolicies = parsed?.network_policies;
+    if (
+      !networkPolicies ||
+      typeof networkPolicies !== "object" ||
+      Array.isArray(networkPolicies)
+    ) {
+      return new Set();
+    }
+    return new Set(Object.keys(networkPolicies));
+  } catch {
+    return null;
+  }
+}
+
 function prepareInitialSandboxCreatePolicy(
   basePolicyPath: string,
   activeMessagingChannels: string[],
 ): InitialSandboxPolicy {
-  const createTimePresets = [
+  const requestedCreateTimePresets = [
     ...new Set(
       activeMessagingChannels.flatMap(
         (channel) => CREATE_TIME_POLICY_PRESETS_BY_CHANNEL[channel] || [],
@@ -1728,11 +1747,25 @@ function prepareInitialSandboxCreatePolicy(
     ),
   ];
 
-  if (createTimePresets.length === 0) {
+  if (requestedCreateTimePresets.length === 0) {
     return { policyPath: basePolicyPath, appliedPresets: [] };
   }
 
   const basePolicy = fs.readFileSync(basePolicyPath, "utf-8");
+  const basePolicyNames = getNetworkPolicyNames(basePolicy);
+  if (basePolicyNames === null) {
+    return { policyPath: basePolicyPath, appliedPresets: [] };
+  }
+  const existingCreateTimePresets = requestedCreateTimePresets.filter((preset) =>
+    basePolicyNames.has(preset),
+  );
+  const createTimePresets = requestedCreateTimePresets.filter(
+    (preset) => !basePolicyNames.has(preset),
+  );
+  if (createTimePresets.length === 0) {
+    return { policyPath: basePolicyPath, appliedPresets: existingCreateTimePresets };
+  }
+
   const mergedPolicy = policies.mergePresetNamesIntoPolicy(basePolicy, createTimePresets);
   if (mergedPolicy.missingPresets.length > 0) {
     throw new Error(
@@ -1745,7 +1778,7 @@ function prepareInitialSandboxCreatePolicy(
 
   return {
     policyPath,
-    appliedPresets: mergedPolicy.appliedPresets,
+    appliedPresets: [...existingCreateTimePresets, ...mergedPolicy.appliedPresets],
     cleanup: () => {
       try {
         cleanupTempDir(policyPath, "nemoclaw-initial-policy");
@@ -5669,6 +5702,7 @@ async function createSandbox(
     imageTag: resolvedImageTag,
     providerCredentialHashes:
       Object.keys(providerCredentialHashes).length > 0 ? providerCredentialHashes : undefined,
+    policies: initialSandboxPolicy.appliedPresets,
     messagingChannels: activeMessagingChannels,
     messagingChannelConfig: messagingChannelConfig || undefined,
     disabledChannels: disabledChannels.length > 0 ? [...disabledChannels] : undefined,
