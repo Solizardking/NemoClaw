@@ -315,14 +315,12 @@ import type { GatewayInference, ProviderSelectionConfig } from "./inference-conf
 import type { GpuInfo, ValidationResult } from "./local-inference";
 import {
   hydrateMessagingChannelConfig,
+  type MessagingChannelConfig,
   mergeMessagingChannelConfigs,
   normalizeMessagingChannelConfigValue,
   readMessagingChannelConfigFromEnv,
   sanitizeMessagingChannelConfig,
-  type MessagingChannelConfig,
 } from "./messaging-channel-config";
-import type { ContainerRuntime } from "./platform";
-import type { SandboxEntry } from "./state/registry";
 import type { Session, SessionUpdates } from "./onboard-session";
 import type {
   ModelCatalogFetchResult,
@@ -330,8 +328,10 @@ import type {
   ProbeResult,
   ValidationFailureLike,
 } from "./onboard-types";
+import type { ContainerRuntime } from "./platform";
 import { listChannels } from "./sandbox-channels";
 import type { StreamSandboxCreateResult } from "./sandbox-create-stream";
+import type { SandboxEntry } from "./state/registry";
 import type { BackupResult } from "./state/sandbox";
 import type { TierDefinition, TierPreset } from "./tiers";
 import type { SandboxCreateFailure, ValidationClassification } from "./validation";
@@ -524,8 +524,57 @@ const {
   isSelectedGateway,
   isGatewayHealthy,
   getGatewayReuseState,
+  shouldSelectNamedGatewayForReuse,
   getSandboxStateFromOutputs,
 } = gatewayState;
+
+type GatewayReuseSnapshot = {
+  gatewayStatus: string;
+  gwInfo: string;
+  activeGatewayInfo: string;
+  gatewayReuseState: ReturnType<typeof getGatewayReuseState>;
+};
+
+function getGatewayReuseSnapshot(): GatewayReuseSnapshot {
+  const gatewayStatus = runCaptureOpenshell(["status"], { ignoreError: true });
+  const gwInfo = runCaptureOpenshell(["gateway", "info", "-g", GATEWAY_NAME], {
+    ignoreError: true,
+  });
+  const activeGatewayInfo = runCaptureOpenshell(["gateway", "info"], { ignoreError: true });
+  return {
+    gatewayStatus,
+    gwInfo,
+    activeGatewayInfo,
+    gatewayReuseState: getGatewayReuseState(gatewayStatus, gwInfo, activeGatewayInfo),
+  };
+}
+
+function selectNamedGatewayForReuseIfNeeded(snapshot: GatewayReuseSnapshot): GatewayReuseSnapshot {
+  if (
+    !shouldSelectNamedGatewayForReuse(
+      snapshot.gatewayStatus,
+      snapshot.gwInfo,
+      snapshot.activeGatewayInfo,
+    )
+  ) {
+    return snapshot;
+  }
+
+  const selectResult = runOpenshell(["gateway", "select", GATEWAY_NAME], {
+    ignoreError: true,
+    suppressOutput: true,
+  });
+  if (selectResult.status !== 0) {
+    return snapshot;
+  }
+
+  const refreshed = getGatewayReuseSnapshot();
+  if (refreshed.gatewayReuseState === "healthy") {
+    process.env.OPENSHELL_GATEWAY = GATEWAY_NAME;
+    console.log(`  ✓ Selected existing ${cliDisplayName()} gateway`);
+  }
+  return refreshed;
+}
 
 /**
  * Remove known_hosts lines whose host field contains an openshell-* entry.
@@ -3900,14 +3949,11 @@ async function preflight(
 
   // Clean up stale or unnamed NemoClaw gateway state before checking ports.
   // A healthy named gateway can be reused later in onboarding, so avoid
-  // tearing it down here. If some other gateway is active, do not treat it
-  // as NemoClaw state; let the port checks surface the conflict instead.
-  const gatewayStatus = runCaptureOpenshell(["status"], { ignoreError: true });
-  const gwInfo = runCaptureOpenshell(["gateway", "info", "-g", GATEWAY_NAME], {
-    ignoreError: true,
-  });
-  const activeGatewayInfo = runCaptureOpenshell(["gateway", "info"], { ignoreError: true });
-  let gatewayReuseState = getGatewayReuseState(gatewayStatus, gwInfo, activeGatewayInfo);
+  // tearing it down here. If some other gateway is active but the named
+  // NemoClaw gateway exists, select it before the port checks so onboarding
+  // reuses the user's NemoClaw gateway instead of reporting a false conflict.
+  const gatewaySnapshot = selectNamedGatewayForReuseIfNeeded(getGatewayReuseSnapshot());
+  let gatewayReuseState = gatewaySnapshot.gatewayReuseState;
 
   // Verify the gateway container is actually running — openshell CLI metadata
   // can be stale after a manual `docker rm`. See #2020.
@@ -4147,12 +4193,14 @@ async function startGatewayWithOptions(
 ) {
   step(2, 8, "Starting OpenShell gateway");
 
-  const gatewayStatus = runCaptureOpenshell(["status"], { ignoreError: true });
-  const gwInfo = runCaptureOpenshell(["gateway", "info", "-g", GATEWAY_NAME], {
-    ignoreError: true,
-  });
-  const activeGatewayInfo = runCaptureOpenshell(["gateway", "info"], { ignoreError: true });
-  if (isGatewayHealthy(gatewayStatus, gwInfo, activeGatewayInfo)) {
+  const gatewaySnapshot = selectNamedGatewayForReuseIfNeeded(getGatewayReuseSnapshot());
+  if (
+    isGatewayHealthy(
+      gatewaySnapshot.gatewayStatus,
+      gatewaySnapshot.gwInfo,
+      gatewaySnapshot.activeGatewayInfo,
+    )
+  ) {
     console.log("  ✓ Reusing existing gateway");
     runOpenshell(["gateway", "select", GATEWAY_NAME], { ignoreError: true });
     process.env.OPENSHELL_GATEWAY = GATEWAY_NAME;
@@ -4163,7 +4211,7 @@ async function startGatewayWithOptions(
   // e.g. after a Docker/Colima restart), skip the destroy — `gateway start`
   // can recover the container without wiping metadata and mTLS certs.
   // The retry loop below will destroy only if start genuinely fails.
-  if (hasStaleGateway(gwInfo)) {
+  if (hasStaleGateway(gatewaySnapshot.gwInfo)) {
     console.log("  Stale gateway detected — attempting restart without destroy...");
   }
 
@@ -9757,12 +9805,8 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
       });
     }
 
-    const gatewayStatus = runCaptureOpenshell(["status"], { ignoreError: true });
-    const gatewayInfo = runCaptureOpenshell(["gateway", "info", "-g", GATEWAY_NAME], {
-      ignoreError: true,
-    });
-    const activeGatewayInfo = runCaptureOpenshell(["gateway", "info"], { ignoreError: true });
-    let gatewayReuseState = getGatewayReuseState(gatewayStatus, gatewayInfo, activeGatewayInfo);
+    const gatewaySnapshot = selectNamedGatewayForReuseIfNeeded(getGatewayReuseSnapshot());
+    let gatewayReuseState = gatewaySnapshot.gatewayReuseState;
 
     // Verify the gateway container is actually running — openshell CLI metadata
     // can be stale after a manual `docker rm`. See #2020.
