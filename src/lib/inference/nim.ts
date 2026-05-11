@@ -9,6 +9,7 @@ const {
   dockerContainerInspectFormat,
   dockerForceRm,
   dockerLoginPasswordStdin,
+  dockerLogs,
   dockerPort,
   dockerPull,
   dockerRm,
@@ -411,39 +412,86 @@ export function pullNimImage(model: string): string {
   return image;
 }
 
-export function startNimContainer(sandboxName: string, model: string, port = VLLM_PORT): string {
-  const name = containerName(sandboxName);
-  return startNimContainerByName(name, model, port);
+export interface NimStartOptions {
+  ngcApiKey?: string;
 }
 
-export function startNimContainerByName(name: string, model: string, port = VLLM_PORT): string {
+export function startNimContainer(
+  sandboxName: string,
+  model: string,
+  port = VLLM_PORT,
+  opts: NimStartOptions = {},
+): string {
+  const name = containerName(sandboxName);
+  return startNimContainerByName(name, model, port, opts);
+}
+
+export function startNimContainerByName(
+  name: string,
+  model: string,
+  port = VLLM_PORT,
+  opts: NimStartOptions = {},
+): string {
   const image = getImageForModel(model);
   if (!image) {
     console.error(`  Unknown model: ${model}`);
     process.exit(1);
   }
 
+  // Resolve the NGC key: explicit arg wins, then NGC_API_KEY, then NVIDIA_API_KEY
+  // (covers users who only set the NVIDIA key for cloud inference but reuse it
+  // against NGC). Without this, NIM's in-container model-manifest download
+  // returns "Authentication Error" and the container exits 0 a few seconds in.
+  // Regression of #210 — see #3333.
+  const ngcApiKey = opts.ngcApiKey ?? process.env.NGC_API_KEY ?? process.env.NVIDIA_API_KEY ?? "";
+  // Use `-e KEY` (no value) so the secret never appears in argv; pass the
+  // value through the spawn env instead. Docker reads each named var from
+  // its own process env and forwards it to the container.
+  const envFlags = ngcApiKey ? ["-e", "NGC_API_KEY", "-e", "NIM_NGC_API_KEY"] : [];
+  const runEnv = ngcApiKey
+    ? { NGC_API_KEY: ngcApiKey, NIM_NGC_API_KEY: ngcApiKey }
+    : undefined;
+  if (!ngcApiKey) {
+    console.warn(
+      "  No NGC API key available; NIM will fail to download model weights. " +
+        "Set NGC_API_KEY or pass it through onboard.",
+    );
+  }
+
   dockerForceRm(name, { ignoreError: true });
 
   console.log(`  Starting NIM container: ${name}`);
-  dockerRunDetached([
-    "--gpus",
-    "all",
-    "-p",
-    `${Number(port)}:8000`,
-    "--name",
-    name,
-    "--shm-size",
-    "16g",
-    image,
-  ]);
+  dockerRunDetached(
+    [
+      "--gpus",
+      "all",
+      "-p",
+      `${Number(port)}:8000`,
+      "--name",
+      name,
+      "--shm-size",
+      "16g",
+      ...envFlags,
+      image,
+    ],
+    runEnv ? { env: runEnv } : {},
+  );
   return name;
 }
 
-export function waitForNimHealth(port = VLLM_PORT, timeout = 300): boolean {
+export interface WaitForNimHealthOptions {
+  container?: string;
+}
+
+export function waitForNimHealth(
+  port = VLLM_PORT,
+  timeout = 300,
+  opts: WaitForNimHealthOptions = {},
+): boolean {
   const start = Date.now();
   const intervalSec = 5;
   const hostPort = Number(port);
+  const { container } = opts;
   console.log(`  Waiting for NIM health on port ${hostPort} (timeout: ${timeout}s)...`);
 
   while ((Date.now() - start) / 1000 < timeout) {
@@ -466,6 +514,26 @@ export function waitForNimHealth(port = VLLM_PORT, timeout = 300): boolean {
       }
     } catch {
       /* ignored */
+    }
+    // Short-circuit if the container has already exited — typically NGC auth
+    // failure or OOM during model load. Without this, the wizard polls the
+    // full timeout (default 300s) against a dead container. See #3333.
+    if (container) {
+      const state = dockerContainerInspectFormat("{{.State.Status}}", container, {
+        ignoreError: true,
+        timeout: NIM_STATUS_PROBE_TIMEOUT_MS,
+      });
+      if (state && state !== "running" && state !== "created" && state !== "restarting") {
+        console.error(`  NIM container ${container} is ${state}; aborting health wait.`);
+        const tail = dockerLogs(container, { tail: 30 });
+        if (tail) {
+          console.error("  Last container output:");
+          for (const line of tail.split("\n")) {
+            if (line) console.error(`    ${line}`);
+          }
+        }
+        return false;
+      }
     }
     sleepSeconds(intervalSec);
   }

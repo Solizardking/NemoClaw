@@ -27,18 +27,20 @@ function withFirmwareModel(model: string, fn: () => void): void {
   }
 }
 
-function loadNimWithMockedRunner(runCapture: Mock) {
+function loadNimWithMockedRunner(runCapture: Mock, run?: Mock) {
   const runner = require(RUNNER_PATH);
   const originalRun = runner.run;
   const originalRunCapture = runner.runCapture;
 
   delete require.cache[NIM_DIST_PATH];
-  runner.run = vi.fn();
+  const runMock = run ?? vi.fn();
+  runner.run = runMock;
   runner.runCapture = runCapture;
   const nimModule = require(NIM_DIST_PATH);
 
   return {
     nimModule,
+    run: runMock,
     restore() {
       delete require.cache[NIM_DIST_PATH];
       runner.run = originalRun;
@@ -589,6 +591,186 @@ describe("nim", () => {
         expect(commands.some((c) => c[0] === "curl" && hasCurlTimeoutArgs(c))).toBe(true);
       } finally {
         restore();
+      }
+    });
+
+    // Regression #3333: if the container exits (typically NGC auth failure),
+    // stop polling immediately and surface the last log lines so the user sees
+    // the cause instead of a generic 5-minute timeout. NIM's Python logger
+    // writes errors to stderr, so the dockerLogs adapter must capture both
+    // streams or the tail will be empty in the real failure mode.
+    it("short-circuits when the container has exited and surfaces stderr", () => {
+      const errorMsg = "Console output from stdout";
+      const stderrMsg = "ERROR Authentication Error\nShutting down services...";
+      const consoleErrors: string[] = [];
+      const origError = console.error;
+      console.error = (...args: unknown[]) => {
+        consoleErrors.push(args.map(String).join(" "));
+      };
+      const runCapture = vi.fn((cmd: string | string[]) => {
+        if (!Array.isArray(cmd)) throw new Error("expected argv array");
+        if (cmd[0] === "curl") return "";
+        if (cmd[0] === "docker" && cmd.includes("inspect")) return "exited";
+        return "";
+      });
+      const run = vi.fn((cmd: string[]) => {
+        if (cmd[0] === "docker" && cmd.includes("logs")) {
+          return { stdout: Buffer.from(errorMsg), stderr: Buffer.from(stderrMsg), status: 0 };
+        }
+        return { stdout: Buffer.from(""), stderr: Buffer.from(""), status: 0 };
+      });
+      const { nimModule, restore } = loadNimWithMockedRunner(runCapture, run);
+
+      try {
+        const started = Date.now();
+        expect(nimModule.waitForNimHealth(9000, 60, { container: "nemoclaw-nim-test" })).toBe(
+          false,
+        );
+        expect(Date.now() - started).toBeLessThan(15_000);
+        const inspectCalls = runCapture.mock.calls.map(([c]: [string | string[]]) => c);
+        const runCalls = run.mock.calls.map(([c]: [string | string[]]) => c);
+        expect(
+          inspectCalls.some(
+            (c) =>
+              c[0] === "docker" && c.includes("inspect") && c.includes("nemoclaw-nim-test"),
+          ),
+        ).toBe(true);
+        expect(
+          runCalls.some(
+            (c) => c[0] === "docker" && c.includes("logs") && c.includes("nemoclaw-nim-test"),
+          ),
+        ).toBe(true);
+        // The stderr line is the actual NIM auth error in production; this
+        // assertion guards against losing it on a future runCapture refactor.
+        expect(consoleErrors.some((line) => line.includes("Authentication Error"))).toBe(true);
+      } finally {
+        console.error = origError;
+        restore();
+      }
+    });
+  });
+
+  describe("startNimContainerByName", () => {
+    // Regression #3333 (and original fix in #219 that was lost in the
+    // string→argv refactor): the NIM container must receive NGC_API_KEY and
+    // NIM_NGC_API_KEY so it can download model manifests from NGC. Without
+    // these the container exits 0 a few seconds in with "Authentication Error".
+    // The value is passed through the spawn env (not argv) so it does not
+    // leak via `ps`/audit logs.
+    type RunCall = [string[], { env?: Record<string, string> } | undefined];
+
+    function dockerRunCall(run: Mock): RunCall | undefined {
+      const found = run.mock.calls.find((c) => {
+        const argv = c[0] as string[];
+        return Array.isArray(argv) && argv[0] === "docker" && argv[1] === "run";
+      });
+      return found as RunCall | undefined;
+    }
+
+    function hasEnvFlag(argv: string[], envName: string): boolean {
+      for (let i = 0; i < argv.length - 1; i++) {
+        if (argv[i] === "-e" && argv[i + 1] === envName) return true;
+      }
+      return false;
+    }
+
+    function argvContainsValue(argv: string[], value: string): boolean {
+      return argv.some((a) => a.includes(value));
+    }
+
+    it("passes NGC_API_KEY and NIM_NGC_API_KEY through spawn env, not argv", () => {
+      const run = vi.fn();
+      const { nimModule, restore } = loadNimWithMockedRunner(vi.fn(() => ""), run);
+      try {
+        nimModule.startNimContainerByName(
+          "nemoclaw-nim-test",
+          "nvidia/nemotron-3-nano-30b-a3b",
+          8000,
+          { ngcApiKey: "nvapi-abc123" },
+        );
+        const call = dockerRunCall(run);
+        expect(call).toBeDefined();
+        const [argv, opts] = call!;
+        expect(hasEnvFlag(argv, "NGC_API_KEY")).toBe(true);
+        expect(hasEnvFlag(argv, "NIM_NGC_API_KEY")).toBe(true);
+        // Secret must not appear in argv (visible via ps/audit logs).
+        expect(argvContainsValue(argv, "nvapi-abc123")).toBe(false);
+        expect(opts?.env).toMatchObject({
+          NGC_API_KEY: "nvapi-abc123",
+          NIM_NGC_API_KEY: "nvapi-abc123",
+        });
+      } finally {
+        restore();
+      }
+    });
+
+    it("falls back to process.env.NGC_API_KEY when no opts key is supplied", () => {
+      const prev = { ngc: process.env.NGC_API_KEY, nv: process.env.NVIDIA_API_KEY };
+      process.env.NGC_API_KEY = "nvapi-env-ngc";
+      delete process.env.NVIDIA_API_KEY;
+      const run = vi.fn();
+      const { nimModule, restore } = loadNimWithMockedRunner(vi.fn(() => ""), run);
+      try {
+        nimModule.startNimContainerByName(
+          "nemoclaw-nim-test",
+          "nvidia/nemotron-3-nano-30b-a3b",
+          8000,
+        );
+        const call = dockerRunCall(run);
+        expect(call?.[1]?.env).toMatchObject({
+          NGC_API_KEY: "nvapi-env-ngc",
+          NIM_NGC_API_KEY: "nvapi-env-ngc",
+        });
+      } finally {
+        restore();
+        if (prev.ngc === undefined) delete process.env.NGC_API_KEY;
+        else process.env.NGC_API_KEY = prev.ngc;
+        if (prev.nv !== undefined) process.env.NVIDIA_API_KEY = prev.nv;
+      }
+    });
+
+    it("falls back to process.env.NVIDIA_API_KEY when NGC_API_KEY is unset", () => {
+      const prev = { ngc: process.env.NGC_API_KEY, nv: process.env.NVIDIA_API_KEY };
+      delete process.env.NGC_API_KEY;
+      process.env.NVIDIA_API_KEY = "nvapi-env-nvidia";
+      const run = vi.fn();
+      const { nimModule, restore } = loadNimWithMockedRunner(vi.fn(() => ""), run);
+      try {
+        nimModule.startNimContainerByName(
+          "nemoclaw-nim-test",
+          "nvidia/nemotron-3-nano-30b-a3b",
+          8000,
+        );
+        const call = dockerRunCall(run);
+        expect(call?.[1]?.env?.NGC_API_KEY).toBe("nvapi-env-nvidia");
+      } finally {
+        restore();
+        if (prev.ngc !== undefined) process.env.NGC_API_KEY = prev.ngc;
+        if (prev.nv === undefined) delete process.env.NVIDIA_API_KEY;
+        else process.env.NVIDIA_API_KEY = prev.nv;
+      }
+    });
+
+    it("omits env flags when no key is available", () => {
+      const prev = { ngc: process.env.NGC_API_KEY, nv: process.env.NVIDIA_API_KEY };
+      delete process.env.NGC_API_KEY;
+      delete process.env.NVIDIA_API_KEY;
+      const run = vi.fn();
+      const { nimModule, restore } = loadNimWithMockedRunner(vi.fn(() => ""), run);
+      try {
+        nimModule.startNimContainerByName(
+          "nemoclaw-nim-test",
+          "nvidia/nemotron-3-nano-30b-a3b",
+          8000,
+        );
+        const call = dockerRunCall(run);
+        expect(hasEnvFlag(call![0], "NGC_API_KEY")).toBe(false);
+        expect(hasEnvFlag(call![0], "NIM_NGC_API_KEY")).toBe(false);
+        expect(call?.[1]?.env).toBeUndefined();
+      } finally {
+        restore();
+        if (prev.ngc !== undefined) process.env.NGC_API_KEY = prev.ngc;
+        if (prev.nv !== undefined) process.env.NVIDIA_API_KEY = prev.nv;
       }
     });
   });
