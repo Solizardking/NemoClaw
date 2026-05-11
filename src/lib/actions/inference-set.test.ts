@@ -60,6 +60,7 @@ function baseSession(overrides: Partial<Session> = {}): Session {
     model: "moonshotai/kimi-k2.6",
     endpointUrl: "https://inference.local/v1",
     credentialEnv: "OPENAI_API_KEY",
+    hermesAuthMethod: null,
     preferredInferenceApi: null,
     nimContainer: null,
     routerPid: null,
