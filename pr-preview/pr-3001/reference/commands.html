@@ -1681,63 +1681,75 @@ Set them before running <code class="docutils literal notranslate"><span class="
 <td><p>provider key (e.g. <code class="docutils literal notranslate"><span class="pre">nvidia</span></code>, <code class="docutils literal notranslate"><span class="pre">openai</span></code>, <code class="docutils literal notranslate"><span class="pre">anthropic</span></code>, <code class="docutils literal notranslate"><span class="pre">ollama</span></code>, <code class="docutils literal notranslate"><span class="pre">vllm</span></code>, <code class="docutils literal notranslate"><span class="pre">compatible</span></code>)</p></td>
 <td><p>Selects the inference provider in non-interactive onboarding. Must match one of the keys the wizard would prompt for.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_ENDPOINT_URL</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_HERMES_AUTH_METHOD</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">oauth</span></code></p></td>
+<td><p>Selects Hermes Provider authentication in non-interactive onboarding. Valid values: <code class="docutils literal notranslate"><span class="pre">oauth</span></code>, <code class="docutils literal notranslate"><span class="pre">nous-portal-oauth</span></code>, <code class="docutils literal notranslate"><span class="pre">api-key</span></code>, <code class="docutils literal notranslate"><span class="pre">nous-api-key</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_HERMES_AUTH</span></code></p></td>
+<td><p>same as <code class="docutils literal notranslate"><span class="pre">NEMOCLAW_HERMES_AUTH_METHOD</span></code></p></td>
+<td><p>Back-compatible alias for Hermes Provider authentication selection.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_NOUS_AUTH_METHOD</span></code></p></td>
+<td><p>same as <code class="docutils literal notranslate"><span class="pre">NEMOCLAW_HERMES_AUTH_METHOD</span></code></p></td>
+<td><p>Nous-specific alias for Hermes Provider authentication selection.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_ENDPOINT_URL</span></code></p></td>
 <td><p>URL</p></td>
 <td><p>Custom OpenAI-compatible endpoint URL. Used together with <code class="docutils literal notranslate"><span class="pre">NEMOCLAW_PROVIDER=compatible</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_PREFERRED_API</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_PREFERRED_API</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">completions</span></code> (currently the only honored value)</p></td>
 <td><p>Forces the validation probe to use the <code class="docutils literal notranslate"><span class="pre">/v1/chat/completions</span></code> API path instead of the newer <code class="docutils literal notranslate"><span class="pre">/v1/responses</span></code> API.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_INFERENCE_INPUTS</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_INFERENCE_INPUTS</span></code></p></td>
 <td><p>comma-separated list of <code class="docutils literal notranslate"><span class="pre">text</span></code> and/or <code class="docutils literal notranslate"><span class="pre">image</span></code></p></td>
 <td><p>Declares model input modalities for vision-capable models. Validated strictly; unknown tokens are ignored.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_AGENT_TIMEOUT</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_AGENT_TIMEOUT</span></code></p></td>
 <td><p>positive integer (seconds)</p></td>
 <td><p>Overrides <code class="docutils literal notranslate"><span class="pre">agents.defaults.timeoutSeconds</span></code> in the built OpenClaw config. Raise for slow inference.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_CONTEXT_WINDOW</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_CONTEXT_WINDOW</span></code></p></td>
 <td><p>positive integer (tokens)</p></td>
 <td><p>Overrides the model’s context-window value in the built OpenClaw config.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_MAX_TOKENS</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_MAX_TOKENS</span></code></p></td>
 <td><p>positive integer (tokens)</p></td>
 <td><p>Overrides the model’s <code class="docutils literal notranslate"><span class="pre">maxTokens</span></code> in the built OpenClaw config.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_REASONING</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_REASONING</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">true</span></code> or <code class="docutils literal notranslate"><span class="pre">false</span></code></p></td>
 <td><p>Overrides the model’s reasoning-mode flag in the built OpenClaw config.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_AGENT_HEARTBEAT_EVERY</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_AGENT_HEARTBEAT_EVERY</span></code></p></td>
 <td><p>duration with <code class="docutils literal notranslate"><span class="pre">s</span></code>, <code class="docutils literal notranslate"><span class="pre">m</span></code>, or <code class="docutils literal notranslate"><span class="pre">h</span></code> suffix (for example <code class="docutils literal notranslate"><span class="pre">30m</span></code>, <code class="docutils literal notranslate"><span class="pre">1h</span></code>, or <code class="docutils literal notranslate"><span class="pre">0m</span></code>)</p></td>
 <td><p>Overrides <code class="docutils literal notranslate"><span class="pre">agents.defaults.heartbeat.every</span></code> in the built OpenClaw config. Set <code class="docutils literal notranslate"><span class="pre">0m</span></code> to disable periodic agent turns.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_OLLAMA_REQUIRE_TOOLS</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_OLLAMA_REQUIRE_TOOLS</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">0</span></code> to disable, anything else to keep the default</p></td>
 <td><p>When set to <code class="docutils literal notranslate"><span class="pre">0</span></code>, skips the Ollama tool-calling capability check during local-inference onboarding.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_PROXY_HOST</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_PROXY_HOST</span></code></p></td>
 <td><p>hostname or IP</p></td>
 <td><p>Overrides the sandbox-side outbound HTTP proxy host. Defaults to <code class="docutils literal notranslate"><span class="pre">10.200.0.1</span></code>.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_PROXY_PORT</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_PROXY_PORT</span></code></p></td>
 <td><p>integer port</p></td>
 <td><p>Overrides the sandbox-side outbound HTTP proxy port. Defaults to <code class="docutils literal notranslate"><span class="pre">3128</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_OPENSHELL_BIN</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_OPENSHELL_BIN</span></code></p></td>
 <td><p>path</p></td>
 <td><p>Overrides the <code class="docutils literal notranslate"><span class="pre">openshell</span></code> binary the CLI invokes. Defaults to <code class="docutils literal notranslate"><span class="pre">openshell</span></code> (resolved via <code class="docutils literal notranslate"><span class="pre">PATH</span></code>).</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_SANDBOX</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_SANDBOX</span></code></p></td>
 <td><p>sandbox name</p></td>
 <td><p>Alternate spelling of <code class="docutils literal notranslate"><span class="pre">NEMOCLAW_SANDBOX_NAME</span></code>; used by <code class="docutils literal notranslate"><span class="pre">services</span></code> and <code class="docutils literal notranslate"><span class="pre">debug</span></code> lookups when neither a flag nor <code class="docutils literal notranslate"><span class="pre">NEMOCLAW_SANDBOX_NAME</span></code> is set.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_INSTALL_REF</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_INSTALL_REF</span></code></p></td>
 <td><p>git ref</p></td>
 <td><p>For internal installer commands: the git ref to install from. Overridden by the <code class="docutils literal notranslate"><span class="pre">--install-ref</span></code> flag.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_INSTALL_TAG</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">NEMOCLAW_INSTALL_TAG</span></code></p></td>
 <td><p>release tag</p></td>
 <td><p>For internal installer commands: the release tag to install. Overridden by the <code class="docutils literal notranslate"><span class="pre">--install-tag</span></code> flag.</p></td>
 </tr>
