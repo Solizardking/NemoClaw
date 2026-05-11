@@ -8594,6 +8594,10 @@ async function setupNim(
           }
         } else {
           if (!resolveProviderCredential(routerCredentialEnv)) {
+            console.log("");
+            console.log("  Model Router accepts NVIDIA API keys (nvapi-...).");
+            console.log("  Get one at https://build.nvidia.com");
+            console.log("");
             await ensureNamedCredential(routerCredentialEnv, "Model Router API key", null);
           }
         }
