@@ -2449,32 +2449,32 @@ scripts:
       reason: live legacy behavior requires non-deterministic infrastructure; retained for bucket parity tracking
       owner: e2e-maintainers
       runner_requirement: self-hosted GPU runner
-    - legacy: Sandbox nvidia-smi works
+    - legacy: "Onboard GPU proof passed: nvidia-smi when available"
       status: deferred
       reason: live legacy behavior requires non-deterministic infrastructure; retained for bucket parity tracking
       owner: e2e-maintainers
       runner_requirement: self-hosted GPU runner
-    - legacy: Sandbox nvidia-smi failed
+    - legacy: "Onboard GPU proof missing: nvidia-smi when available"
       status: deferred
       reason: live legacy behavior requires non-deterministic infrastructure; retained for bucket parity tracking
       owner: e2e-maintainers
       runner_requirement: self-hosted GPU runner
-    - legacy: Sandbox /proc/self/task/<tid>/comm write works
+    - legacy: "Onboard GPU proof passed: /proc/self/task/<tid>/comm write"
       status: deferred
       reason: live legacy behavior requires non-deterministic infrastructure; retained for bucket parity tracking
       owner: e2e-maintainers
       runner_requirement: self-hosted GPU runner
-    - legacy: Sandbox /proc comm write failed
+    - legacy: "Onboard GPU proof missing: /proc comm write"
       status: deferred
       reason: live legacy behavior requires non-deterministic infrastructure; retained for bucket parity tracking
       owner: e2e-maintainers
       runner_requirement: self-hosted GPU runner
-    - legacy: Sandbox cuInit(0) succeeds
+    - legacy: "Onboard GPU proof passed: cuInit(0)"
       status: deferred
       reason: live legacy behavior requires non-deterministic infrastructure; retained for bucket parity tracking
       owner: e2e-maintainers
       runner_requirement: self-hosted GPU runner
-    - legacy: Sandbox cuInit(0) failed
+    - legacy: "Onboard GPU proof missing: cuInit(0)"
       status: deferred
       reason: live legacy behavior requires non-deterministic infrastructure; retained for bucket parity tracking
       owner: e2e-maintainers
@@ -2609,7 +2609,7 @@ scripts:
       reason: live legacy behavior requires non-deterministic infrastructure; retained for bucket parity tracking
       owner: e2e-maintainers
       runner_requirement: self-hosted GPU runner
-    - legacy: openshell sandbox ssh-config failed
+    - legacy: '[LOCAL] Sandbox inference: ${sandbox_probe_failure}'
       status: deferred
       reason: live legacy behavior requires non-deterministic infrastructure; retained for bucket parity tracking
       owner: e2e-maintainers
@@ -2624,7 +2624,7 @@ scripts:
       reason: live legacy behavior requires non-deterministic infrastructure; retained for bucket parity tracking
       owner: e2e-maintainers
       runner_requirement: self-hosted GPU runner
-    - legacy: '[LOCAL] Sandbox inference: no response from inference.local inside sandbox'
+    - legacy: '[LOCAL] Sandbox inference: no response from ${SANDBOX_INFERENCE_URL} inside sandbox'
       status: mapped
       id: legacy.gpu.e2e.local.sandbox.inference.no.response.from.inference.local.inside.sandbox
     - legacy: Sandbox ${SANDBOX_NAME} still in registry after destroy
