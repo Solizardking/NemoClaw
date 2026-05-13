@@ -20,6 +20,7 @@ const {
   cleanupTempDir,
   secureTempFile,
 }: typeof import("./onboard/temp-files") = require("./onboard/temp-files");
+const { stopStaleDashboardListenersForSandbox } = require("./onboard/stale-gateway-cleanup");
 const {
   buildCompatibleEndpointSandboxSmokeCommand,
   buildCompatibleEndpointSandboxSmokeScript,
@@ -11265,11 +11266,6 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
         break;
       }
 
-      // Prompt for the sandbox name and show the review gate BEFORE
-      // setupInference runs upsertProvider / `inference set` on the gateway.
-      // On retry (inferenceResult.retry === "selection") the user is re-prompted
-      // for provider/model above and sees this gate again with the new config.
-      // See #2221 (CodeRabbit).
       if (!sandboxName) {
         sandboxName = await promptValidatedSandboxName(agent);
       }
@@ -11453,9 +11449,15 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
         current.messagingChannelConfig = messagingChannelConfig;
         return current;
       });
+      if (!sandboxName) {
+        sandboxName = await promptValidatedSandboxName(agent);
+      }
       if (typeof model !== "string" || typeof provider !== "string") {
         console.error("  Inference selection is incomplete; cannot create sandbox.");
         process.exit(1);
+      }
+      if (fresh) {
+        stopStaleDashboardListenersForSandbox(registry.listSandboxes().sandboxes, sandboxName);
       }
       sandboxName = await createSandbox(
         gpu,
@@ -11471,9 +11473,6 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
         sandboxGpuConfig,
       );
       webSearchConfig = nextWebSearchConfig;
-      // Persist model and provider after the sandbox entry exists in the registry.
-      // updateSandbox() silently no-ops when the entry is missing, so this must
-      // run after createSandbox() / registerSandbox() — not before. Fixes #1881.
       registry.updateSandbox(sandboxName, {
         model,
         provider,
