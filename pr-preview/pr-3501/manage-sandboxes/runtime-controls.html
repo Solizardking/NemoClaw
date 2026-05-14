@@ -586,6 +586,10 @@ The table below maps each commonly changed item to the layer that owns it and th
 <td><p>Runtime — hot-reloaded by OpenClaw on config change</p></td>
 <td><p>Edit <code class="docutils literal notranslate"><span class="pre">openclaw.json</span></code> while shields are down</p></td>
 </tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">openclaw.json</span></code> keys (general — model, agents.list, web.backend, channel config, etc.)</p></td>
+<td><p>Mixed: locked under <code class="docutils literal notranslate"><span class="pre">shields</span> <span class="pre">up</span></code>, runtime-editable under <code class="docutils literal notranslate"><span class="pre">shields</span> <span class="pre">down</span></code>. Individual keys still follow the rebuild rules in the rows above (e.g. provider switch requires rebuild even after editing the JSON).</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">nemoclaw</span> <span class="pre">&lt;name&gt;</span> <span class="pre">shields</span> <span class="pre">down</span></code>, edit <code class="docutils literal notranslate"><span class="pre">/opt/nemoclaw/openclaw.json</span></code> inside the sandbox, then <code class="docutils literal notranslate"><span class="pre">nemoclaw</span> <span class="pre">&lt;name&gt;</span> <span class="pre">shields</span> <span class="pre">up</span></code></p></td>
+</tr>
 </tbody>
 </table>
 </div>
