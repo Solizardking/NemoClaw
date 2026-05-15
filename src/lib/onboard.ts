@@ -1465,31 +1465,8 @@ function getDockerDriverGatewayEndpointArg(): string {
   return safeOpenShellArgument(getDockerDriverGatewayEndpoint(), "gateway endpoint");
 }
 
-/**
- * Execute a shell command inside a sandbox for post-deployment verification.
- * Returns a structured result with status, stdout, stderr — or null if
- * the sandbox is unreachable. Uses `openshell sandbox exec` with sh -c.
- */
-function executeSandboxCommandForVerification(
-  sandboxName: string,
-  script: string,
-): { status: number; stdout: string; stderr: string } | null {
-  try {
-    const result = spawnSync(
-      getOpenshellBinary(),
-      ["sandbox", "exec", "-n", sandboxName, "--", "sh", "-c", script],
-      { encoding: "utf-8", timeout: 15000, stdio: ["ignore", "pipe", "pipe"] },
-    );
-    if (result.error) return null;
-    return {
-      status: result.status ?? 1,
-      stdout: (result.stdout || "").trim(),
-      stderr: (result.stderr || "").trim(),
-    };
-  } catch {
-    return null;
-  }
-}
+const { executeSandboxCommandForVerification }: typeof import("./onboard/sandbox-verification-exec") =
+  require("./onboard/sandbox-verification-exec");
 
 // URL/string utilities — delegated to src/lib/core/url-utils.ts
 const {
@@ -10715,12 +10692,22 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
     // every target is already clean.
     cleanupStaleHostFiles();
 
+    // Step [8/8] policy-apply restarts the sandbox container; the OpenClaw
+    // gateway inside the new container is launched lazily (normally by the
+    // first `nemoclaw <name> connect`). Bring it up explicitly here so the
+    // verifyDeployment block below does not race the post-policy startup and
+    // surface a false "gateway crashed during startup" warning. The helper
+    // is a no-op when the gateway is already running. Fixes #3573.
+    const processRecovery: typeof import("./actions/sandbox/process-recovery") =
+      require("./actions/sandbox/process-recovery");
+    processRecovery.checkAndRecoverSandboxProcesses(sandboxName, { quiet: true });
+
     // Post-deployment verification — confirm the full delivery chain is
     // operational before telling the user "YOUR AGENT IS LIVE". Fixes #2342.
     const verifyDeploymentModule: typeof import("./verify-deployment") = require("./verify-deployment");
     const _verifyChatUiUrl = process.env.CHAT_UI_URL || `http://127.0.0.1:${DASHBOARD_PORT}`;
     const verifyChain = buildChain({ chatUiUrl: _verifyChatUiUrl, isWsl: isWsl(), wslHostAddress: getWslHostAddress() });
-    const verificationResult = verifyDeploymentModule.verifyDeployment(
+    const verificationResult = await verifyDeploymentModule.verifyDeployment(
       sandboxName,
       verifyChain,
       {
