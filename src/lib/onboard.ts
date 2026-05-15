@@ -17,9 +17,7 @@ const {
 }: typeof import("./onboard/branding") = require("./onboard/branding");
 const { cleanupTempDir }: typeof import("./onboard/temp-files") = require("./onboard/temp-files");
 const { stopStaleDashboardListenersForSandbox } = require("./onboard/stale-gateway-cleanup");
-const {
-  runBackgroundForwardStartWithDiagnostics,
-}: typeof import("./onboard/forward-start") = require("./onboard/forward-start");
+const { looksLikeForwardPortConflict, runBackgroundForwardStartWithPortReleaseRetries }: typeof import("./onboard/forward-start") = require("./onboard/forward-start");
 const {
   ensureOllamaLoopbackSystemdOverride,
 }: typeof import("./onboard/ollama-systemd") = require("./onboard/ollama-systemd");
@@ -9299,17 +9297,16 @@ function ensureDashboardForward(
   parsedUrl.port = String(actualPort);
   const actualTarget = getDashboardForwardTarget(parsedUrl.toString());
   runOpenshell(["forward", "stop", String(actualPort)], { ignoreError: true });
-  const { result: fwdResult, diagnostic: fwdDiagnostic } =
-    runBackgroundForwardStartWithDiagnostics((stdio, timeout) =>
+  const { result: fwdResult, diagnostic: fwdDiagnostic } = runBackgroundForwardStartWithPortReleaseRetries(
+    (stdio, timeout) =>
       runOpenshell(
         ["forward", "start", "--background", actualTarget, sandboxName],
         { ignoreError: true, suppressOutput: true, stdio, timeout },
       ),
-    );
+    () => { sleep(1); runOpenshell(["forward", "stop", String(actualPort)], { ignoreError: true }); },
+  );
   if (fwdResult && fwdResult.status !== 0) {
-    const looksLikePortConflict =
-      fwdDiagnostic === "" ||
-      /eaddrinuse|address already in use|port .* in use|bind: .*in use/i.test(fwdDiagnostic);
+    const looksLikePortConflict = looksLikeForwardPortConflict(fwdDiagnostic);
     if (rollbackSandboxOnFailure) {
       // The sandbox was just created, committed to actualPort via its
       // baked-in CHAT_UI_URL and NEMOCLAW_DASHBOARD_PORT env. Silently

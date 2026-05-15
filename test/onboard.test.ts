@@ -10326,9 +10326,9 @@ const { createSandbox } = require(${onboardPath});
     assert.match(source, /if \(fwdResult && fwdResult\.status !== 0\)/);
     assert.match(source, /if \(rollbackSandboxOnFailure\)/);
     assert.match(source, /const looksLikePortConflict =/);
-    assert.match(source, /eaddrinuse\|address already in use/i);
+    assert.match(source, /looksLikeForwardPortConflict/);
     assert.match(source, /suppressOutput: true/);
-    assert.match(source, /runBackgroundForwardStartWithDiagnostics/);
+    assert.match(source, /runBackgroundForwardStartWithPortReleaseRetries/);
     assert.doesNotMatch(
       source,
       /forward", "start", "--background"[\s\S]{0,260}stdio: \["ignore", "pipe", "pipe"\]/,
@@ -10340,6 +10340,8 @@ const { createSandbox } = require(${onboardPath});
     );
     assert.match(helperSource, /secureTempFile\("nemoclaw-forward-start", "\.out"\)/);
     assert.match(helperSource, /runForwardStart\(\["ignore", outFd, errFd\], timeoutMs\)/);
+    assert.match(helperSource, /eaddrinuse\|address already in use/i);
+    assert.match(helperSource, /maxRetries = 3/);
     assert.match(
       source,
       /runOpenshell\(\["sandbox", "delete", sandboxName\], \{ ignoreError: true \}\)/,
