@@ -64,7 +64,10 @@ function buildDebugCommandDeps(rootDir: string): RunDebugCommandDeps {
     runDebug,
     log: console.log,
     error: console.error,
-    exit: (code: number) => process.exit(code),
+    exit: (code: number): never => {
+      process.exitCode = code;
+      return undefined as never;
+    },
   };
 }
 

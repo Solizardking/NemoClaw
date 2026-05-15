@@ -38,7 +38,7 @@ export default class SandboxConfigGetCommand extends NemoClawCommand {
   }
 }
 
-export function printConfigUsageAndExit(): never {
+export function printConfigUsageAndExit(): void {
   console.error(`  Usage: ${CLI_NAME} <name> config get [--key dotpath] [--format json|yaml]`);
-  process.exit(1);
+  process.exitCode = 1;
 }
