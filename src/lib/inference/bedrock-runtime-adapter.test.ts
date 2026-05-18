@@ -6,6 +6,7 @@ import http from "node:http";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  __test,
   buildBedrockConverseRequest,
   createBedrockRuntimeAdapterServer,
   createOpenAiChatCompletion,
@@ -230,5 +231,47 @@ describe("Bedrock Runtime OpenAI adapter", () => {
     expect(response.status).toBe(502);
     const body = (await response.json()) as any;
     expect(body.error.message).toContain("Could not load credentials");
+  });
+
+  it("includes forwarded AWS environment in the adapter reuse hash", () => {
+    const savedContainerCredentials = process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
+    const savedSharedCredentials = process.env.AWS_SHARED_CREDENTIALS_FILE;
+    try {
+      delete process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
+      delete process.env.AWS_SHARED_CREDENTIALS_FILE;
+      const base = __test.adapterCredentialHash({
+        endpointUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
+        region: "us-east-1",
+        compatibleCredential: null,
+      });
+
+      process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI = "/v2/credentials/old";
+      const withContainerCredentials = __test.adapterCredentialHash({
+        endpointUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
+        region: "us-east-1",
+        compatibleCredential: null,
+      });
+
+      process.env.AWS_SHARED_CREDENTIALS_FILE = "/tmp/bedrock-credentials";
+      const withSharedCredentialsFile = __test.adapterCredentialHash({
+        endpointUrl: "https://bedrock-runtime.us-east-1.amazonaws.com",
+        region: "us-east-1",
+        compatibleCredential: null,
+      });
+
+      expect(withContainerCredentials).not.toBe(base);
+      expect(withSharedCredentialsFile).not.toBe(withContainerCredentials);
+    } finally {
+      if (savedContainerCredentials === undefined) {
+        delete process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
+      } else {
+        process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI = savedContainerCredentials;
+      }
+      if (savedSharedCredentials === undefined) {
+        delete process.env.AWS_SHARED_CREDENTIALS_FILE;
+      } else {
+        process.env.AWS_SHARED_CREDENTIALS_FILE = savedSharedCredentials;
+      }
+    }
   });
 });

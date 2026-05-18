@@ -38,9 +38,9 @@ function getExplicitCompatibleCredential(credentialEnv: string | null | undefine
   return normalizeCredentialValue(process.env[credentialEnv]) || null;
 }
 
-function printMissingBedrockAuth(credentialEnv: string): void {
+function printMissingBedrockAuth(): void {
   console.error(
-    `  ${BEDROCK_RUNTIME_AWS_BEARER_TOKEN_ENV}, AWS_PROFILE, IAM environment credentials, or exported ${credentialEnv} is required for a Bedrock Runtime endpoint.`,
+    `  ${BEDROCK_RUNTIME_AWS_BEARER_TOKEN_ENV}, AWS_PROFILE, IAM environment credentials, or an explicitly exported Bedrock-compatible endpoint key is required for a Bedrock Runtime endpoint.`,
   );
 }
 
@@ -79,7 +79,7 @@ export async function selectBedrockRuntimeCustomAnthropic(options: {
   const credentialEnv = options.credentialEnv || BEDROCK_RUNTIME_COMPATIBLE_CREDENTIAL_ENV;
   if (!hasBedrockRuntimeAwsAuthEnv() && !getExplicitCompatibleCredential(credentialEnv)) {
     if (options.isNonInteractive()) {
-      printMissingBedrockAuth(credentialEnv);
+      printMissingBedrockAuth();
       process.exit(1);
     }
     await options.replaceNamedCredential(credentialEnv, `${options.label} API key`, options.helpUrl);
@@ -120,7 +120,7 @@ export async function setupBedrockRuntimeInference(options: {
 
   const compatibleCredential = getExplicitCompatibleCredential(options.credentialEnv);
   if (!hasBedrockRuntimeAwsAuthEnv() && !compatibleCredential) {
-    printMissingBedrockAuth(options.credentialEnv || BEDROCK_RUNTIME_COMPATIBLE_CREDENTIAL_ENV);
+    printMissingBedrockAuth();
     if (options.isNonInteractive()) process.exit(1);
     return { handled: true, result: { retry: "selection" } };
   }

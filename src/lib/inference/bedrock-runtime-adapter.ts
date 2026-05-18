@@ -658,10 +658,16 @@ function sendJson(res: http.ServerResponse, status: number, body: unknown): void
   res.end(JSON.stringify(body));
 }
 
+function safeErrorMessage(err: unknown): string {
+  if (err instanceof AdapterHttpError) return err.message;
+  if (err instanceof Error && err.message) return err.message;
+  return "Bedrock Runtime request failed.";
+}
+
 function sendError(res: http.ServerResponse, err: unknown): void {
   const status = err instanceof AdapterHttpError ? err.status : 502;
   const code = err instanceof AdapterHttpError ? err.code : "bedrock_runtime_error";
-  const message = err instanceof Error ? err.message : String(err);
+  const message = safeErrorMessage(err);
   sendJson(res, status, {
     error: {
       message: compactText(message),
@@ -747,7 +753,9 @@ export function createBedrockRuntimeAdapterServer(options: {
       if (!res.headersSent) {
         sendError(res, err);
       } else {
-        res.write(`data: ${JSON.stringify({ error: { message: String(err) } })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({ error: { message: compactText(safeErrorMessage(err)) } })}\n\n`,
+        );
         res.end();
       }
     }
@@ -815,6 +823,16 @@ function copyAwsEnv(extra: Record<string, string>): void {
   }
 }
 
+function forwardedAwsEnvSnapshot(env: NodeJS.ProcessEnv = process.env): Record<string, string> {
+  const snapshot: Record<string, string> = {};
+  for (const [key, value] of Object.entries(env)) {
+    if (value !== undefined && key.startsWith("AWS_")) {
+      snapshot[key] = value;
+    }
+  }
+  return snapshot;
+}
+
 function adapterCredentialHash(options: {
   endpointUrl: string;
   region: string;
@@ -824,24 +842,15 @@ function adapterCredentialHash(options: {
     endpointUrl: options.endpointUrl,
     region: options.region,
     compatibleCredential: options.compatibleCredential,
+    ...forwardedAwsEnvSnapshot(),
   };
-  for (const key of [
-    BEDROCK_RUNTIME_AWS_BEARER_TOKEN_ENV,
-    "AWS_ACCESS_KEY_ID",
-    "AWS_SECRET_ACCESS_KEY",
-    "AWS_SESSION_TOKEN",
-    "AWS_PROFILE",
-    "AWS_REGION",
-    "AWS_DEFAULT_REGION",
-    "AWS_WEB_IDENTITY_TOKEN_FILE",
-  ]) {
-    values[key] = process.env[key] || null;
-  }
   return crypto.createHash("sha256").update(stableJson(values)).digest("hex");
 }
 
 function probeAdapterHealth(token: string, port = BEDROCK_RUNTIME_ADAPTER_PORT): Promise<boolean> {
   return new Promise((resolve) => {
+    // The token is a 0600 local adapter secret and this probe is fixed to the loopback host.
+    // codeql[js/file-access-to-http]
     const req = http.request(
       {
         hostname: BEDROCK_RUNTIME_ADAPTER_BIND_HOST,
@@ -956,3 +965,7 @@ export async function ensureBedrockRuntimeAdapter(options: {
 export function getCompatibleAnthropicCredentialForBedrock(): string | null {
   return process.env[BEDROCK_RUNTIME_COMPATIBLE_CREDENTIAL_ENV]?.trim() || null;
 }
+
+export const __test = {
+  adapterCredentialHash,
+};
