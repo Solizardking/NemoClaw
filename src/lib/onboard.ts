@@ -346,7 +346,12 @@ import {
   sanitizeMessagingChannelConfig,
 } from "./messaging-channel-config";
 import { streamGatewayStart } from "./onboard/gateway";
-import { reportGpuPassthroughRecovery } from "./onboard/gpu-recovery";
+import {
+  filterEnabledChannelsByAgent,
+  getAvailableMessagingChannelsForAgent,
+  resolveMessagingChannelSeed,
+  resolveQrSelectedChannels,
+} from "./onboard/messaging-state";
 import { getMessagingToken } from "./onboard/messaging-token";
 import type {
   DockerDriverBinaryOverrides,
@@ -354,6 +359,7 @@ import type {
   OpenShellInstallResult,
 } from "./onboard/openshell-install";
 import { decidePolicyCarryForward } from "./onboard/policy-carryforward";
+import { getSuggestedPolicyPresets } from "./onboard/policy-presets";
 import {
   getResumeSandboxGpuOverrides,
   resolveSandboxGpuConfig,
@@ -1808,7 +1814,7 @@ function getRecordedMessagingChannelsForResume(
   session: Session | null, sandboxName: string | null,
 ): string[] | null {
   return require("./onboard/messaging-reuse").getNonInteractiveStoredMessagingChannels(
-    resume, session?.messagingChannels, sandboxName, MESSAGING_CHANNELS, (envKey: string) => Boolean(getCredential(envKey) || normalizeCredentialValue(process.env[envKey])),
+    resume, session?.messagingChannels, sandboxName, MESSAGING_CHANNELS, (envKey: string) => Boolean(normalizeCredentialValue(process.env[envKey]) || getCredential(envKey)),
     registry.getSandbox.bind(registry), registry.getDisabledChannels.bind(registry), providerExistsInGateway, isNonInteractive());
 }
 
@@ -4709,6 +4715,7 @@ async function createSandbox(
     sandboxNameOverride ?? (await promptValidatedSandboxName(agent)),
     "sandbox name",
   );
+  enabledChannels = filterEnabledChannelsByAgent(enabledChannels, agent);
   const effectiveSandboxGpuConfig =
     sandboxGpuConfig ?? resolveSandboxGpuConfig(gpu, { flag: null, device: null });
 
@@ -4822,9 +4829,12 @@ async function createSandbox(
   // Credentials stay in the keychain; the bridge simply isn't registered with
   // the gateway on the next rebuild. `channels start` removes the entry and
   // the bridge comes back.
-  const disabledChannels = require("./onboard/channel-state").resolveDisabledChannels(sandboxName);
+  const disabledChannels: string[] = require("./onboard/channel-state").resolveDisabledChannels(
+    sandboxName,
+  );
+  const disabledChannelNames = new Set(disabledChannels);
   const disabledEnvKeys = new Set(
-    MESSAGING_CHANNELS.filter((c) => disabledChannels.includes(c.name)).flatMap((c) =>
+    MESSAGING_CHANNELS.filter((c) => disabledChannelNames.has(c.name)).flatMap((c) =>
       getChannelTokenKeys(c),
     ),
   );
@@ -5298,6 +5308,11 @@ async function createSandbox(
   const tokensByEnvKey = Object.fromEntries(
     messagingTokenDefs.map(({ envKey, token }) => [envKey, token]),
   );
+  const qrSelectedChannels = resolveQrSelectedChannels(
+    MESSAGING_CHANNELS,
+    enabledChannels,
+    disabledChannelNames,
+  );
   const activeMessagingChannels = [
     ...new Set([
       ...messagingTokenDefs
@@ -5312,6 +5327,7 @@ async function createSandbox(
           return [];
         }),
       ...reusableMessagingChannels,
+      ...qrSelectedChannels,
     ]),
   ];
   const { useDockerGpuPatch, logMessage: sandboxGpuLogMessage } =
@@ -5362,13 +5378,9 @@ async function createSandbox(
   // comma-separated list of IDs (e.g. TELEGRAM_ALLOWED_IDS="123,456").
   const messagingAllowedIds: Record<string, string[]> = {};
   const enabledTokenEnvKeys = new Set(messagingTokenDefs.map(({ envKey }) => envKey));
+  const activeChannelNames = new Set(activeMessagingChannels);
   for (const ch of MESSAGING_CHANNELS) {
-    if (
-      ch.envKey &&
-      enabledTokenEnvKeys.has(ch.envKey) &&
-      ch.userIdEnvKey &&
-      process.env[ch.userIdEnvKey]
-    ) {
+    if (activeChannelNames.has(ch.name) && ch.userIdEnvKey && process.env[ch.userIdEnvKey]) {
       const ids = String(process.env[ch.userIdEnvKey])
         .split(",")
         .map((s) => s.trim())
@@ -7800,12 +7812,24 @@ async function checkTelegramReachability(token: string) {
   }
 }
 
-async function setupMessagingChannels(): Promise<string[]> {
+async function setupMessagingChannels(
+  agent: AgentDefinition | null = null,
+  existingChannels: string[] | null = null,
+): Promise<string[]> {
   step(5, 8, "Messaging channels");
+
+  const availableChannels = getAvailableMessagingChannelsForAgent(MESSAGING_CHANNELS, agent);
+  const seedFromState = (includeAllExisting = false): string[] =>
+    resolveMessagingChannelSeed(
+      availableChannels,
+      existingChannels,
+      (channel) => Boolean(getMessagingToken(channel.envKey)),
+      { includeAllExisting },
+    );
 
   // Non-interactive: skip prompt, tokens come from env/credentials
   if (isNonInteractive() || process.env.NEMOCLAW_NON_INTERACTIVE === "1") {
-    const found = MESSAGING_CHANNELS.filter((c) => getMessagingToken(c.envKey)).map((c) => c.name);
+    const found = Array.from(new Set(seedFromState(false)));
     if (found.length > 0) {
       note(`  [non-interactive] Messaging tokens detected: ${found.join(", ")}`);
       if (found.includes("telegram")) {
@@ -7820,15 +7844,14 @@ async function setupMessagingChannels(): Promise<string[]> {
     return found;
   }
 
-  // Single-keypress toggle selector — pre-select channels that already have tokens.
-  // Press a channel number to toggle; press Enter to continue.
-  const enabled = new Set(
-    MESSAGING_CHANNELS.filter((c) => getMessagingToken(c.envKey)).map((c) => c.name),
-  );
+  // Single-keypress toggle selector — pre-select channels that already have tokens
+  // or were recorded for this sandbox (so a rebuild does not silently drop QR-only
+  // channels that have no host token).
+  const enabled = new Set(seedFromState(true));
 
   const output = process.stderr;
   // Lines above the prompt: 1 blank + 1 header + N channels + 1 blank = N + 3
-  const linesAbovePrompt = MESSAGING_CHANNELS.length + 3;
+  const linesAbovePrompt = availableChannels.length + 3;
   let firstDraw = true;
   const showList = () => {
     if (!firstDraw) {
@@ -7838,13 +7861,13 @@ async function setupMessagingChannels(): Promise<string[]> {
     firstDraw = false;
     output.write("\n");
     output.write("  Available messaging channels:\n");
-    MESSAGING_CHANNELS.forEach((ch, i) => {
+    availableChannels.forEach((ch, i) => {
       const marker = enabled.has(ch.name) ? "●" : "○";
       const status = getMessagingToken(ch.envKey) ? " (configured)" : "";
       output.write(`    [${i + 1}] ${marker} ${ch.name} — ${ch.description}${status}\n`);
     });
     output.write("\n");
-    output.write(`  Press 1-${MESSAGING_CHANNELS.length} to toggle, Enter when done: `);
+    output.write(`  Press 1-${availableChannels.length} to toggle, Enter when done: `);
   };
 
   showList();
@@ -7892,8 +7915,8 @@ async function setupMessagingChannels(): Promise<string[]> {
           return;
         }
         const num = parseInt(ch, 10);
-        if (num >= 1 && num <= MESSAGING_CHANNELS.length) {
-          const channel = MESSAGING_CHANNELS[num - 1];
+        if (num >= 1 && num <= availableChannels.length) {
+          const channel = availableChannels[num - 1];
           if (enabled.has(channel.name)) {
             enabled.delete(channel.name);
           } else {
@@ -7927,7 +7950,7 @@ async function setupMessagingChannels(): Promise<string[]> {
     return [];
   }
 
-  await setupSelectedMessagingChannels(selected, enabled, MESSAGING_CHANNELS);
+  await setupSelectedMessagingChannels(selected, enabled, availableChannels);
   console.log("");
 
   // Channels where the user declined to enter a token were dropped from
@@ -7948,45 +7971,6 @@ async function setupMessagingChannels(): Promise<string[]> {
   return Array.from(enabled);
 }
 
-function getSuggestedPolicyPresets({
-  enabledChannels = null,
-  webSearchConfig = null,
-  provider = null,
-}: {
-  enabledChannels?: string[] | null;
-  webSearchConfig?: WebSearchConfig | null;
-  provider?: string | null;
-} = {}): string[] {
-  const suggestions = ["pypi", "npm"];
-
-  // Auto-suggest local-inference preset when a local provider is selected
-  if (provider && LOCAL_INFERENCE_PROVIDERS.includes(provider)) {
-    suggestions.push("local-inference");
-  }
-  const usesExplicitMessagingSelection = Array.isArray(enabledChannels);
-
-  const maybeSuggestMessagingPreset = (channel: string, envKey: string): void => {
-    if (usesExplicitMessagingSelection) {
-      if (enabledChannels.includes(channel)) suggestions.push(channel);
-      return;
-    }
-    if (getCredential(envKey) || process.env[envKey]) {
-      suggestions.push(channel);
-      if (process.stdout.isTTY && !isNonInteractive() && process.env.CI !== "true") {
-        console.log(`  Auto-detected: ${envKey} -> suggesting ${channel} preset`);
-      }
-    }
-  };
-
-  maybeSuggestMessagingPreset("telegram", "TELEGRAM_BOT_TOKEN");
-  maybeSuggestMessagingPreset("slack", "SLACK_BOT_TOKEN");
-  maybeSuggestMessagingPreset("discord", "DISCORD_BOT_TOKEN");
-  maybeSuggestMessagingPreset("wechat", "WECHAT_BOT_TOKEN");
-
-  if (webSearchConfig) suggestions.push("brave");
-
-  return suggestions;
-}
 
 // ── Step 7: OpenClaw ─────────────────────────────────────────────
 
@@ -10030,7 +10014,12 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
           );
         }
       } else {
-        selectedMessagingChannels = await setupMessagingChannels();
+        const existing = sandboxName
+          ? registry.getSandbox(sandboxName)?.messagingChannels ??
+            session?.messagingChannels ??
+            null
+          : session?.messagingChannels ?? null;
+        selectedMessagingChannels = await setupMessagingChannels(agent, existing);
       }
       const messagingChannelConfig = readMessagingChannelConfigFromEnv();
       onboardSession.updateSession((current: Session) => {
