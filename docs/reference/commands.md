@@ -333,6 +333,26 @@ $ nemoclaw my-assistant connect [--probe-only]
 The `--probe-only` flag verifies the sandbox is reachable over SSH and exits without opening a shell.
 Use it for health checks and scripted readiness probes.
 
+### `nemoclaw <name> exec`
+
+Run a single command non-interactively in a running sandbox via the OpenShell exec endpoint.
+The command runs as the sandbox user with `HOME=/sandbox`, so in-sandbox tooling resolves NemoClaw-provisioned config under `/sandbox/.openclaw` the same way it does for `connect` and `openshell sandbox connect`.
+This is the supported substitute for `docker exec` on the sandbox container; raw `docker exec` runs as root and lands on `HOME=/root`, where the agent config is not present and `openclaw agent` falls back to its built-in defaults.
+
+```console
+$ nemoclaw my-assistant exec -- openclaw agent -m "What is 2+2?"
+$ nemoclaw my-assistant exec --workdir /sandbox/workspace -- ls -la
+```
+
+Everything after `--` is forwarded verbatim to the sandbox command, including flags the inner command needs.
+The exit code is the remote command's exit code.
+
+| Flag | Description |
+|------|-------------|
+| `--workdir <dir>` | Working directory inside the sandbox |
+| `--tty` / `--no-tty` | Allocate a pseudo-terminal; defaults to auto-detection (on when stdin and stdout are terminals) |
+| `--timeout <seconds>` | Timeout in seconds (`0` means no timeout) |
+
 ### `nemoclaw <name> recover`
 
 Restart the in-sandbox gateway and re-establish the host-side dashboard port-forward without opening an SSH session.
