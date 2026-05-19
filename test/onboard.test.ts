@@ -724,8 +724,23 @@ const { setupInference } = require(${onboardPath});
     assert.match(providerCommand.command, /OPENAI_BASE_URL=http:\/\/127\.0\.0\.1:11436\/v1/);
     assert.equal(providerCommand.env?.NEMOCLAW_BEDROCK_RUNTIME_ADAPTER_TOKEN, "adapter-token");
     assert.ok(
-      !commands.some((entry) => /bedrock-bearer/.test(entry.command)),
-      "Bedrock bearer token must not appear in OpenShell argv",
+      !JSON.stringify(commands).includes("bedrock-bearer"),
+      "Bedrock bearer token must not appear in OpenShell argv or env",
+    );
+    const sandboxCommands = commands.filter((entry) => /\bsandbox\b/.test(entry.command));
+    assert.ok(
+      !sandboxCommands.some((entry) =>
+        JSON.stringify(entry).includes("NEMOCLAW_BEDROCK_RUNTIME_ADAPTER_TOKEN"),
+      ),
+      "adapter credential env must not be passed to sandbox commands",
+    );
+    assert.ok(
+      !sandboxCommands.some((entry) => JSON.stringify(entry).includes("adapter-token")),
+      "adapter token must not be passed to sandbox commands",
+    );
+    assert.ok(
+      !result.stderr.includes("bedrock-bearer") && !result.stderr.includes("adapter-token"),
+      "Bedrock tokens must not appear in onboarding stderr",
     );
     assert.match(
       commands.at(-1)?.command || "",

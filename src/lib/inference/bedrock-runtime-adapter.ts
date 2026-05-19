@@ -855,8 +855,8 @@ function adapterCredentialHash(options: {
 function probeAdapterHealth(token: string, port = BEDROCK_RUNTIME_ADAPTER_PORT): Promise<boolean> {
   return new Promise((resolve) => {
     // The token is a 0600 local adapter secret and this probe is fixed to the loopback host.
-    // codeql[js/file-access-to-http]
     const req = http.request(
+      // codeql[js/file-access-to-http]
       {
         hostname: BEDROCK_RUNTIME_ADAPTER_BIND_HOST,
         port,
