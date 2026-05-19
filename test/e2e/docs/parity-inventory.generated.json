@@ -9,6 +9,387 @@
       }
     },
     {
+      "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+      "assertions": [
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 246,
+          "text": "B0: sudo is required to edit /etc/hosts for Bedrock hostname mapping",
+          "polarity": "fail",
+          "normalized_id": "b0.sudo.is.required.to.edit.etc.hosts.for.bedrock.hostname.mapping",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 250,
+          "text": "B0: passwordless sudo is required to edit /etc/hosts for Bedrock hostname mapping",
+          "polarity": "fail",
+          "normalized_id": "b0.passwordless.sudo.is.required.to.edit.etc.hosts.for.bedrock.hostname.mapping",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 264,
+          "text": "B0: Bedrock Runtime hostname maps to localhost",
+          "polarity": "pass",
+          "normalized_id": "b0.bedrock.runtime.hostname.maps.to.localhost",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 266,
+          "text": "B0: Bedrock Runtime hostname did not resolve to localhost after hosts edit",
+          "polarity": "fail",
+          "normalized_id": "b0.bedrock.runtime.hostname.did.not.resolve.to.localhost.after.hosts.edit",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 443,
+          "text": "B1: onboard completed for Bedrock Runtime compatible Anthropic endpoint",
+          "polarity": "pass",
+          "normalized_id": "b1.onboard.completed.for.bedrock.runtime.compatible.anthropic.endpoint",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 445,
+          "text": "B1: onboard failed for Bedrock Runtime compatible Anthropic endpoint",
+          "polarity": "fail",
+          "normalized_id": "b1.onboard.failed.for.bedrock.runtime.compatible.anthropic.endpoint",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 510,
+          "text": "B2: onboard state keeps provider identity as compatible-anthropic-endpoint",
+          "polarity": "pass",
+          "normalized_id": "b2.onboard.state.keeps.provider.identity.as.compatible.anthropic.endpoint",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 512,
+          "text": "B2: onboard state did not preserve compatible-anthropic-endpoint identity: ${probe:0:500}",
+          "polarity": "fail",
+          "normalized_id": "b2.onboard.state.did.not.preserve.compatible.anthropic.endpoint.identity.probe.0.500",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 520,
+          "text": "B3: Bedrock Runtime adapter health endpoint failed",
+          "polarity": "fail",
+          "normalized_id": "b3.bedrock.runtime.adapter.health.endpoint.failed",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 542,
+          "text": "B3: Bedrock Runtime adapter health reports fake endpoint and us-east-1",
+          "polarity": "pass",
+          "normalized_id": "b3.bedrock.runtime.adapter.health.reports.fake.endpoint.and.us.east.1",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 544,
+          "text": "B3: Bedrock Runtime adapter health payload was not the expected fake endpoint",
+          "polarity": "fail",
+          "normalized_id": "b3.bedrock.runtime.adapter.health.payload.was.not.the.expected.fake.endpoint",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 551,
+          "text": "B4: openshell inference get failed: ${route:0:300}",
+          "polarity": "fail",
+          "normalized_id": "b4.openshell.inference.get.failed.route.0.300",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 557,
+          "text": "B4: OpenShell route points at compatible-anthropic-endpoint",
+          "polarity": "pass",
+          "normalized_id": "b4.openshell.route.points.at.compatible.anthropic.endpoint",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 559,
+          "text": "B4: OpenShell route did not point at compatible-anthropic-endpoint: ${plain_route:0:400}",
+          "polarity": "fail",
+          "normalized_id": "b4.openshell.route.did.not.point.at.compatible.anthropic.endpoint.plain.route.0.400",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 564,
+          "text": "B5: OpenShell provider registry contains compatible-anthropic-endpoint",
+          "polarity": "pass",
+          "normalized_id": "b5.openshell.provider.registry.contains.compatible.anthropic.endpoint",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 566,
+          "text": "B5: OpenShell provider registry did not expose compatible-anthropic-endpoint",
+          "polarity": "fail",
+          "normalized_id": "b5.openshell.provider.registry.did.not.expose.compatible.anthropic.endpoint",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 611,
+          "text": "B6: OpenClaw config uses only managed inference.local provider",
+          "polarity": "pass",
+          "normalized_id": "b6.openclaw.config.uses.only.managed.inference.local.provider",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 613,
+          "text": "B6: OpenClaw config did not use the expected inference.local provider shape",
+          "polarity": "fail",
+          "normalized_id": "b6.openclaw.config.did.not.use.the.expected.inference.local.provider.shape",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 620,
+          "text": "B6: could not read Hermes config.yaml: ${config:0:240}",
+          "polarity": "fail",
+          "normalized_id": "b6.could.not.read.hermes.config.yaml.config.0.240",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 663,
+          "text": "B6: Hermes config.yaml was not patched correctly: ${probe:0:400}",
+          "polarity": "fail",
+          "normalized_id": "b6.hermes.config.yaml.was.not.patched.correctly.probe.0.400",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 666,
+          "text": "B6: Hermes config uses inference.local without OpenShell/OpenClaw provider blocks",
+          "polarity": "pass",
+          "normalized_id": "b6.hermes.config.uses.inference.local.without.openshell.openclaw.provider.blocks",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 685,
+          "text": "B7: sandbox inference.local chat completion returned PONG",
+          "polarity": "pass",
+          "normalized_id": "b7.sandbox.inference.local.chat.completion.returned.pong",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 687,
+          "text": "B7: sandbox inference.local chat completion failed: ${response:0:400}",
+          "polarity": "fail",
+          "normalized_id": "b7.sandbox.inference.local.chat.completion.failed.response.0.400",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 698,
+          "text": "B8: OpenClaw agent turn hit a provider or transport error",
+          "polarity": "fail",
+          "normalized_id": "b8.openclaw.agent.turn.hit.a.provider.or.transport.error",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 721,
+          "text": "B8: OpenClaw agent completed a Bedrock-backed turn through inference.local",
+          "polarity": "pass",
+          "normalized_id": "b8.openclaw.agent.completed.a.bedrock.backed.turn.through.inference.local",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 723,
+          "text": "B8: OpenClaw agent did not return PONG through Bedrock adapter",
+          "polarity": "fail",
+          "normalized_id": "b8.openclaw.agent.did.not.return.pong.through.bedrock.adapter",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 744,
+          "text": "B8: Hermes local chat API completed a Bedrock-backed turn through inference.local",
+          "polarity": "pass",
+          "normalized_id": "b8.hermes.local.chat.api.completed.a.bedrock.backed.turn.through.inference.local",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 746,
+          "text": "B8: Hermes local chat API did not return PONG through Bedrock adapter: ${response:0:400}",
+          "polarity": "fail",
+          "normalized_id": "b8.hermes.local.chat.api.did.not.return.pong.through.bedrock.adapter.response.0.400",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 755,
+          "text": "B9: fake Bedrock Runtime endpoint observed authenticated Converse traffic",
+          "polarity": "pass",
+          "normalized_id": "b9.fake.bedrock.runtime.endpoint.observed.authenticated.converse.traffic",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 757,
+          "text": "B9: fake Bedrock Runtime endpoint did not observe authenticated Converse traffic",
+          "polarity": "fail",
+          "normalized_id": "b9.fake.bedrock.runtime.endpoint.did.not.observe.authenticated.converse.traffic",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 761,
+          "text": "B10: fake Bedrock Runtime endpoint observed authenticated ConverseStream traffic",
+          "polarity": "pass",
+          "normalized_id": "b10.fake.bedrock.runtime.endpoint.observed.authenticated.conversestream.traffic",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 763,
+          "text": "B10: fake Bedrock Runtime endpoint did not observe OpenClaw streamed traffic",
+          "polarity": "fail",
+          "normalized_id": "b10.fake.bedrock.runtime.endpoint.did.not.observe.openclaw.streamed.traffic",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 848,
+          "text": "B11: adapter token file was not created on the host",
+          "polarity": "fail",
+          "normalized_id": "b11.adapter.token.file.was.not.created.on.the.host",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 869,
+          "text": "B11: sandbox configs, env, proc, and logs contain no Bedrock token or hostname leaks",
+          "polarity": "pass",
+          "normalized_id": "b11.sandbox.configs.env.proc.and.logs.contain.no.bedrock.token.or.hostname.leaks",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 871,
+          "text": "B11: leak scan found forbidden Bedrock token or hostname locations",
+          "polarity": "fail",
+          "normalized_id": "b11.leak.scan.found.forbidden.bedrock.token.or.hostname.locations",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 923,
+          "text": "Docker is running",
+          "polarity": "pass",
+          "normalized_id": "docker.is.running",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 925,
+          "text": "Docker is not running",
+          "polarity": "fail",
+          "normalized_id": "docker.is.not.running",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 930,
+          "text": "python3 is available",
+          "polarity": "pass",
+          "normalized_id": "python3.is.available",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 932,
+          "text": "python3 not found",
+          "polarity": "fail",
+          "normalized_id": "python3.not.found",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 937,
+          "text": "NEMOCLAW_NON_INTERACTIVE=1",
+          "polarity": "pass",
+          "normalized_id": "nemoclaw.non.interactive.1",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 939,
+          "text": "NEMOCLAW_NON_INTERACTIVE=1 is required",
+          "polarity": "fail",
+          "normalized_id": "nemoclaw.non.interactive.1.is.required",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 944,
+          "text": "third-party software acceptance is set",
+          "polarity": "pass",
+          "normalized_id": "third.party.software.acceptance.is.set",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 946,
+          "text": "NEMOCLAW_ACCEPT_THIRD_PARTY_SOFTWARE=1 is required",
+          "polarity": "fail",
+          "normalized_id": "nemoclaw.accept.third.party.software.1.is.required",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 958,
+          "text": "B0: source CLI and OpenShell are ready",
+          "polarity": "pass",
+          "normalized_id": "b0.source.cli.and.openshell.are.ready",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 960,
+          "text": "B0: source CLI/OpenShell preparation failed",
+          "polarity": "fail",
+          "normalized_id": "b0.source.cli.openshell.preparation.failed",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 969,
+          "text": "B0: fake Bedrock Runtime endpoint started",
+          "polarity": "pass",
+          "normalized_id": "b0.fake.bedrock.runtime.endpoint.started",
+          "mapping_status": "deferred"
+        },
+        {
+          "script": "test/e2e/test-bedrock-runtime-compatible-anthropic.sh",
+          "line": 971,
+          "text": "B0: fake Bedrock Runtime endpoint failed to start",
+          "polarity": "fail",
+          "normalized_id": "b0.fake.bedrock.runtime.endpoint.failed.to.start",
+          "mapping_status": "deferred"
+        }
+      ]
+    },
+    {
       "script": "test/e2e/test-brave-search-e2e.sh",
       "assertions": [
         {
@@ -16347,8 +16728,8 @@
     }
   ],
   "totals": {
-    "scripts": 52,
-    "assertions": 2010,
+    "scripts": 53,
+    "assertions": 2057,
     "zero_assertion_scripts": 2
   }
 }
