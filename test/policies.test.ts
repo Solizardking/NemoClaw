@@ -1240,6 +1240,40 @@ exit 1
       }
     });
 
+    it("baseline filesystem_policy.read_write grants the Homebrew prefix (#3913)", () => {
+      // Companion to the Dockerfile.base step that bakes Homebrew core
+      // into the sandbox image. Without /home/linuxbrew in read_write,
+      // `brew install <formula>` cannot extract bottles or manage the
+      // Cellar/opt symlinks at runtime, and the brew preset's binary
+      // whitelist becomes dead code.
+      const parsed = YAML.parse(
+        fs.readFileSync(
+          path.join(REPO_ROOT, "nemoclaw-blueprint/policies/openclaw-sandbox.yaml"),
+          "utf-8",
+        ),
+      );
+      expect(parsed.filesystem_policy.read_write).toContain("/home/linuxbrew");
+    });
+
+    it("brew preset whitelists the PATH shim and Homebrew-managed entrypoints (#3913)", () => {
+      const content = requirePresetContent(policies.loadPreset("brew"));
+      const parsed = YAML.parse(content);
+      const brewPolicy = parsed.network_policies?.brew as
+        | { binaries?: Array<{ path?: string }> }
+        | undefined;
+      const binaries = (brewPolicy?.binaries ?? []).map((binary) => binary.path).sort();
+      expect(binaries).toEqual(
+        [
+          "/home/linuxbrew/.linuxbrew/Homebrew/bin/*",
+          "/home/linuxbrew/.linuxbrew/bin/*",
+          "/home/linuxbrew/.linuxbrew/bin/brew",
+          "/usr/bin/curl",
+          "/usr/bin/git",
+          "/usr/local/bin/brew",
+        ].sort(),
+      );
+    });
+
     it("telegram REST preset relies on automatic TLS handling", () => {
       const content = requirePresetContent(policies.loadPreset("telegram"));
       expect(content).toBeTruthy();
