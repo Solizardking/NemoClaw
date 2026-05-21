@@ -6058,7 +6058,7 @@ async function setupNim(
   preferredInferenceApi: string | null;
   nimContainer: string | null;
 }> {
-  step(3, 8, "Configuring inference (NIM)");
+  step(3, 8, "Configuring inference provider");
 
   let model: string | null = null;
   let provider: string = REMOTE_PROVIDER_CONFIG.build.providerName;
@@ -8967,7 +8967,7 @@ function startRecordedStep(
 const ONBOARD_STEP_INDEX: Record<string, { number: number; title: string }> = {
   preflight: { number: 1, title: "Preflight checks" },
   gateway: { number: 2, title: "Starting OpenShell gateway" },
-  provider_selection: { number: 3, title: "Configuring inference (NIM)" },
+  provider_selection: { number: 3, title: "Configuring inference provider" },
   inference: { number: 4, title: "Setting up inference provider" },
   messaging: { number: 5, title: "Messaging channels" },
   sandbox: { number: 6, title: "Creating sandbox" },

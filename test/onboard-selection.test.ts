@@ -227,6 +227,18 @@ const { setupNim } = require(${onboardPath});
     assert.ok(
       payload.lines.some((line: string) => line.includes("Chat Completions API available")),
     );
+    // #3951: step 3 banner must be provider-agnostic — selecting a non-NIM
+    // provider (here, NVIDIA Endpoints) must not be labeled "(NIM)".
+    assert.ok(
+      payload.lines.some((line: string) =>
+        /\[3\/8\] Configuring inference provider\b/.test(line),
+      ),
+      "expected provider-agnostic [3/8] banner",
+    );
+    assert.ok(
+      !payload.lines.some((line: string) => line.includes("Configuring inference (NIM)")),
+      'step 3 banner must not be labeled "Configuring inference (NIM)" for non-NIM providers',
+    );
   });
 
   it("offers detected running vLLM without requiring a rerun", () => {
