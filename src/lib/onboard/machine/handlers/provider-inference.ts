@@ -111,11 +111,23 @@ export interface ProviderInferenceStateResult {
   session: Session | null;
 }
 
-function requireSelection(provider: string | null, model: string | null): { provider: string; model: string } {
+function requireSelection(
+  provider: string | null,
+  model: string | null,
+  deps: Pick<ProviderInferenceStateOptions<unknown, unknown, unknown>["deps"], "error" | "exitProcess">,
+): { provider: string; model: string } {
   if (typeof provider !== "string" || typeof model !== "string") {
-    throw new Error("Inference selection did not yield a provider/model.");
+    deps.error("  Inference selection did not yield a provider/model.");
+    deps.exitProcess(1);
   }
   return { provider, model };
+}
+
+function clearStagedCredentialEnv(
+  deps: Pick<ProviderInferenceStateOptions<unknown, unknown, unknown>["deps"], "deleteEnv">,
+  credentialEnv: string | null,
+): void {
+  if (credentialEnv) deps.deleteEnv(credentialEnv);
 }
 
 export async function handleProviderInferenceState<Gpu, Agent, Host>({
@@ -154,6 +166,7 @@ export async function handleProviderInferenceState<Gpu, Agent, Host>({
       session?.steps?.provider_selection?.status === "complete" &&
       typeof provider === "string" &&
       typeof model === "string";
+    let shouldRecordProviderSelection = false;
     if (resumeProviderSelection) {
       const recovery = await deps.ensureResumeProviderReady(provider, credentialEnv);
       forceInferenceSetup = recovery.forceInferenceSetup;
@@ -172,6 +185,13 @@ export async function handleProviderInferenceState<Gpu, Agent, Host>({
       hermesToolGateways = selection.hermesToolGateways;
       preferredInferenceApi = selection.preferredInferenceApi;
       nimContainer = selection.nimContainer;
+      shouldRecordProviderSelection = true;
+    }
+
+    const selected = requireSelection(provider, model, deps);
+    provider = selected.provider;
+    model = selected.model;
+    if (shouldRecordProviderSelection) {
       session = await deps.recordStepComplete(
         "provider_selection",
         deps.toSessionUpdates({
@@ -186,10 +206,6 @@ export async function handleProviderInferenceState<Gpu, Agent, Host>({
         }),
       );
     }
-
-    const selected = requireSelection(provider, model);
-    provider = selected.provider;
-    model = selected.model;
     env.NEMOCLAW_OPENSHELL_BIN = deps.getOpenshellBinary();
     const needsBedrockRuntimeAdapter = deps.needsBedrockRuntimeAdapter(provider, endpointUrl);
     const resumeInference =
@@ -200,17 +216,22 @@ export async function handleProviderInferenceState<Gpu, Agent, Host>({
       deps.isInferenceRouteReady(provider, model);
     if (resumeInference) {
       if (provider === constants.hermesProviderName) {
-        if (!sandboxName) sandboxName = await deps.promptValidatedSandboxName(agent);
-        await deps.startRecordedStep("inference", { provider, model });
-        const inferenceResult = await deps.setupInference(
-          sandboxName,
-          model,
-          provider,
-          endpointUrl,
-          credentialEnv,
-          hermesAuthMethod,
-          hermesToolGateways,
-        );
+        let inferenceResult: ProviderInferenceRetry;
+        try {
+          if (!sandboxName) sandboxName = await deps.promptValidatedSandboxName(agent);
+          await deps.startRecordedStep("inference", { provider, model });
+          inferenceResult = await deps.setupInference(
+            sandboxName,
+            model,
+            provider,
+            endpointUrl,
+            credentialEnv,
+            hermesAuthMethod,
+            hermesToolGateways,
+          );
+        } finally {
+          clearStagedCredentialEnv(deps, credentialEnv);
+        }
         if (inferenceResult?.retry === "selection") {
           forceProviderSelection = true;
           continue;
@@ -238,45 +259,49 @@ export async function handleProviderInferenceState<Gpu, Agent, Host>({
       break;
     }
 
-    if (!sandboxName) sandboxName = await deps.promptValidatedSandboxName(agent);
-    const buildEstimateNote =
-      env.NEMOCLAW_IGNORE_RUNTIME_RESOURCES === "1"
-        ? null
-        : deps.formatSandboxBuildEstimateNote(deps.assessHost());
-    deps.log(
-      deps.formatOnboardConfigSummary({
-        provider,
+    let inferenceResult: ProviderInferenceRetry;
+    try {
+      if (!sandboxName) sandboxName = await deps.promptValidatedSandboxName(agent);
+      const buildEstimateNote =
+        env.NEMOCLAW_IGNORE_RUNTIME_RESOURCES === "1"
+          ? null
+          : deps.formatSandboxBuildEstimateNote(deps.assessHost());
+      deps.log(
+        deps.formatOnboardConfigSummary({
+          provider,
+          model,
+          credentialEnv,
+          hermesAuthMethod,
+          webSearchConfig,
+          hermesToolGateways,
+          enabledChannels: selectedMessagingChannels.length > 0 ? selectedMessagingChannels : null,
+          sandboxName,
+          notes: buildEstimateNote ? [buildEstimateNote] : [],
+        }),
+      );
+      deps.log("  Web search and messaging channels will be prompted next.");
+      if (!deps.isNonInteractive()) {
+        if (!(await deps.promptYesNoOrDefault("  Apply this configuration?", null, true))) {
+          deps.log(`  Aborted. Re-run \`${deps.cliName()} onboard\` to start over.`);
+          deps.log("  Credentials entered so far were only staged in memory for this run.");
+          deps.log("  No new gateway credential was registered because onboarding stopped here.");
+          deps.exitProcess(0);
+        }
+      }
+
+      await deps.startRecordedStep("inference", { provider, model });
+      inferenceResult = await deps.setupInference(
+        sandboxName,
         model,
+        provider,
+        endpointUrl,
         credentialEnv,
         hermesAuthMethod,
-        webSearchConfig,
         hermesToolGateways,
-        enabledChannels: selectedMessagingChannels.length > 0 ? selectedMessagingChannels : null,
-        sandboxName,
-        notes: buildEstimateNote ? [buildEstimateNote] : [],
-      }),
-    );
-    deps.log("  Web search and messaging channels will be prompted next.");
-    if (!deps.isNonInteractive()) {
-      if (!(await deps.promptYesNoOrDefault("  Apply this configuration?", null, true))) {
-        deps.log(`  Aborted. Re-run \`${deps.cliName()} onboard\` to start over.`);
-        deps.log("  Credentials entered so far were only staged in memory for this run.");
-        deps.log("  No new gateway credential was registered because onboarding stopped here.");
-        deps.exitProcess(0);
-      }
+      );
+    } finally {
+      clearStagedCredentialEnv(deps, credentialEnv);
     }
-
-    await deps.startRecordedStep("inference", { provider, model });
-    const inferenceResult = await deps.setupInference(
-      sandboxName,
-      model,
-      provider,
-      endpointUrl,
-      credentialEnv,
-      hermesAuthMethod,
-      hermesToolGateways,
-    );
-    deps.deleteEnv("NVIDIA_API_KEY");
     if (inferenceResult?.retry === "selection") {
       forceProviderSelection = true;
       continue;

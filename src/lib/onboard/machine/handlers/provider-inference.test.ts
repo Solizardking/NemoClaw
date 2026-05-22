@@ -154,6 +154,51 @@ describe("handleProviderInferenceState", () => {
     });
   });
 
+  it("clears non-NVIDIA provider credentials when inference setup fails", async () => {
+    const setupNim = vi.fn(async () => ({
+      ...baseSelection,
+      provider: "compatible-endpoint",
+      credentialEnv: "COMPATIBLE_API_KEY",
+    }));
+    const setupInference = vi.fn(async () => {
+      throw new Error("probe failed");
+    });
+    const { deps, calls } = createDeps({ setupNim, setupInference });
+
+    await expect(handleProviderInferenceState(baseOptions(deps))).rejects.toThrow("probe failed");
+
+    expect(calls.deleteEnv).toHaveBeenCalledWith("COMPATIBLE_API_KEY");
+  });
+
+  it("exits through the injected CLI boundary when provider selection is incomplete", async () => {
+    const setupNim = vi.fn(async () => ({ ...baseSelection, model: null }));
+    const { deps, calls } = createDeps({ setupNim });
+
+    await expect(handleProviderInferenceState(baseOptions(deps))).rejects.toThrow("exit 1");
+
+    expect(calls.error).toHaveBeenCalledWith("  Inference selection did not yield a provider/model.");
+    expect(calls.exit).toHaveBeenCalledWith(1);
+    expect(calls.complete).not.toHaveBeenCalledWith("provider_selection", expect.anything());
+    expect(calls.setupInference).not.toHaveBeenCalled();
+  });
+
+  it("clears provider credentials when inference step recording fails", async () => {
+    const setupNim = vi.fn(async () => ({
+      ...baseSelection,
+      provider: "compatible-endpoint",
+      credentialEnv: "COMPATIBLE_API_KEY",
+    }));
+    const startRecordedStep = vi.fn(async (stepName: string) => {
+      if (stepName === "inference") throw new Error("recording failed");
+    });
+    const { deps, calls } = createDeps({ setupNim, startRecordedStep });
+
+    await expect(handleProviderInferenceState(baseOptions(deps))).rejects.toThrow("recording failed");
+
+    expect(calls.deleteEnv).toHaveBeenCalledWith("COMPATIBLE_API_KEY");
+    expect(calls.setupInference).not.toHaveBeenCalled();
+  });
+
   it("skips provider selection and inference setup when resume state is already ready", async () => {
     const session = createSession({
       provider: "ollama-local",
