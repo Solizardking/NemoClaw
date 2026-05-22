@@ -207,6 +207,7 @@ const {
   getProviderSelectionConfig,
   parseGatewayInference,
 } = inferenceConfig;
+const { ensureResumeProviderReady } = require("./onboard/resume-provider-shim");
 
 const onboardProviders = require("./onboard/providers");
 const hermesProviderAuth = require("./hermes-provider-auth");
@@ -1502,8 +1503,6 @@ const {
   shouldSkipResponsesProbe,
   shouldForceCompletionsApi,
 } = validation;
-
-// validateNvidiaApiKeyValue — see validation import above
 
 async function replaceNamedCredential(
   envName: string,
@@ -9439,6 +9438,7 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
         recordStepComplete,
         toSessionUpdates: (updates) => toSessionUpdates(updates as Parameters<typeof toSessionUpdates>[0]),
         skippedStepMessage,
+        ensureResumeProviderReady,
         hydrateCredentialEnv,
         repairLocalInferenceSystemdOverrideOrExit,
         isNonInteractive,
@@ -9992,7 +9992,6 @@ module.exports = {
   recoverGatewayRuntime,
   buildChain,
   buildControlUiUrls,
-
   startGateway,
   findAvailableDashboardPort,
   findDashboardForwardOwner,
@@ -10048,4 +10047,5 @@ module.exports = {
   checkTelegramReachability,
   TELEGRAM_NETWORK_CURL_CODES,
   verifyCompatibleEndpointSandboxSmoke,
+  resumeProviderShimDeps: { isRoutedInferenceProvider, replaceNamedCredential },
 };

@@ -32,6 +32,10 @@ function createDeps(overrides: Partial<ProviderInferenceStateOptions<Gpu, Agent,
     startStep: vi.fn(async () => undefined),
     complete: vi.fn(async () => createSession()),
     skipped: vi.fn(),
+    recoverProvider: vi.fn(async (_provider: string | null | undefined, credentialEnv: string | null | undefined) => ({
+      forceInferenceSetup: false,
+      credentialEnv: credentialEnv ?? null,
+    })),
     hydrate: vi.fn(),
     repair: vi.fn(),
     routeReady: vi.fn(() => false),
@@ -56,6 +60,7 @@ function createDeps(overrides: Partial<ProviderInferenceStateOptions<Gpu, Agent,
       recordStepComplete: calls.complete,
       toSessionUpdates: (updates: Record<string, unknown>) => updates as SessionUpdates,
       skippedStepMessage: calls.skipped,
+      ensureResumeProviderReady: calls.recoverProvider,
       hydrateCredentialEnv: calls.hydrate,
       repairLocalInferenceSystemdOverrideOrExit: calls.repair,
       isNonInteractive: () => true,
@@ -166,11 +171,46 @@ describe("handleProviderInferenceState", () => {
 
     expect(calls.setupNim).not.toHaveBeenCalled();
     expect(calls.setupInference).not.toHaveBeenCalled();
+    expect(calls.recoverProvider).toHaveBeenCalledWith("ollama-local", null);
     expect(calls.skipped).toHaveBeenCalledWith("provider_selection", "ollama-local / llama3.1");
     expect(calls.hydrate).toHaveBeenCalledWith(null);
     expect(calls.repair).toHaveBeenCalledWith("ollama-local", deps.isNonInteractive);
     expect(calls.skipped).toHaveBeenCalledWith("inference", "ollama-local / llama3.1");
     expect(result).toMatchObject({ provider: "ollama-local", model: "llama3.1" });
+  });
+
+  it("reruns inference setup when resumed provider recovery forces recreation", async () => {
+    const session = createSession({
+      provider: "compatible-endpoint",
+      model: "custom-model",
+      credentialEnv: null,
+    });
+    session.steps.provider_selection.status = "complete";
+    const { deps, calls } = createDeps({
+      isInferenceRouteReady: vi.fn(() => true),
+      ensureResumeProviderReady: vi.fn(async () => ({
+        forceInferenceSetup: true,
+        credentialEnv: "COMPATIBLE_API_KEY",
+      })),
+    });
+
+    await handleProviderInferenceState({
+      ...baseOptions(deps, session),
+      resume: true,
+      sandboxName: "my-assistant",
+    });
+
+    expect(calls.setupNim).not.toHaveBeenCalled();
+    expect(calls.hydrate).toHaveBeenCalledWith("COMPATIBLE_API_KEY");
+    expect(calls.setupInference).toHaveBeenCalledWith(
+      "my-assistant",
+      "custom-model",
+      "compatible-endpoint",
+      null,
+      "COMPATIBLE_API_KEY",
+      null,
+      [],
+    );
   });
 
   it("reconciles model router on resumed routed inference", async () => {

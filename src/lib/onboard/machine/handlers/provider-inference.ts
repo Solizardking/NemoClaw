@@ -61,6 +61,10 @@ export interface ProviderInferenceStateOptions<Gpu, Agent, Host> {
     recordStepComplete(stepName: string, updates: SessionUpdates): Promise<Session>;
     toSessionUpdates(updates: Record<string, unknown>): SessionUpdates;
     skippedStepMessage(stepName: string, detail?: string | null): void;
+    ensureResumeProviderReady(
+      provider: string | null | undefined,
+      credentialEnv: string | null | undefined,
+    ): Promise<{ forceInferenceSetup: boolean; credentialEnv: string | null }>;
     hydrateCredentialEnv(credentialEnv: string | null): void;
     repairLocalInferenceSystemdOverrideOrExit(provider: string | null, isNonInteractive: () => boolean): void;
     isNonInteractive(): boolean;
@@ -143,6 +147,7 @@ export async function handleProviderInferenceState<Gpu, Agent, Host>({
   let forceProviderSelection = initialForceProviderSelection;
 
   while (true) {
+    let forceInferenceSetup = false;
     const resumeProviderSelection =
       !forceProviderSelection &&
       resume &&
@@ -150,6 +155,9 @@ export async function handleProviderInferenceState<Gpu, Agent, Host>({
       typeof provider === "string" &&
       typeof model === "string";
     if (resumeProviderSelection) {
+      const recovery = await deps.ensureResumeProviderReady(provider, credentialEnv);
+      forceInferenceSetup = recovery.forceInferenceSetup;
+      credentialEnv = recovery.credentialEnv;
       deps.skippedStepMessage("provider_selection", `${provider} / ${model}`);
       deps.hydrateCredentialEnv(credentialEnv);
       deps.repairLocalInferenceSystemdOverrideOrExit(provider, deps.isNonInteractive);
@@ -187,6 +195,7 @@ export async function handleProviderInferenceState<Gpu, Agent, Host>({
     const resumeInference =
       !needsBedrockRuntimeAdapter &&
       !forceProviderSelection &&
+      !forceInferenceSetup &&
       resume &&
       deps.isInferenceRouteReady(provider, model);
     if (resumeInference) {
