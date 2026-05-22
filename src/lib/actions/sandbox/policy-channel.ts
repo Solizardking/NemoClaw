@@ -162,7 +162,10 @@ export async function addSandboxPolicy(
     if (confirm.trim().toLowerCase().startsWith("n")) return;
   }
 
-  policies.applyPreset(sandboxName, answer);
+  if (!policies.applyPreset(sandboxName, answer)) {
+    process.exit(1);
+  }
+  syncSessionPolicyPresetsWithRegistry(sandboxName, answer, "add");
 }
 
 /**
@@ -212,6 +215,11 @@ async function applyExternalPreset(
     const result = policies.applyPresetContent(sandboxName, loaded.presetName, loaded.content, {
       custom: { sourcePath: path.resolve(filePath) },
     });
+    if (result !== false) {
+      // Custom presets share the registry slot with built-ins (customPolicies
+      // in policy/index.ts:684), so they need the same session-sync.
+      syncSessionPolicyPresetsWithRegistry(sandboxName, loaded.presetName, "add");
+    }
     return result !== false;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
@@ -723,6 +731,7 @@ function applyChannelPresetIfAvailable(sandboxName: string, channelName: string)
       );
       return false;
     }
+    syncSessionPolicyPresetsWithRegistry(sandboxName, channelName, "add");
     return true;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -785,18 +794,53 @@ function clearSandboxChannelDurableState(sandboxName: string, channelName: strin
   return true;
 }
 
-// Drop the channel name from session.policyPresets so onboard --resume's
-// preset reconciliation does not re-apply the preset we just removed (#3998).
-function dropChannelFromSessionPolicyPresets(channelName: string): void {
-  onboardSession.updateSession((current) => {
-    if (Array.isArray(current.policyPresets)) {
-      const filtered = current.policyPresets.filter((preset) => preset !== channelName);
-      if (filtered.length !== current.policyPresets.length) {
-        current.policyPresets = filtered;
+// Mirror a registry-side preset add/remove into `session.policyPresets`.
+// Without this, a later `rebuild` re-enters onboard resume, reads the
+// stale session, and narrows the preset back away — see #3437 follow-up.
+// Best-effort: registry has already succeeded; failure paths log and
+// swallow so the caller's flow is never broken by a session I/O error.
+function syncSessionPolicyPresetsWithRegistry(
+  sandboxName: string,
+  presetName: string,
+  action: "add" | "remove",
+): void {
+  let session: ReturnType<typeof onboardSession.loadSession>;
+  try {
+    session = onboardSession.loadSession();
+  } catch {
+    return;
+  }
+  // No session = nothing to sync. Foreign sandbox = leave its intent alone.
+  if (!session) return;
+  if (session.sandboxName !== sandboxName) return;
+
+  const current = Array.isArray(session.policyPresets) ? session.policyPresets : [];
+  const has = current.includes(presetName);
+  // Skip the file write when the desired state already holds.
+  if (action === "add" && has) return;
+  if (action === "remove" && !has) return;
+
+  try {
+    onboardSession.updateSession((s) => {
+      const arr = Array.isArray(s.policyPresets) ? [...s.policyPresets] : [];
+      if (action === "add") {
+        if (!arr.includes(presetName)) arr.push(presetName);
+      } else {
+        const idx = arr.indexOf(presetName);
+        if (idx >= 0) arr.splice(idx, 1);
       }
-    }
-    return current;
-  });
+      s.policyPresets = arr;
+      return s;
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error(
+      `  ${YW}⚠${R} Could not record '${presetName}' preset ${action} in onboard session: ${msg}`,
+    );
+    console.error(
+      `    Registry is consistent; rerun '${CLI_NAME} ${sandboxName} policy-${action === "add" ? "add" : "remove"} ${presetName}' after rebuild if needed.`,
+    );
+  }
 }
 
 // Mirror of applyChannelPresetIfAvailable. When the channel-named built-in
@@ -809,9 +853,11 @@ function dropChannelFromSessionPolicyPresets(channelName: string): void {
 function removeChannelPresetIfPresent(sandboxName: string, channelName: string): void {
   const builtinPresets = new Set(policies.listPresets().map((p) => p.name));
   if (!builtinPresets.has(channelName)) {
+    syncSessionPolicyPresetsWithRegistry(sandboxName, channelName, "remove");
     return;
   }
   if (!policies.getAppliedPresets(sandboxName).includes(channelName)) {
+    syncSessionPolicyPresetsWithRegistry(sandboxName, channelName, "remove");
     return;
   }
   try {
@@ -823,6 +869,8 @@ function removeChannelPresetIfPresent(sandboxName: string, channelName: string):
       console.error(
         `    Run manually after rebuild with: ${CLI_NAME} ${sandboxName} policy-remove ${channelName}`,
       );
+    } else {
+      syncSessionPolicyPresetsWithRegistry(sandboxName, channelName, "remove");
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -863,7 +911,12 @@ export async function removeSandboxChannel(
   const isQrChannel = channelUsesInSandboxQrPairing(channel);
 
   const registryEntry = registry.getSandbox(sandboxName);
-  const sessionForSandbox = onboardSession.loadSession();
+  let sessionForSandbox: ReturnType<typeof onboardSession.loadSession> = null;
+  try {
+    sessionForSandbox = onboardSession.loadSession();
+  } catch {
+    sessionForSandbox = null;
+  }
   const sessionPolicyPresets =
     sessionForSandbox?.sandboxName === sandboxName &&
     Array.isArray(sessionForSandbox.policyPresets)
@@ -901,7 +954,6 @@ export async function removeSandboxChannel(
   }
 
   removeChannelPresetIfPresent(sandboxName, canonical);
-  dropChannelFromSessionPolicyPresets(canonical);
 
   // Token-based channels: best-effort tidy of any leftover dir. Token
   // revocation already prevents the bot from authenticating, so a
@@ -1047,4 +1099,5 @@ export async function removeSandboxPolicy(
   if (!policies.removePreset(sandboxName, answer)) {
     process.exit(1);
   }
+  syncSessionPolicyPresetsWithRegistry(sandboxName, answer, "remove");
 }
