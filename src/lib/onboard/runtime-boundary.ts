@@ -91,6 +91,15 @@ export class OnboardRuntimeBoundary {
   }
 
   async recordSessionComplete(updates: SessionUpdates = {}): Promise<Session> {
-    return this.getRuntime().completeSession(updates);
+    const runtime = this.getRuntime();
+    const current = await runtime.session();
+    if (current.machine.state === "finalizing") {
+      await runtime.transition("post_verify");
+      return runtime.complete(updates);
+    }
+    if (current.machine.state === "post_verify") {
+      return runtime.complete(updates);
+    }
+    return runtime.completeSession(updates);
   }
 }
