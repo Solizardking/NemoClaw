@@ -40,7 +40,8 @@ export interface SandboxStateOptions<Gpu, Agent, WebSearchConfig, MessagingChann
     stringSetsEqual(left: string[], right: string[]): boolean;
     removeSandboxFromRegistry(sandboxName: string): void;
     repairRecordedSandbox(sandboxName: string | null): void;
-    ensureValidatedBraveSearchCredential(): Promise<string | null>;
+    ensureValidatedBraveSearchCredential(): Promise<unknown>;
+    isBackToSelection(value: unknown): boolean;
     configureWebSearch(
       existingConfig: WebSearchConfig | null,
       agent: Agent,
@@ -216,7 +217,11 @@ export async function handleSandboxState<Gpu, Agent, WebSearchConfig, MessagingC
     if (nextWebSearchConfig) {
       deps.note("  [resume] Revalidating Brave Search configuration for sandbox recreation.");
       const braveApiKey = await deps.ensureValidatedBraveSearchCredential();
-      nextWebSearchConfig = braveApiKey ? webSearchConfig : null;
+      if (deps.isBackToSelection(braveApiKey)) {
+        nextWebSearchConfig = null;
+      } else {
+        nextWebSearchConfig = braveApiKey ? webSearchConfig : null;
+      }
       if (nextWebSearchConfig) deps.note("  [resume] Reusing Brave Search configuration.");
     } else {
       nextWebSearchConfig = await deps.configureWebSearch(null, agent, webSearchSupportProbePath);

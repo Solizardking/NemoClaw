@@ -285,6 +285,14 @@ const {
   resolveProviderCredential,
   saveCredential,
 } = credentials;
+const credentialNavigation: typeof import("./onboard/credential-navigation") =
+  require("./onboard/credential-navigation");
+const {
+  BACK_TO_SELECTION,
+  createCredentialPromptHelpers,
+  getNavigationChoice,
+  isBackToSelection,
+} = credentialNavigation;
 const { hashCredential }: typeof import("./security/credential-hash") = require("./security/credential-hash");
 const {
   cleanupStaleHostFiles,
@@ -436,7 +444,6 @@ const DIM = USE_COLOR ? "\x1b[2m" : "";
 const RESET = USE_COLOR ? "\x1b[0m" : "";
 let OPENSHELL_BIN: string | null = null;
 const GATEWAY_NAME = "nemoclaw";
-const BACK_TO_SELECTION = "__NEMOCLAW_BACK_TO_SELECTION__";
 type HermesAuthMethod = "oauth" | "api_key";
 const HERMES_AUTH_METHOD_OAUTH: HermesAuthMethod = "oauth";
 const HERMES_AUTH_METHOD_API_KEY: HermesAuthMethod = "api_key";
@@ -1325,19 +1332,13 @@ const {
   runCurlProbe,
 } = httpProbe;
 
-function getNavigationChoice(value = ""): "back" | "exit" | null {
-  const normalized = String(value || "")
-    .trim()
-    .toLowerCase();
-  if (normalized === "back") return "back";
-  if (normalized === "exit" || normalized === "quit") return "exit";
-  return null;
-}
-
 function exitOnboardFromPrompt(): never {
   console.log("  Exiting onboarding.");
   process.exit(1);
 }
+
+const credentialPrompt = createCredentialPromptHelpers(exitOnboardFromPrompt);
+const replaceNamedCredential = credentialPrompt.replaceNamedCredential;
 
 function normalizeHermesAuthMethod(value: string | null | undefined): HermesAuthMethod | null {
   const normalized = String(value || "")
@@ -1428,7 +1429,7 @@ function stageNousApiKeyProviderEnv(): void {
   }
 }
 
-async function ensureHermesNousApiKeyEnv(): Promise<string> {
+async function ensureHermesNousApiKeyEnv(): Promise<string | typeof BACK_TO_SELECTION> {
   const existing = resolveHermesNousApiKey();
   if (existing) {
     process.env[HERMES_NOUS_API_KEY_CREDENTIAL_ENV] = existing;
@@ -1437,11 +1438,8 @@ async function ensureHermesNousApiKeyEnv(): Promise<string> {
   console.log("");
   console.log("  Hermes Provider Nous API Key");
   console.log(`  Create or copy a key from ${HERMES_NOUS_API_KEY_HELP_URL}`);
-  const key = normalizeCredentialValue(
-    await prompt("  Nous API Key: ", {
-      secret: true,
-    }),
-  );
+  const key = await credentialPrompt.readValue("  Nous API Key: ");
+  if (isBackToSelection(key)) return key;
   const validationError = validateNvidiaApiKeyValue(key, HERMES_NOUS_API_KEY_CREDENTIAL_ENV);
   if (validationError) {
     console.error(validationError);
@@ -1505,37 +1503,7 @@ const {
   shouldForceCompletionsApi,
 } = validation;
 
-async function replaceNamedCredential(
-  envName: string,
-  label: string,
-  helpUrl: string | null = null,
-  validator: ((value: string) => string | null) | null = null,
-): Promise<string> {
-  if (helpUrl) {
-    console.log("");
-    console.log(`  Get your ${label} from: ${helpUrl}`);
-    console.log("");
-  }
-
-  while (true) {
-    const key = normalizeCredentialValue(await prompt(`  ${label}: `, { secret: true }));
-    if (!key) {
-      console.error(`  ${label} is required.`);
-      continue;
-    }
-    const validationError = typeof validator === "function" ? validator(key) : null;
-    if (validationError) {
-      console.error(validationError);
-      continue;
-    }
-    saveCredential(envName, key);
-    process.env[envName] = key;
-    console.log("");
-    console.log("  Credential staged. Onboarding will register it with the OpenShell gateway.");
-    console.log("");
-    return key;
-  }
-}
+// validateNvidiaApiKeyValue — see validation import above
 
 async function promptValidationRecovery(
   label: string,
@@ -1572,11 +1540,20 @@ async function promptValidationRecovery(
     // nvapi- prefix when credentialEnv === "NVIDIA_API_KEY", so passing it
     // unconditionally here is safe for Anthropic/OpenAI/Gemini too.
     const validator = (key: string) => validateNvidiaApiKeyValue(key, credentialEnv);
+    const replaceCredential = async (): Promise<"credential" | "selection"> => {
+      const result = await credentialPrompt.replaceNamedCredential(
+        credentialEnv,
+        `${label} API key`,
+        helpUrl,
+        validator,
+      );
+      if (credentialPrompt.returningToProviderSelection(result)) return "selection";
+      return "credential";
+    };
     if (looksLikeToken) {
       console.log("  ⚠️  That looks like an API key — do not paste credentials here.");
       console.log("  Treating as 'retry'. You will be prompted to enter the key securely.");
-      await replaceNamedCredential(credentialEnv, `${label} API key`, helpUrl, validator);
-      return "credential";
+      return replaceCredential();
     }
     if (choice === "back") {
       console.log("  Returning to provider selection.");
@@ -1587,8 +1564,7 @@ async function promptValidationRecovery(
       exitOnboardFromPrompt();
     }
     if (choice === "" || choice === "retry") {
-      await replaceNamedCredential(credentialEnv, `${label} API key`, helpUrl, validator);
-      return "credential";
+      return replaceCredential();
     }
     console.log("  Please choose a provider/model again.");
     console.log("");
@@ -1977,15 +1953,17 @@ async function promptBraveSearchRecovery(
   return "retry";
 }
 
-async function promptBraveSearchApiKey(): Promise<string> {
+async function promptBraveSearchApiKey(): Promise<string | typeof BACK_TO_SELECTION> {
   console.log("");
   console.log(`  Get your Brave Search API key from: ${BRAVE_SEARCH_HELP_URL}`);
   console.log("");
 
   while (true) {
-    const key = normalizeCredentialValue(
-      await prompt("  Brave Search API key: ", { secret: true }),
-    );
+    const value = await credentialPrompt.readValue("  Brave Search API key: ");
+    if (isBackToSelection(value)) {
+      return value;
+    }
+    const key = normalizeCredentialValue(value);
     if (!key) {
       console.error("  Brave Search API key is required.");
       continue;
@@ -1996,7 +1974,7 @@ async function promptBraveSearchApiKey(): Promise<string> {
 
 async function ensureValidatedBraveSearchCredential(
   nonInteractive = isNonInteractive(),
-): Promise<string | null> {
+): Promise<string | typeof BACK_TO_SELECTION | null> {
   const savedApiKey = getCredential(webSearch.BRAVE_API_KEY_ENV);
   let apiKey: string | null =
     savedApiKey || normalizeCredentialValue(process.env[webSearch.BRAVE_API_KEY_ENV]);
@@ -2009,7 +1987,11 @@ async function ensureValidatedBraveSearchCredential(
           "Brave Search requires BRAVE_API_KEY or a saved Brave Search credential in non-interactive mode.",
         );
       }
-      apiKey = await promptBraveSearchApiKey();
+      const promptedApiKey = await promptBraveSearchApiKey();
+      if (isBackToSelection(promptedApiKey)) {
+        return promptedApiKey;
+      }
+      apiKey = promptedApiKey;
       usingSavedKey = false;
     }
 
@@ -2086,6 +2068,9 @@ async function configureWebSearch(
   }
 
   const braveApiKey = await ensureValidatedBraveSearchCredential();
+  if (isBackToSelection(braveApiKey)) {
+    return configureWebSearch(existingConfig, agent, dockerfilePathOverride);
+  }
   if (!braveApiKey) {
     return null;
   }
@@ -3179,23 +3164,6 @@ function attachGatewayMetadataIfNeeded({
     return true;
   }
   return false;
-}
-
-async function ensureNamedCredential(
-  envName: string | null,
-  label: string,
-  helpUrl: string | null = null,
-): Promise<string> {
-  if (!envName) {
-    console.error(`  Missing credential target for ${label}.`);
-    process.exit(1);
-  }
-  let key = getCredential(envName);
-  if (key) {
-    process.env[envName] = key;
-    return key;
-  }
-  return replaceNamedCredential(envName, label, helpUrl);
 }
 
 function waitForSandboxReady(sandboxName: string, attempts = 10, delaySeconds = 2): boolean {
@@ -5948,13 +5916,13 @@ async function selectAndValidateOllamaModel(
   const { requestedModel, recoveredModel } = defaults;
   while (true) {
     const installedModels = getOllamaModelOptions();
-    let model: string;
+    let model: string | typeof BACK_TO_SELECTION;
     if (isNonInteractive()) {
       model = requestedModel || recoveredModel || getDefaultOllamaModel(gpu);
     } else {
       model = await promptOllamaModel(gpu);
     }
-    if (model === BACK_TO_SELECTION) {
+    if (isBackToSelection(model)) {
       console.log("  Returning to provider selection.");
       console.log("");
       return { outcome: "back-to-selection" };
@@ -6044,7 +6012,7 @@ async function setupNim(
 }> {
   step(3, 8, "Configuring inference provider");
 
-  let model: string | null = null;
+  let model: string | typeof BACK_TO_SELECTION | null = null;
   let provider: string = REMOTE_PROVIDER_CONFIG.build.providerName;
   let nimContainer: string | null = null;
   let endpointUrl: string | null = REMOTE_PROVIDER_CONFIG.build.endpointUrl;
@@ -6052,6 +6020,16 @@ async function setupNim(
   let hermesAuthMethod: HermesAuthMethod | null = null;
   let hermesToolGateways: string[] = [];
   let preferredInferenceApi: string | null = null;
+  const resetSelectionAttemptState = () => {
+    model = null;
+    provider = REMOTE_PROVIDER_CONFIG.build.providerName;
+    nimContainer = null;
+    endpointUrl = REMOTE_PROVIDER_CONFIG.build.endpointUrl;
+    credentialEnv = REMOTE_PROVIDER_CONFIG.build.credentialEnv;
+    hermesAuthMethod = null;
+    hermesToolGateways = [];
+    preferredInferenceApi = null;
+  };
 
   // Detect local inference options. Bound curl with --connect-timeout/--max-time
   // so a half-open port or stalled listener cannot hang the onboard at step 3
@@ -6216,12 +6194,12 @@ async function setupNim(
 
   if (options.length > 1) {
     selectionLoop: while (true) {
+      resetSelectionAttemptState();
       let selected: ProviderChoice | undefined;
       // Hoisted so downstream model-selection branches can fall back to a
       // recorded model from the same recovery decision.
       let recoveredFromSandbox = false;
       let recoveredModel: string | null = null;
-      hermesAuthMethod = null;
 
       if (isNonInteractive() || requestedProvider) {
         let providerKey = requestedProvider;
@@ -6414,10 +6392,8 @@ async function setupNim(
 
         if (selected.key === "hermesProvider") {
           const selectedHermesAuthMethod = await promptHermesAuthMethod();
-          if (selectedHermesAuthMethod === BACK_TO_SELECTION) {
+          if (credentialPrompt.returningToProviderSelection(selectedHermesAuthMethod)) {
             hermesAuthMethod = null;
-            console.log("  Returning to provider selection.");
-            console.log("");
             continue selectionLoop;
           }
           hermesAuthMethod = selectedHermesAuthMethod;
@@ -6432,7 +6408,11 @@ async function setupNim(
                 process.exit(1);
               }
             } else {
-              await ensureHermesNousApiKeyEnv();
+              const hermesCredentialResult = await ensureHermesNousApiKeyEnv();
+              if (credentialPrompt.returningToProviderSelection(hermesCredentialResult)) {
+                hermesAuthMethod = null;
+                continue selectionLoop;
+              }
             }
           } else {
             credentialEnv = remoteConfig.credentialEnv;
@@ -6475,11 +6455,7 @@ async function setupNim(
               },
             );
           }
-          if (model === BACK_TO_SELECTION) {
-            console.log("  Returning to provider selection.");
-            console.log("");
-            continue selectionLoop;
-          }
+          if (credentialPrompt.returningToProviderSelection(model)) continue selectionLoop;
           preferredInferenceApi = "openai-completions";
           console.log(`  Using ${remoteConfig.label} with model: ${model}`);
           break;
@@ -6516,7 +6492,7 @@ async function setupNim(
               process.exit(1);
             }
           } else {
-            await ensureApiKey();
+            if (credentialPrompt.returningToProviderSelection(await ensureApiKey())) continue selectionLoop;
           }
           const _envModel = (process.env.NEMOCLAW_MODEL || "").trim();
           model =
@@ -6526,11 +6502,7 @@ async function setupNim(
               ? DEFAULT_CLOUD_MODEL
               : await promptCloudModel({ defaultModelId: _envModel || undefined })) ||
             DEFAULT_CLOUD_MODEL;
-          if (model === BACK_TO_SELECTION) {
-            console.log("  Returning to provider selection.");
-            console.log("");
-            continue selectionLoop;
-          }
+          if (credentialPrompt.returningToProviderSelection(model)) continue selectionLoop;
         } else {
           // NEMOCLAW_PROVIDER_KEY is a universal alias: if the specific credential env
           // isn't already set, use NEMOCLAW_PROVIDER_KEY as the API key for this provider.
@@ -6564,7 +6536,7 @@ async function setupNim(
             backToSelection: BACK_TO_SELECTION,
             isNonInteractive,
             promptInputModel,
-            replaceNamedCredential,
+            replaceNamedCredential: credentialPrompt.replaceNamedCredential,
           });
           if (bedrockSelection.action === "retry-selection") {
             console.log("  Returning to provider selection.");
@@ -6584,11 +6556,12 @@ async function setupNim(
               process.exit(1);
             }
           } else {
-            await ensureNamedCredential(
+            const credentialResult = await credentialPrompt.ensureNamedCredential(
               selectedCredentialEnv,
               remoteConfig.label + " API key",
               remoteConfig.helpUrl,
             );
+            if (credentialPrompt.returningToProviderSelection(credentialResult)) continue selectionLoop;
           }
           let modelValidator: ((candidate: string) => ModelValidationResult) | null = null;
           if (selected.key === "openai" || selected.key === "gemini") {
@@ -6622,11 +6595,7 @@ async function setupNim(
             } else {
               model = await promptInputModel(remoteConfig.label, defaultModel, modelValidator);
             }
-            if (model === BACK_TO_SELECTION) {
-              console.log("  Returning to provider selection.");
-              console.log("");
-              continue selectionLoop;
-            }
+            if (credentialPrompt.returningToProviderSelection(model)) continue selectionLoop;
 
             if (selected.key === "custom") {
               const validation = await validateCustomOpenAiLikeSelection(
@@ -6785,6 +6754,7 @@ async function setupNim(
         const models = nim.listModels().filter((m) => m.minGpuMemoryMB <= localGpu.totalMemoryMB);
         if (models.length === 0) {
           console.log("  No NIM models fit your GPU VRAM. Falling back to cloud API.");
+          model = requestedModel || (recoveredFromSandbox && recoveredModel) || DEFAULT_CLOUD_MODEL;
         } else {
           let sel;
           if (isNonInteractive()) {
@@ -6829,9 +6799,8 @@ async function setupNim(
             console.log("  NGC API Key required to pull NIM images.");
             console.log("  Get one from: https://org.ngc.nvidia.com/setup/api-key");
             console.log("");
-            let ngcKey = normalizeCredentialValue(
-              await prompt("  NGC API Key: ", { secret: true }),
-            );
+            let ngcKey = await credentialPrompt.readValue("  NGC API Key: ");
+            if (credentialPrompt.returningToProviderSelection(ngcKey)) continue selectionLoop;
             if (!ngcKey) {
               console.error("  NGC API Key is required for Local NIM.");
               process.exit(1);
@@ -6839,7 +6808,8 @@ async function setupNim(
             if (!nim.dockerLoginNgc(ngcKey)) {
               console.error("  Failed to login to NGC registry. Check your API key and try again.");
               console.log("");
-              ngcKey = normalizeCredentialValue(await prompt("  NGC API Key: ", { secret: true }));
+              ngcKey = await credentialPrompt.readValue("  NGC API Key: ");
+              if (credentialPrompt.returningToProviderSelection(ngcKey)) continue selectionLoop;
               if (!ngcKey || !nim.dockerLoginNgc(ngcKey)) {
                 console.error("  NGC login failed. Cannot pull NIM images.");
                 process.exit(1);
@@ -6861,9 +6831,9 @@ async function setupNim(
               console.log("");
               console.log("  NGC API Key required to download NIM model weights at runtime.");
               console.log("  (Docker is logged in to nvcr.io, but the key was not saved.)");
-              ngcApiKey = normalizeCredentialValue(
-                await prompt("  NGC API Key: ", { secret: true }),
-              );
+              const ngcKey = await credentialPrompt.readValue("  NGC API Key: ");
+              if (credentialPrompt.returningToProviderSelection(ngcKey)) continue selectionLoop;
+              ngcApiKey = ngcKey || null;
             }
           }
 
@@ -7202,6 +7172,9 @@ async function setupNim(
           console.error("  Local vLLM validation URL could not be determined.");
           process.exit(1);
         }
+        if (isBackToSelection(model)) {
+          continue selectionLoop;
+        }
         const validation = await validateOpenAiLikeSelection(
           "Local vLLM",
           validationBaseUrl,
@@ -7258,7 +7231,13 @@ async function setupNim(
             console.log("  Model Router accepts NVIDIA API keys (nvapi-...).");
             console.log("  Get one at https://build.nvidia.com");
             console.log("");
-            await ensureNamedCredential(routerCredentialEnv, "Model Router API key", null);
+            const routerCredentialResult = await credentialPrompt.ensureNamedCredential(
+              routerCredentialEnv,
+              "Model Router API key",
+              null,
+            );
+            if (credentialPrompt.returningToProviderSelection(routerCredentialResult))
+              continue selectionLoop;
           }
         }
         provider = bp.provider_name || "nvidia-router";
@@ -7278,7 +7257,7 @@ async function setupNim(
   }
 
   return {
-    model,
+    model: isBackToSelection(model) ? null : model,
     provider,
     endpointUrl,
     credentialEnv,
@@ -9517,6 +9496,7 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
         removeSandboxFromRegistry: registry.removeSandbox.bind(registry),
         repairRecordedSandbox,
         ensureValidatedBraveSearchCredential,
+        isBackToSelection,
         configureWebSearch,
         startRecordedStep,
         getRecordedMessagingChannelsForResume,
