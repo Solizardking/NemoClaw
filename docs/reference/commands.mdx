@@ -184,6 +184,13 @@ In interactive mode, the wizard asks for confirmation before delete and recreate
 In non-interactive mode, NemoClaw recreates automatically when the stored selection is readable and differs; if NemoClaw cannot read the stored selection, NemoClaw reuses by default.
 Set `NEMOCLAW_RECREATE_SANDBOX=1` to force recreation even when no drift is detected.
 
+Before deleting an existing sandbox during recreation, NemoClaw backs up the workspace state (agents, extensions, workspace, skills, hooks, identity, devices, canvas, cron, memory, telegram, wechat, credentials) and restores it into the new sandbox once it is live.
+This applies whether the existing sandbox is ready or marked not-ready, so cross-version upgrades that pass `NEMOCLAW_RECREATE_SANDBOX=1` no longer drop user files under `/sandbox/.openclaw/workspace/`.
+The behaviour matches `nemoclaw <name> rebuild --force`.
+NemoClaw aborts the recreate when the backup cannot complete in full — including when individual state directories or files fail mid-backup — so failed entries are not silently dropped on delete.
+Set `NEMOCLAW_RECREATE_WITHOUT_BACKUP=1` to skip the pre-recreate backup.
+The destination sandbox starts with a fresh workspace.
+
 Before creating the gateway, the wizard runs preflight checks.
 It verifies that Docker is reachable, warns on untested runtimes such as Podman, and prints host remediation guidance when prerequisites are missing.
 The preflight also enforces the OpenShell version range declared in the blueprint (`min_openshell_version` and `max_openshell_version`).
