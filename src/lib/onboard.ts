@@ -487,6 +487,7 @@ import {
   readMessagingChannelConfigFromEnv,
 } from "./messaging-channel-config";
 import { streamGatewayStart } from "./onboard/gateway";
+import { runOllamaStartupOrGate } from "./onboard/ollama-startup";
 import {
   mergeRequiredHermesToolGatewayPolicyPresets,
   normalizeHermesToolGatewaySelections,
@@ -5103,18 +5104,16 @@ async function setupNim(
           );
           process.exit(1);
         }
-        if (!ollamaReady) {
-          console.log("  Starting Ollama...");
-          // Keep raw Ollama loopback-only; the auth proxy (or Docker Desktop
-          // on WSL via host.docker.internal) fronts container access.
-          runShell(`OLLAMA_HOST=127.0.0.1:${OLLAMA_PORT} ollama serve > /dev/null 2>&1 &`, {
-            ignoreError: true,
-          });
-          if (!waitForHttp(`http://127.0.0.1:${OLLAMA_PORT}/`, 10)) {
-            console.error(`  Ollama did not become ready on :${OLLAMA_PORT} within timeout.`);
-            if (isNonInteractive()) process.exit(1);
-            continue selectionLoop;
-          }
+        const ollamaStartup = runOllamaStartupOrGate({
+          ollamaReady,
+          ollamaPort: OLLAMA_PORT,
+          getLocalProviderBaseUrl,
+          isNonInteractive,
+        });
+        if (ollamaStartup.kind === "continue") continue selectionLoop;
+        if (ollamaStartup.kind === "fallback") {
+          ({ provider, credentialEnv, endpointUrl, model, preferredInferenceApi } = ollamaStartup.result);
+          break;
         }
         if (shouldFrontOllamaWithProxy()) {
           if (!startOllamaAuthProxy()) process.exit(1);
