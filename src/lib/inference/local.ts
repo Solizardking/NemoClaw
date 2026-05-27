@@ -239,6 +239,23 @@ function runLocalCurlProbe(argv: string[]): CurlProbeResult {
   return runCurlProbe(argv, { env: buildSubprocessEnv(), replaceEnv: true });
 }
 
+// A 200 response on `/api/tags` alone is not enough to call Ollama healthy —
+// a captive HTTP_PROXY, a stale listener, or a stub on the loopback port can
+// all answer with arbitrary 2xx bodies that look healthy at the curl-status
+// level. The authoritative signal is the Ollama wire format itself:
+// `{ "models": [...] }`. An empty array is fine — that just means no models
+// pulled yet — but a body that doesn't parse as JSON-with-array-`models` did
+// not come from Ollama and the probe should not call it healthy. (#4275)
+function isValidOllamaTagsResponseBody(body: string): boolean {
+  if (!body) return false;
+  try {
+    const parsed = JSON.parse(body);
+    return parsed !== null && typeof parsed === "object" && Array.isArray(parsed.models);
+  } catch {
+    return false;
+  }
+}
+
 export function validateOllamaPortConfiguration(): ValidationResult {
   if (!isWsl() && OLLAMA_PORT === OLLAMA_PROXY_PORT) {
     return {
@@ -386,6 +403,21 @@ export function probeOllamaAuthProxyHealth(
     probeLabel: "auth proxy",
   };
   if (result.ok) {
+    // A 200 from the proxy alone is not a healthy signal — the proxy may be
+    // serving a captive HTTP_PROXY page, or its upstream Ollama backend may
+    // be down but the proxy returned a stub. Confirm with the wire format. (#4275)
+    if (!isValidOllamaTagsResponseBody(result.body)) {
+      return {
+        ...base,
+        ok: false,
+        failureLabel: "unhealthy",
+        detail:
+          `Ollama auth proxy returned HTTP ${result.httpStatus} on ${endpoint} but the body ` +
+          `is not a valid /api/tags response. The proxy is reachable but its upstream Ollama ` +
+          `backend is not, or an HTTP proxy is intercepting the loopback. ` +
+          `Restart \`ollama serve\` and check HTTP_PROXY/NO_PROXY.`,
+      };
+    }
     return { ...base, ok: true, detail: `Ollama auth proxy is reachable on ${endpoint}.` };
   }
   if (result.httpStatus === 401) {
@@ -446,6 +478,25 @@ export function probeLocalProviderHealth(
   const attachProbeLabel = probeLabel ? { probeLabel } : {};
 
   if (result.ok) {
+    // For ollama-local, a 200 is necessary but not sufficient: a captive
+    // HTTP_PROXY, a stale listener on 11434, or any other HTTP responder
+    // can return 200 with an arbitrary body. Treat the probe as healthy
+    // only when the response is the Ollama /api/tags JSON shape. (#4275)
+    if (provider === "ollama-local" && !isValidOllamaTagsResponseBody(result.body)) {
+      return {
+        ok: false,
+        providerLabel,
+        endpoint,
+        failureLabel: "unhealthy",
+        detail:
+          `${providerLabel} responded on ${endpoint} with HTTP ${result.httpStatus} but the ` +
+          `body is not a valid /api/tags response. The listener may not be Ollama (e.g. a ` +
+          `stale process or an HTTP proxy intercepting the loopback). Restart \`ollama serve\` ` +
+          `and verify HTTP_PROXY/NO_PROXY.`,
+        ...attachProbeLabel,
+        ...attachSubprobes,
+      };
+    }
     return {
       ok: true,
       providerLabel,
