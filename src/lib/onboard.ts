@@ -4184,7 +4184,7 @@ async function selectAndValidateOllamaModel(
       null,
       {
         skipResponsesProbe: true,
-        requireChatCompletionsToolCalling: true,
+        requireChatCompletionsToolCalling: process.env.NEMOCLAW_OLLAMA_REQUIRE_TOOLS !== "0",
         allowHostDockerInternal:
           localInference.getResolvedOllamaHost() === OLLAMA_HOST_DOCKER_INTERNAL,
       },
