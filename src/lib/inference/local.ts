@@ -14,6 +14,16 @@ import { runCurlProbe } from "../adapters/http/probe";
 import type { ContainerRuntime } from "../platform";
 import type { CaptureResult } from "../runner";
 import { buildSubprocessEnv } from "../subprocess-env";
+import {
+  applyOllamaRuntimeContextWindow as applyOllamaRuntimeContextWindowWithHost,
+  MAX_AUTODETECTED_OLLAMA_CONTEXT_WINDOW,
+  parsePositiveInteger,
+  probeOllamaRuntimeModelStatus as probeOllamaRuntimeModelStatusWithHost,
+  resetOllamaRuntimeContextWindowAutoState,
+  resolveOllamaRuntimeContextWindow as resolveOllamaRuntimeContextWindowWithHost,
+} from "./ollama-runtime-context";
+import type { OllamaRuntimeModelStatus } from "./ollama-runtime-context";
+export type { OllamaRuntimeModelStatus } from "./ollama-runtime-context";
 
 const { shellQuote, runCapture, runCaptureEx } = require("../runner");
 
@@ -666,67 +676,32 @@ export function parseOllamaTags(output: string | null | undefined): string[] {
   }
 }
 
-export interface OllamaRuntimeModelStatus {
-  probed: boolean;
-  loaded: boolean;
-  cpuOnly: boolean;
-  processor?: string;
-  sizeVram?: number;
-}
-
-function normalizeOllamaModelName(value: unknown): string {
-  return String(value || "").trim();
-}
+export { MAX_AUTODETECTED_OLLAMA_CONTEXT_WINDOW, parsePositiveInteger };
 
 export function probeOllamaRuntimeModelStatus(
   model: string,
   runCaptureImpl?: RunCaptureFn,
 ): OllamaRuntimeModelStatus {
-  const capture = runCaptureImpl ?? runCapture;
-  const host = getResolvedOllamaHost();
-  const output = capture(
-    [
-      "curl",
-      "-sf",
-      "--connect-timeout",
-      "3",
-      "--max-time",
-      "5",
-      `http://${host}:${OLLAMA_PORT}/api/ps`,
-    ],
-    { ignoreError: true },
+  return probeOllamaRuntimeModelStatusWithHost(model, getResolvedOllamaHost, runCaptureImpl);
+}
+
+export function resolveOllamaRuntimeContextWindow(
+  model: string,
+  currentContextWindow: string | null | undefined = null,
+  runCaptureImpl?: RunCaptureFn,
+): number | null {
+  return resolveOllamaRuntimeContextWindowWithHost(
+    model,
+    currentContextWindow,
+    getResolvedOllamaHost,
+    runCaptureImpl,
   );
-  if (!output) return { probed: false, loaded: false, cpuOnly: false };
+}
 
-  try {
-    const parsed = JSON.parse(String(output || ""));
-    const models = Array.isArray(parsed?.models) ? parsed.models : [];
-    const target = normalizeOllamaModelName(model);
-    const loaded = models.find((entry: { name?: unknown; model?: unknown }) => {
-      return (
-        normalizeOllamaModelName(entry?.name) === target ||
-        normalizeOllamaModelName(entry?.model) === target
-      );
-    });
-    if (!loaded) return { probed: true, loaded: false, cpuOnly: false };
+export { resetOllamaRuntimeContextWindowAutoState };
 
-    const rawSizeVram = Number((loaded as { size_vram?: unknown }).size_vram);
-    const hasSizeVram = Number.isFinite(rawSizeVram);
-    const processor = normalizeOllamaModelName((loaded as { processor?: unknown }).processor);
-    const mentionsGpu = /\bGPU\b/i.test(processor);
-    const processorCpuOnly = /\bCPU\b/i.test(processor) && !mentionsGpu;
-    const sizeVramCpuOnly = hasSizeVram && rawSizeVram === 0 && !mentionsGpu;
-
-    return {
-      probed: true,
-      loaded: true,
-      cpuOnly: processorCpuOnly || sizeVramCpuOnly,
-      ...(processor ? { processor } : {}),
-      ...(hasSizeVram ? { sizeVram: rawSizeVram } : {}),
-    };
-  } catch {
-    return { probed: true, loaded: false, cpuOnly: false };
-  }
+export function applyOllamaRuntimeContextWindow(selectedModel: string): void {
+  applyOllamaRuntimeContextWindowWithHost(selectedModel, getResolvedOllamaHost);
 }
 
 function formatOllamaCpuOnlyDiagnostic(model: string, status: OllamaRuntimeModelStatus): string {
@@ -796,6 +771,7 @@ export function resolveNonInteractiveOllamaModel(
   recoveredModel: string | null,
   gpu: GpuInfo | null,
   log: (message: string) => void = (m) => console.warn(m),
+  runCaptureImpl?: RunCaptureFn,
 ): string {
   const explicit = requestedModel || recoveredModel;
   if (explicit && !modelFitsAvailableMemory(explicit, gpu)) {
@@ -812,7 +788,7 @@ export function resolveNonInteractiveOllamaModel(
   if (!explicit && !anyRegistryModelFits(gpu)) {
     warnNoBootstrapModelFits(gpu, log);
   }
-  return explicit || getDefaultOllamaModel(gpu);
+  return explicit || getDefaultOllamaModel(gpu, runCaptureImpl);
 }
 
 function warnNoBootstrapModelFits(

@@ -4100,7 +4100,6 @@ const { readLiveInference, readRecordedProvider, readRecordedNimContainer, readR
 type OllamaModelSelectionOutcome =
   | { outcome: "selected"; model: string }
   | { outcome: "back-to-selection" };
-
 // Pick an Ollama model, pull it if missing, and validate it via the local
 // proxy. Shared by the three Ollama provider branches (running, Windows-host
 // install/start, install-locally). Returns "back-to-selection" so the caller
@@ -4190,6 +4189,7 @@ async function selectAndValidateOllamaModel(
         "  ℹ Using chat completions API (Ollama tool calls require /v1/chat/completions)",
       );
     }
+    localInference.applyOllamaRuntimeContextWindow(selectedModel);
     return { outcome: "selected", model: selectedModel };
   }
 }

@@ -36,7 +36,6 @@ import {
   getOllamaWarmupCommand,
   parseOllamaList,
   parseOllamaTags,
-  probeOllamaRuntimeModelStatus,
   probeLocalProviderHealth,
   validateOllamaModel,
   validateLocalProvider,
@@ -654,6 +653,7 @@ describe("local inference helpers", () => {
         null,
         { type: "nvidia", totalMemoryMB: 131_072, availableMemoryMB: 131_072 },
         log,
+        () => "",
       ),
     ).toBe(QWEN3_6_OLLAMA_MODEL);
   });
@@ -686,6 +686,7 @@ describe("local inference helpers", () => {
         null,
         { type: "nvidia", totalMemoryMB: 16_384, availableMemoryMB: 4_000 },
         log,
+        () => "",
       ),
     ).toBe("qwen2.5:7b");
     expect(messages.some((m) => m.includes("No known Ollama bootstrap model fits"))).toBe(true);
@@ -791,23 +792,6 @@ describe("local inference helpers", () => {
   it("treats non-JSON probe output as success once the model responds", () => {
     const captureEx = () => ({ stdout: "ok", exitCode: 0, timedOut: false });
     expect(validateOllamaModel("nemotron-3-nano:30b", () => "ok", undefined, captureEx)).toEqual({ ok: true });
-  });
-
-  it("parses Ollama runtime status from /api/ps", () => {
-    const capture = () =>
-      JSON.stringify({
-        models: [
-          { name: "qwen3.6:35b", size_vram: 0, processor: "100% CPU" },
-        ],
-      });
-
-    expect(probeOllamaRuntimeModelStatus("qwen3.6:35b", capture)).toEqual({
-      probed: true,
-      loaded: true,
-      cpuOnly: true,
-      processor: "100% CPU",
-      sizeVram: 0,
-    });
   });
 
   it("fails Spark Ollama validation when the model is CPU-only after warmup", () => {
