@@ -47,6 +47,8 @@
 #   TELEGRAM_BOT_TOKEN                     — defaults to fake token
 #   DISCORD_BOT_TOKEN                      — defaults to fake token
 #   TELEGRAM_ALLOWED_IDS                   — comma-separated Telegram user IDs for DM allowlisting
+#   TELEGRAM_AUTHORIZED_CHAT_IDS           — compatibility alias for TELEGRAM_ALLOWED_IDS
+#   TELEGRAM_CHAT_ID                       — compatibility alias for TELEGRAM_ALLOWED_IDS
 #   TELEGRAM_BOT_TOKEN_REAL                — optional: enables Phase 6 real OpenClaw send
 #   DISCORD_BOT_TOKEN_REAL                 — optional: enables Phase 6 real OpenClaw send
 #   SLACK_BOT_TOKEN_REAL                   — optional: enables Phase 6 real OpenClaw send
@@ -68,6 +70,11 @@
 #   TELEGRAM_CHAT_ID_E2E                   — optional: target for real Telegram send
 #   DISCORD_CHANNEL_ID_E2E                 — optional: target for real Discord send
 #   SLACK_CHANNEL_ID_E2E                   — optional: target for real Slack send
+#   NEMOCLAW_TELEGRAM_INBOUND_REPLY_E2E=1  — optional: wait for a real Telegram-client DM
+#                                            from an allowed user and verify inbound +
+#                                            outbound gateway breadcrumbs
+#   NEMOCLAW_TELEGRAM_INBOUND_WAIT_SECONDS — optional: wait time for the live inbound
+#                                            proof (default: 90)
 #   NEMOCLAW_OPENSHELL_BIN                 — optional OpenShell binary under test
 #   NEMOCLAW_FRESH=1                       — auto-set to discard interrupted onboard sessions
 #
@@ -402,7 +409,19 @@ TELEGRAM_TOKEN="${TELEGRAM_BOT_TOKEN_REAL:-${TELEGRAM_BOT_TOKEN:-test-fake-teleg
 DISCORD_TOKEN="${DISCORD_BOT_TOKEN_REAL:-${DISCORD_BOT_TOKEN:-test-fake-discord-token-e2e}}"
 SLACK_TOKEN="${SLACK_BOT_TOKEN_REAL:-${SLACK_BOT_TOKEN:-xoxb-fake-slack-token-e2e}}"
 SLACK_APP="${SLACK_APP_TOKEN_REAL:-${SLACK_APP_TOKEN:-xapp-fake-slack-app-token-e2e}}"
-TELEGRAM_IDS="${TELEGRAM_ALLOWED_IDS:-123456789,987654321}"
+if [ -n "${TELEGRAM_ALLOWED_IDS:-}" ]; then
+  TELEGRAM_IDS="$TELEGRAM_ALLOWED_IDS"
+  TELEGRAM_ALLOWLIST_ENV_KEY="TELEGRAM_ALLOWED_IDS"
+elif [ -n "${TELEGRAM_AUTHORIZED_CHAT_IDS:-}" ]; then
+  TELEGRAM_IDS="$TELEGRAM_AUTHORIZED_CHAT_IDS"
+  TELEGRAM_ALLOWLIST_ENV_KEY="TELEGRAM_AUTHORIZED_CHAT_IDS"
+elif [ -n "${TELEGRAM_CHAT_ID:-}" ]; then
+  TELEGRAM_IDS="$TELEGRAM_CHAT_ID"
+  TELEGRAM_ALLOWLIST_ENV_KEY="TELEGRAM_CHAT_ID"
+else
+  TELEGRAM_IDS="123456789,987654321"
+  TELEGRAM_ALLOWLIST_ENV_KEY="TELEGRAM_AUTHORIZED_CHAT_IDS"
+fi
 SLACK_IDS="${SLACK_ALLOWED_USERS-U0AR85ATALW,U09E2ESLACK}"
 # WeChat: pre-seeding WECHAT_BOT_TOKEN + the per-account metadata env vars lets
 # the non-interactive onboard path (src/lib/onboard.ts:8433) treat wechat as
@@ -422,7 +441,19 @@ export TELEGRAM_BOT_TOKEN="$TELEGRAM_TOKEN"
 export DISCORD_BOT_TOKEN="$DISCORD_TOKEN"
 export SLACK_BOT_TOKEN="$SLACK_TOKEN"
 export SLACK_APP_TOKEN="$SLACK_APP"
-export TELEGRAM_ALLOWED_IDS="$TELEGRAM_IDS"
+case "$TELEGRAM_ALLOWLIST_ENV_KEY" in
+  TELEGRAM_ALLOWED_IDS)
+    export TELEGRAM_ALLOWED_IDS="$TELEGRAM_IDS"
+    ;;
+  TELEGRAM_AUTHORIZED_CHAT_IDS)
+    unset TELEGRAM_ALLOWED_IDS
+    export TELEGRAM_AUTHORIZED_CHAT_IDS="$TELEGRAM_IDS"
+    ;;
+  TELEGRAM_CHAT_ID)
+    unset TELEGRAM_ALLOWED_IDS TELEGRAM_AUTHORIZED_CHAT_IDS
+    export TELEGRAM_CHAT_ID="$TELEGRAM_IDS"
+    ;;
+esac
 export SLACK_ALLOWED_USERS="$SLACK_IDS"
 export WECHAT_BOT_TOKEN="$WECHAT_TOKEN"
 export WECHAT_ACCOUNT_ID="$WECHAT_ACCOUNT"
@@ -473,6 +504,73 @@ sandbox_exec() {
 
   rm -f "$ssh_config"
   echo "$result"
+}
+
+read_gateway_log() {
+  openshell sandbox exec --name "$SANDBOX_NAME" -- cat /tmp/gateway.log 2>/dev/null || true
+}
+
+run_telegram_inbound_reply_probe() {
+  if [ "${NEMOCLAW_TELEGRAM_INBOUND_REPLY_E2E:-}" != "1" ]; then
+    return
+  fi
+
+  section "Phase 6a: Live Telegram Inbound Reply Proof"
+
+  local wait_seconds="${NEMOCLAW_TELEGRAM_INBOUND_WAIT_SECONDS:-90}"
+  if ! [[ "$wait_seconds" =~ ^[0-9]+$ ]]; then
+    wait_seconds=90
+  fi
+  if [ "$wait_seconds" -lt 1 ]; then
+    wait_seconds=90
+  fi
+
+  if [ -z "${TELEGRAM_BOT_TOKEN_REAL:-}" ]; then
+    fail "M19b: Live Telegram inbound proof requires TELEGRAM_BOT_TOKEN_REAL"
+    return
+  fi
+  if [ "$TELEGRAM_ALLOWLIST_ENV_KEY" = "TELEGRAM_ALLOWED_IDS" ]; then
+    fail "M19b: Live Telegram inbound proof must be run with TELEGRAM_AUTHORIZED_CHAT_IDS or TELEGRAM_CHAT_ID to exercise alias compatibility"
+    return
+  fi
+  if [ -z "$TELEGRAM_IDS" ]; then
+    fail "M19b: Live Telegram inbound proof requires a non-empty Telegram allowlist alias"
+    return
+  fi
+
+  local log_before_lines
+  log_before_lines=$(read_gateway_log | wc -l | tr -d ' ')
+  if [ -z "$log_before_lines" ]; then
+    log_before_lines=0
+  fi
+
+  info "Live Telegram inbound proof is using ${TELEGRAM_ALLOWLIST_ENV_KEY}; send a fresh direct message from an allowed Telegram client to the bot now."
+  info "Waiting up to ${wait_seconds}s for inbound getUpdates and outbound sendMessage breadcrumbs in /tmp/gateway.log..."
+
+  local deadline now delta_log saw_inbound saw_outbound
+  deadline=$(($(date +%s) + wait_seconds))
+  saw_inbound=0
+  saw_outbound=0
+  while true; do
+    delta_log=$(read_gateway_log | awk -v start="$log_before_lines" 'NR > start')
+    if echo "$delta_log" | grep -qF "[telegram] [default] inbound update received"; then
+      saw_inbound=1
+    fi
+    if echo "$delta_log" | grep -qF "[telegram] [default] outbound sendMessage attempted"; then
+      saw_outbound=1
+    fi
+    if [ "$saw_inbound" = "1" ] && [ "$saw_outbound" = "1" ]; then
+      pass "M19b: Telegram client DM produced inbound getUpdates and outbound reply breadcrumbs"
+      return
+    fi
+    now=$(date +%s)
+    if [ "$now" -ge "$deadline" ]; then
+      break
+    fi
+    sleep 5
+  done
+
+  fail "M19b: Timed out waiting for Telegram inbound/reply breadcrumbs (inbound=${saw_inbound}, outbound=${saw_outbound})"
 }
 
 run_openclaw_message_send() {
@@ -531,6 +629,15 @@ fi
 pass "Docker is running"
 
 info "Telegram token: configured (${#TELEGRAM_TOKEN} chars)"
+telegram_allowed_id_count=0
+if [ -n "$TELEGRAM_IDS" ]; then
+  IFS=',' read -ra _telegram_allowed_ids <<<"$TELEGRAM_IDS"
+  for _tid in "${_telegram_allowed_ids[@]}"; do
+    _tid="${_tid//[[:space:]]/}"
+    [ -n "$_tid" ] && ((telegram_allowed_id_count++))
+  done
+fi
+info "Telegram allowlist source: ${TELEGRAM_ALLOWLIST_ENV_KEY} (${telegram_allowed_id_count} ID(s))"
 info "Discord token: configured (${#DISCORD_TOKEN} chars)"
 info "Slack bot token: configured (${#SLACK_TOKEN} chars)"
 info "Slack app token: configured (${#SLACK_APP} chars)"
@@ -565,7 +672,10 @@ fi
 pass "Pre-cleanup complete"
 
 if [ -z "${NEMOCLAW_SKIP_TELEGRAM_REACHABILITY:-}" ]; then
-  if ! curl -fsS --max-time 10 https://api.telegram.org/ >/dev/null 2>&1; then
+  if [ -z "${TELEGRAM_BOT_TOKEN_REAL:-}" ] && [[ "$TELEGRAM_TOKEN" == test-fake-* ]]; then
+    export NEMOCLAW_SKIP_TELEGRAM_REACHABILITY=1
+    info "Skipping onboarding Telegram reachability probe for fake-token E2E"
+  elif ! curl -fsS --max-time 10 https://api.telegram.org/ >/dev/null 2>&1; then
     export NEMOCLAW_SKIP_TELEGRAM_REACHABILITY=1
     info "Host cannot reach api.telegram.org; skipping onboarding Telegram reachability probe for fake-token E2E"
   fi
@@ -1540,6 +1650,9 @@ print(','.join(str(i) for i in ids))
     done
     if [ ${#missing_ids[@]} -eq 0 ]; then
       pass "M11c: Telegram allowFrom contains all expected user IDs: $tg_allow_from"
+      if [ "$TELEGRAM_ALLOWLIST_ENV_KEY" != "TELEGRAM_ALLOWED_IDS" ]; then
+        pass "M11c-alias: Telegram allowFrom honored ${TELEGRAM_ALLOWLIST_ENV_KEY} alias"
+      fi
     else
       fail "M11c: Telegram allowFrom ($tg_allow_from) is missing IDs: ${missing_ids[*]} (expected all of: $TELEGRAM_IDS)"
     fi
@@ -2567,6 +2680,8 @@ else
     fail "M19: Telegram OpenClaw mock message send could not run without fake Telegram"
   fi
 fi
+
+run_telegram_inbound_reply_probe
 
 if [ -n "${DISCORD_BOT_TOKEN_REAL:-}" ] && [ -n "${DISCORD_CHANNEL_ID_E2E:-}" ]; then
   if [ "$dc_status" = "200" ]; then
