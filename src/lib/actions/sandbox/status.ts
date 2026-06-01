@@ -23,14 +23,19 @@ import {
 import * as nim from "../../inference/nim";
 import * as sandboxVersion from "../../sandbox/version";
 import * as shields from "../../shields";
-import { parseSandboxPhase } from "../../state/gateway";
+import { isTerminalSandboxPhase, parseSandboxPhase } from "../../state/gateway";
 import * as registry from "../../state/registry";
 import {
   createSystemDeps as createSessionDeps,
   getActiveSandboxSessions,
 } from "../../state/sandbox-session";
 import { getSandboxDockerHealth } from "./docker-health";
-import { classifyGatewayFailure, getLayerHeader } from "./gateway-failure-classifier";
+import {
+  classifyGatewayFailure,
+  getLayerHeader,
+  isDockerRuntimeDown,
+  printDockerRuntimeDownGuidance,
+} from "./gateway-failure-classifier";
 import type { SandboxGatewayState } from "./gateway-state";
 import {
   getReconciledSandboxGatewayState,
@@ -383,6 +388,19 @@ export async function showSandboxStatus(sandboxName: string): Promise<void> {
     console.log(lookup.output);
     const phase = parseSandboxPhase(lookup.output || "");
     if (phase && phase !== "Ready") {
+      // A non-ready, non-terminal phase can mean two very different things. If
+      // the Docker daemon is down, OpenShell can still return a present-but-
+      // Provisioning sandbox (cached/transitional state); steering the user
+      // toward rebuild is wrong because the sandbox is fine and rebuild cannot
+      // succeed until Docker is back. Reclassify as a runtime outage first
+      // (#4428). Terminal phases (Failed/Error/...) are settled sandbox
+      // failures and keep the existing rebuild guidance even when Docker is
+      // down, so a genuine failure is never masked.
+      if (!isTerminalSandboxPhase(phase) && isDockerRuntimeDown(sandboxName)) {
+        console.log("");
+        printDockerRuntimeDownGuidance(sandboxName, { writer: console.log });
+        process.exit(1);
+      }
       console.log("");
       console.log(`  Sandbox '${sandboxName}' is stuck in '${phase}' phase.`);
       console.log(
