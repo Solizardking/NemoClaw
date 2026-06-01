@@ -6598,7 +6598,7 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
         }),
       );
     }
-
+    await onboardRuntimeBoundary.recordOnboardStarted(resume);
     // Backstop for the resume path: a session may exist (so the early guard
     // skipped because resume === true) but never have recorded a sandboxName
     // — sandbox creation could have failed before that step ran. Without a
