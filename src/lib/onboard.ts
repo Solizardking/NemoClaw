@@ -433,6 +433,7 @@ const { handleProviderInferenceState }: typeof import("./onboard/machine/handler
 const { handleSandboxState }: typeof import("./onboard/machine/handlers/sandbox") = require("./onboard/machine/handlers/sandbox");
 const { getOnboardProgressStep }: typeof import("./onboard/machine/progress") = require("./onboard/machine/progress");
 const policies: typeof import("./policy") = require("./policy");
+const policyPresetCarry: typeof import("./onboard/policy-preset-persistence") = require("./onboard/policy-preset-persistence");
 const tiers: typeof import("./policy/tiers") = require("./policy/tiers");
 const { ensureUsageNoticeConsent } = require("./onboard/usage-notice");
 const {
@@ -537,7 +538,6 @@ import type {
   OpenShellInstallDeps,
   OpenShellInstallResult,
 } from "./onboard/openshell-install";
-import { decidePolicyCarryForward } from "./onboard/policy-carryforward";
 import { getSuggestedPolicyPresets } from "./onboard/policy-presets";
 import {
   computeSetupPresetSuggestions as computeSetupPresetSuggestionsImpl,
@@ -3099,6 +3099,7 @@ async function createSandbox(
           if (confirmedSelectionDrift) {
             note("  [non-interactive] Recreating sandbox due to provider/model drift.");
           } else {
+            policyPresetCarry.seedReusedSandboxPolicyPresets(sandboxName, isNonInteractive());
             // Upsert messaging providers even on reuse so credential changes take
             // effect without requiring a full sandbox recreation.
             upsertMessagingProviders(messagingTokenDefs);
@@ -3160,6 +3161,7 @@ async function createSandbox(
           console.log(`  Sandbox '${sandboxName}' already exists.`);
           console.log("  Choosing 'n' will delete the existing sandbox and create a new one.");
           if (await promptYesNoOrDefault("  Reuse existing sandbox?", null, true)) {
+            policyPresetCarry.seedReusedSandboxPolicyPresets(sandboxName, isNonInteractive());
             upsertMessagingProviders(messagingTokenDefs);
             const reusedPort2 = ensureDashboardForward(sandboxName, chatUiUrl);
             chatUiUrl = `http://127.0.0.1:${reusedPort2}`;
@@ -3234,12 +3236,7 @@ async function createSandbox(
     }
 
     const previousEntry: SandboxEntry | null = registry.getSandbox(sandboxName);
-    const decision = decidePolicyCarryForward(previousEntry?.policies, process.env, isNonInteractive());
-    onboardSession.updateSession((c: Session) => {
-      c.policyPresets = decision.newPresets;
-      return c;
-    });
-    if (decision.overrideNote !== null) note(decision.overrideNote);
+    policyPresetCarry.applyRecreatePolicyCarryForward(sandboxName, isNonInteractive(), note);
 
     if (pendingStateRestore === null && !shouldSkipPreRecreateBackup(process.env)) {
       note("  Backing up workspace state before recreating sandbox...");
@@ -7013,6 +7010,7 @@ async function onboard(opts: OnboardOptions = {}): Promise<void> {
         updateSession: onboardSession.updateSession,
         recordStepComplete,
         toSessionUpdates: (updates) => toSessionUpdates(updates as Parameters<typeof toSessionUpdates>[0]),
+        persistAppliedPolicyPresets: policyPresetCarry.persistFinalizedPolicyPresets,
       },
     });
     session = policiesResult.session;
