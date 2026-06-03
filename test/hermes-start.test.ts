@@ -155,6 +155,7 @@ function runHermesGatewayRuntimeCleanup(opts: {
   stalePid?: boolean;
   lockedConfigRoot?: boolean;
   rootOwnedConfigRoot?: boolean;
+  preExistingHistory?: "regular" | "symlink" | "directory" | "hardlink-to-config";
 }) {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "nemoclaw-hermes-runtime-cleanup-"));
   const hermesHome = path.join(tmpDir, ".hermes");
@@ -171,9 +172,26 @@ function runHermesGatewayRuntimeCleanup(opts: {
   if (opts.lockedConfigRoot || opts.rootOwnedConfigRoot) {
     fs.chmodSync(hermesHome, 0o755);
   }
+  const configYamlPath = path.join(hermesHome, "config.yaml");
+  const envFilePath = path.join(hermesHome, ".env");
   if (opts.lockedConfigRoot) {
-    fs.writeFileSync(path.join(hermesHome, "config.yaml"), "model: test\n");
-    fs.writeFileSync(path.join(hermesHome, ".env"), "HERMES_TEST=1\n");
+    fs.writeFileSync(configYamlPath, "model: test\n", { mode: 0o600 });
+    fs.writeFileSync(envFilePath, "HERMES_TEST=1\n", { mode: 0o600 });
+  }
+  const historyPath = path.join(hermesHome, ".hermes_history");
+  const symlinkTarget = path.join(tmpDir, "history-target");
+  if (opts.preExistingHistory === "regular") {
+    fs.writeFileSync(historyPath, "pre-existing\n", { mode: 0o600 });
+  } else if (opts.preExistingHistory === "symlink") {
+    fs.writeFileSync(symlinkTarget, "attacker\n");
+    fs.symlinkSync(symlinkTarget, historyPath);
+  } else if (opts.preExistingHistory === "directory") {
+    fs.mkdirSync(historyPath);
+  } else if (opts.preExistingHistory === "hardlink-to-config") {
+    if (!opts.lockedConfigRoot) {
+      throw new Error("hardlink-to-config requires lockedConfigRoot to write the target file");
+    }
+    fs.linkSync(configYamlPath, historyPath);
   }
   fs.symlinkSync("runtime/gateway.pid", legacyPid);
   if (opts.stalePid !== false) fs.writeFileSync(runtimePid, "999999\n");
@@ -210,6 +228,7 @@ function runHermesGatewayRuntimeCleanup(opts: {
       extractShellFunctionFromSource(src, "hermes_config_root_is_locked"),
       extractShellFunctionFromSource(src, "ensure_hermes_config_root_mode"),
       extractShellFunctionFromSource(src, "ensure_hermes_state_dir"),
+      extractShellFunctionFromSource(src, "ensure_hermes_history_file"),
       extractShellFunctionFromSource(src, "repair_hermes_startup_layout"),
       extractShellFunctionFromSource(src, "cleanup_stale_hermes_gateway_runtime"),
       `KILL_LOG=${shellQuote(killLog)}`,
@@ -262,6 +281,29 @@ function runHermesGatewayRuntimeCleanup(opts: {
         ];
       }),
     );
+    const historyStat = lstatIfPresent(historyPath);
+    let historyMode = "missing";
+    let historyKind: "missing" | "regular" | "symlink" | "directory" | "other" = "missing";
+    let historyContent = "";
+    if (historyStat) {
+      historyMode = (historyStat.mode & 0o777).toString(8);
+      if (historyStat.isSymbolicLink()) historyKind = "symlink";
+      else if (historyStat.isDirectory()) historyKind = "directory";
+      else if (historyStat.isFile()) historyKind = "regular";
+      else historyKind = "other";
+      if (historyKind === "regular") {
+        historyContent = fs.readFileSync(historyPath, "utf-8");
+      }
+    }
+    const symlinkTargetContent = fs.existsSync(symlinkTarget)
+      ? fs.readFileSync(symlinkTarget, "utf-8")
+      : "";
+    const configYamlMode = fs.existsSync(configYamlPath)
+      ? (fs.statSync(configYamlPath).mode & 0o777).toString(8)
+      : "missing";
+    const configYamlContent = fs.existsSync(configYamlPath)
+      ? fs.readFileSync(configYamlPath, "utf-8")
+      : "";
     return {
       result,
       killLog: fs.existsSync(killLog) ? fs.readFileSync(killLog, "utf-8") : "",
@@ -271,6 +313,12 @@ function runHermesGatewayRuntimeCleanup(opts: {
       runtimeLockExists: fs.existsSync(runtimeLock),
       legacyPidExists: legacyPidStat !== null,
       legacyPidIsSymlink: legacyPidStat?.isSymbolicLink() ?? false,
+      historyMode,
+      historyKind,
+      historyContent,
+      symlinkTargetContent,
+      configYamlMode,
+      configYamlContent,
     };
   } finally {
     fs.rmSync(tmpDir, { recursive: true, force: true });
@@ -411,9 +459,57 @@ describe("agents/hermes/start.sh gateway runtime cleanup", () => {
       image_cache: "770",
       audio_cache: "770",
     });
+    expect(run.historyKind).toBe("regular");
+    expect(run.historyMode).toBe("660");
+    expect(run.historyContent).toBe("");
   });
 
-  it("preserves a locked Hermes config root during stale gateway cleanup", () => {
+  it("preserves a pre-existing Hermes history file and re-asserts its mode", () => {
+    const run = runHermesGatewayRuntimeCleanup({
+      staleLock: false,
+      stalePid: false,
+      rootOwnedConfigRoot: true,
+      preExistingHistory: "regular",
+    });
+
+    expect(run.result.status).toBe(0);
+    expect(run.historyKind).toBe("regular");
+    expect(run.historyMode).toBe("660");
+    expect(run.historyContent).toBe("pre-existing\n");
+  });
+
+  it("refuses to repair when the Hermes history path is a symlink and does not write through", () => {
+    const run = runHermesGatewayRuntimeCleanup({
+      staleLock: false,
+      stalePid: false,
+      rootOwnedConfigRoot: true,
+      preExistingHistory: "symlink",
+    });
+
+    expect(run.historyKind).toBe("symlink");
+    expect(run.symlinkTargetContent).toBe("attacker\n");
+    expect(run.result.stderr).toContain(
+      "Refusing Hermes layout repair because",
+    );
+    expect(run.result.stderr).toContain(".hermes_history is a symlink");
+  });
+
+  it("refuses to repair when the Hermes history path is a directory", () => {
+    const run = runHermesGatewayRuntimeCleanup({
+      staleLock: false,
+      stalePid: false,
+      rootOwnedConfigRoot: true,
+      preExistingHistory: "directory",
+    });
+
+    expect(run.historyKind).toBe("directory");
+    expect(run.result.stderr).toContain(
+      "Refusing Hermes layout repair because",
+    );
+    expect(run.result.stderr).toContain(".hermes_history is not a regular file");
+  });
+
+  it("creates the Hermes history file under a locked config root for legacy sandboxes", () => {
     const run = runHermesGatewayRuntimeCleanup({ lockedConfigRoot: true });
 
     expect(run.result.status).toBe(0);
@@ -425,12 +521,60 @@ describe("agents/hermes/start.sh gateway runtime cleanup", () => {
       image_cache: "missing",
       audio_cache: "missing",
     });
+    expect(run.historyKind).toBe("regular");
+    expect(run.historyMode).toBe("660");
+    expect(run.historyContent).toBe("");
     expect(run.runtimePidExists).toBe(false);
     expect(run.runtimeLockExists).toBe(false);
     expect(run.legacyPidExists).toBe(false);
     expect(run.result.stderr).toContain(
-      "Hermes layout repair skipped because config root is locked",
+      "Hermes layout repair limited to history file because config root is locked",
     );
+  });
+
+  it("fails Hermes startup when the locked-root history path is a symlink and does not write through", () => {
+    const run = runHermesGatewayRuntimeCleanup({
+      lockedConfigRoot: true,
+      preExistingHistory: "symlink",
+    });
+
+    expect(run.result.status).not.toBe(0);
+    expect(run.historyKind).toBe("symlink");
+    expect(run.symlinkTargetContent).toBe("attacker\n");
+    expect(run.result.stderr).toContain(
+      "Refusing Hermes layout repair because",
+    );
+    expect(run.result.stderr).toContain(".hermes_history is a symlink");
+  });
+
+  it("fails Hermes startup when the locked-root history path hard-links a sealed config file", () => {
+    const run = runHermesGatewayRuntimeCleanup({
+      lockedConfigRoot: true,
+      preExistingHistory: "hardlink-to-config",
+    });
+
+    expect(run.result.status).not.toBe(0);
+    expect(run.historyKind).toBe("regular");
+    expect(run.result.stderr).toContain(
+      "Refusing Hermes layout repair because",
+    );
+    expect(run.result.stderr).toContain("has hard-link count");
+    expect(run.configYamlMode).toBe("600");
+    expect(run.configYamlContent).toBe("model: test\n");
+  });
+
+  it("fails Hermes startup when the locked-root history path is a directory", () => {
+    const run = runHermesGatewayRuntimeCleanup({
+      lockedConfigRoot: true,
+      preExistingHistory: "directory",
+    });
+
+    expect(run.result.status).not.toBe(0);
+    expect(run.historyKind).toBe("directory");
+    expect(run.result.stderr).toContain(
+      "Refusing Hermes layout repair because",
+    );
+    expect(run.result.stderr).toContain(".hermes_history is not a regular file");
   });
 
   it("kills orphaned socat forwarders when no Hermes gateway is alive", () => {
