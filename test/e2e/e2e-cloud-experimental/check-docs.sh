@@ -156,7 +156,7 @@ JSON
   log "[cli] comparing: $NODE bin/nemoclaw.js --dump-commands"
   # shellcheck disable=SC2016
   # log text: backticks are documentation markers, not command substitution
-  log '[cli]        vs: docs/reference/commands.mdx (### `nemoclaw …` headings only)'
+  log '[cli]        vs: docs/reference/commands.mdx (### `nemoclaw …` or `$$nemoclaw …` headings)'
 
   log "[cli] phase 1/2: dump canonical command list from registry"
   if ! HOME="$_cli_home" "$NODE" "$CLI_JS" --dump-commands >"$_tmp/help.txt" 2>"$_tmp/help.err"; then
@@ -172,11 +172,11 @@ JSON
 
   # shellcheck disable=SC2016
   # log text: backticks are documentation markers, not command substitution
-  log '[cli] phase 2/2: extract ### `nemoclaw …` headings from commands reference'
+  log '[cli] phase 2/2: extract ### `nemoclaw …` / `$$nemoclaw …` headings from commands reference'
   # Allow optional MyST suffix on the same line, e.g. ### `nemoclaw onboard` {#anchor}.
   # Preserve placeholders that are part of the canonical help signature, but
   # keep accepting docs-only suffixes such as `snapshot restore [selector]`.
-  grep -E '^### `nemoclaw ' "$COMMANDS_MD" | LC_ALL=C perl -CS -ne '
+  grep -E '^### `(\$\$)?nemoclaw ' "$COMMANDS_MD" | LC_ALL=C perl -CS -ne '
     BEGIN {
       my $help_path = shift @ARGV;
       open my $help_fh, "<", $help_path or die "open help list: $!";
@@ -188,6 +188,7 @@ JSON
     }
     if (/^### `([^`]+)`\s*(?:\{[^}]+\})?\s*$/) {
       my $c = $1;
+      $c =~ s/^\$\$nemoclaw\b/nemoclaw/;
       $c =~ s/\s+$//;
       while (!$help{$c}) {
         my $changed = 0;
@@ -254,6 +255,7 @@ JSON
         bt = index(line, "`")
         if (bt > 0) {
           cand = substr(line, 1, bt - 1)
+          sub(/^\$\$nemoclaw/, "nemoclaw", cand)
           sub(/[[:space:]]+$/, "", cand)
           if (cand == target) {
             in_sec = 1
@@ -742,7 +744,16 @@ function maybeEmit(item) {
   if (!item || item.emitted || !variant || !item.path || !item.slug || item.indent <= 6) return;
   const route = ["user-guide", variant, ...item.parent, item.slug].join("/");
   rows.push(`${item.path}\t${route}`);
+  const sourcePath = agentVariantSourcePath(item.path);
+  if (sourcePath && sourcePath !== item.path) {
+    rows.push(`${sourcePath}\t${route}`);
+  }
   item.emitted = true;
+}
+
+function agentVariantSourcePath(navPath) {
+  const match = navPath.match(/^_build\/agent-variants\/(.+)\.(?:openclaw|hermes)\.generated\.mdx$/);
+  return match ? `${match[1]}.mdx` : null;
 }
 
 function maybePushSection(item) {
@@ -812,6 +823,8 @@ normalize_fern_route_path() {
     nemoclaw/*) input="${input#nemoclaw/}" ;;
     latest/*) input="${input#latest/}" ;;
   esac
+  input="${input%.mdx}"
+  input="${input%.md}"
 
   local -a parts=() out=()
   local IFS='/'
