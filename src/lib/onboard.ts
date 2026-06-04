@@ -919,9 +919,7 @@ function upsertMessagingProviders(
   if (mutated) persistMigratedLegacyKeys();
   return upserted;
 }
-function providerExistsInGateway(name: string) {
-  return onboardProviders.providerExistsInGateway(name, runOpenshell);
-}
+const providerExistsInGateway = (name: string) => onboardProviders.providerExistsInGateway(name, runOpenshell);
 
 // Tri-state probe factory for messaging-conflict backfill. An upfront liveness
 // check is necessary because `openshell provider get` exits non-zero for both
@@ -4428,14 +4426,15 @@ async function setupNim(
           }
           if (isNonInteractive()) {
             const resolvedNvidiaKey = resolveProviderCredential("NVIDIA_API_KEY");
-            if (!resolvedNvidiaKey) {
+            if (resolvedNvidiaKey) {
+              const keyError = validateNvidiaApiKeyValue(resolvedNvidiaKey);
+              if (keyError) {
+                console.error(keyError);
+                console.error(`  Get a key from ${REMOTE_PROVIDER_CONFIG.build.helpUrl}`);
+                process.exit(1);
+              }
+            } else if (!providerExistsInGateway(provider)) {
               logMissingNvidiaApiKeyHelp(REMOTE_PROVIDER_CONFIG.build.helpUrl);
-              process.exit(1);
-            }
-            const keyError = validateNvidiaApiKeyValue(resolvedNvidiaKey);
-            if (keyError) {
-              console.error(keyError);
-              console.error(`  Get a key from ${REMOTE_PROVIDER_CONFIG.build.helpUrl}`);
               process.exit(1);
             }
           } else {
@@ -4500,7 +4499,7 @@ async function setupNim(
             break;
           }
           if (isNonInteractive()) {
-            if (!resolveProviderCredential(selectedCredentialEnv)) {
+            if (!resolveProviderCredential(selectedCredentialEnv) && !providerExistsInGateway(provider)) {
               console.error(
                 `  ${selectedCredentialEnv} (or NEMOCLAW_PROVIDER_KEY) is required for ${remoteConfig.label} in non-interactive mode.`,
               );
