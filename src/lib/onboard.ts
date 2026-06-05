@@ -16,9 +16,8 @@ const {
   setOnboardBrandingAgent,
 }: typeof import("./onboard/branding") = require("./onboard/branding");
 const { createSelectOnboardAgent }: typeof import("./onboard/agent-selection") = require("./onboard/agent-selection");
-const {
-  createInferenceSelectionValidationHelpers,
-}: typeof import("./onboard/inference-selection-validation") = require("./onboard/inference-selection-validation");
+const { createInferenceSelectionValidationHelpers }: typeof import("./onboard/inference-selection-validation") = require("./onboard/inference-selection-validation");
+const inferenceInputCapability = require("./onboard/inference-input-capability");
 const { cleanupTempDir }: typeof import("./onboard/temp-files") = require("./onboard/temp-files");
 const { abortNonInteractive }: typeof import("./onboard/non-interactive-abort") = require("./onboard/non-interactive-abort");
 const { stopStaleDashboardListenersForSandbox } = require("./onboard/stale-gateway-cleanup");
@@ -5161,6 +5160,7 @@ async function setupNim(
   }
 
   const selectedModel = isBackToSelection(model) ? null : model;
+  await inferenceInputCapability.maybePromptForInferenceInputCapability(selectedModel, { isNonInteractive, prompt });
   return {
     model: selectedModel,
     provider,
