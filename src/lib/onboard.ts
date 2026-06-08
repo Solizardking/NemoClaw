@@ -5789,7 +5789,7 @@ async function setupPoliciesWithSelection(
   sandboxName: string,
   options: SetupPolicySelectionOptions = {},
 ) {
-  const selectedTier = await setupPoliciesWithSelectionImpl(
+  return setupPoliciesWithSelectionImpl(
     {
       policies,
       tiers,
@@ -5808,7 +5808,6 @@ async function setupPoliciesWithSelection(
     sandboxName,
     options,
   );
-  return selectedTier;
 }
 
 const {
