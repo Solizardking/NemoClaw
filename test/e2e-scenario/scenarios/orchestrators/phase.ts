@@ -16,9 +16,11 @@ import type {
   RunPlanPhase,
   TransientClassifier,
 } from "../types.ts";
+import { superviseChild } from "../../framework/shell/supervisor.ts";
+import { validateShellToken } from "../../framework/shell/trusted-command.ts";
 import { lookupProbe } from "../probes/registry.ts";
 import type { ProbeContext } from "../probes/types.ts";
-import { buildChildEnv, pipeRedacted, redactString } from "./redaction.ts";
+import { buildChildEnv, redactString } from "./redaction.ts";
 
 // Auto-register the built-in probes the moment the orchestrator is
 // imported. This is a deliberate side-effect import: registry state is
@@ -30,6 +32,28 @@ registerBuiltinProbes();
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 const DEFAULT_STEP_TIMEOUT_SECONDS = 300;
+
+/**
+ * Collect the actual secret values an action / step declared via
+ * `secretEnv` so redactString can scrub them verbatim from evidence.
+ * Canonical regex shapes catch most token forms, but per-test secret
+ * literals may not match any shape and would otherwise leak into the
+ * evidence log and stderr tail.
+ */
+function collectExplicitSecretValues(
+  env: NodeJS.ProcessEnv,
+  secretEnv: readonly string[] | undefined,
+): string[] {
+  if (!secretEnv || secretEnv.length === 0) return [];
+  const values: string[] = [];
+  for (const key of secretEnv) {
+    const value = env[key];
+    if (typeof value === "string" && value.length > 0) {
+      values.push(value);
+    }
+  }
+  return values;
+}
 
 interface StepAttemptOutcome {
   status: "passed" | "failed" | "skipped";
@@ -184,109 +208,99 @@ export class PhaseOrchestrator {
       },
     });
 
-    return await new Promise<PhaseActionResult>((resolve) => {
-      const child = spawn("bash", bashArgs, { env, cwd: REPO_ROOT, detached: true });
-      const pgid = child.pid;
-      const logStream = fs.createWriteStream(logPath);
-      let stderrTail = "";
-      // Every byte from the child passes through redactString before
-      // hitting the evidence log or the stderr tail; raw output never
-      // touches disk or PhaseActionResult.message.
-      pipeRedacted(child.stdout, logStream);
-      pipeRedacted(child.stderr, logStream, (redactedChunk) => {
-        stderrTail = (stderrTail + redactedChunk).slice(-4096);
-      });
-
-      const killGroup = (signal: NodeJS.Signals) => {
-        if (typeof pgid !== "number") {
-          child.kill(signal);
+    let safeArgs: string[];
+    try {
+      safeArgs = bashArgs.map((arg, idx) => validateShellToken(arg, `runAction bashArgs[${idx}]`));
+    } catch (err) {
+      return {
+        id: action.id,
+        status: "failed",
+        durationMs: Date.now() - startedAt,
+        message: `phase action ${action.id} rejected at the trusted-command boundary: ${redactString(err instanceof Error ? err.message : String(err))}`,
+      };
+    }
+    // Explicit secret values declared via action.secretEnv must be
+    // scrubbed verbatim from evidence, not only when they happen to
+    // match a canonical regex shape. Gather the actual values the
+    // child sees so redactString redacts them as well.
+    const explicitSecretValues = collectExplicitSecretValues(env, action.secretEnv);
+    const redactAction = (text: string): string => redactString(text, explicitSecretValues);
+    const child = spawn("bash", safeArgs, { env, cwd: REPO_ROOT, detached: true });
+    const logStream = fs.createWriteStream(logPath);
+    let stderrTail = "";
+    const finishLog = (): Promise<void> =>
+      new Promise((res) => {
+        if ((logStream as unknown as { closed?: boolean }).closed) {
+          res();
           return;
         }
-        try {
-          process.kill(-pgid, signal);
-        } catch {
-          /* group already gone */
-        }
-      };
-
-      let timedOut = false;
-      const timeout = setTimeout(() => {
-        timedOut = true;
-        killGroup("SIGTERM");
-        setTimeout(() => {
-          if (!child.killed) {
-            killGroup("SIGKILL");
-          }
-        }, 5_000).unref();
-      }, timeoutSeconds * 1_000);
-
-      const finishLog = (): Promise<void> =>
-        new Promise((res) => {
-          if ((logStream as unknown as { closed?: boolean }).closed) {
-            res();
-            return;
-          }
-          logStream.once("finish", () => res());
-          logStream.once("error", () => res());
-          logStream.end();
-        });
-
-      child.on("error", (err) => {
-        clearTimeout(timeout);
-        void finishLog().then(() =>
-          resolve({
-            id: action.id,
-            status: "failed",
-            durationMs: Date.now() - startedAt,
-            evidence: logPath,
-            message: redactString(`phase action ${action.id} spawn error: ${err.message}`),
-          }),
-        );
+        logStream.once("finish", () => res());
+        logStream.once("error", () => res());
+        logStream.end();
       });
-
-      child.on("close", (code, signal) => {
-        clearTimeout(timeout);
-        void finishLog().then(() => {
-          const durationMs = Date.now() - startedAt;
-          if (timedOut) {
-            resolve({
-              id: action.id,
-              status: "failed",
-              durationMs,
-              evidence: logPath,
-              message: `phase action ${action.id} exceeded ${timeoutSeconds}s (signal=${signal ?? "SIGTERM"})`,
-            });
-            return;
-          }
-          if (code === 0) {
-            // Publish the action's evidence log under a stable alias for
-            // legacy assertions that reference fixed filenames
-            // (onboard.log, install.log, ...). Best-effort; alias copy
-            // failures do not fail the action.
-            if (action.aliasPath) {
-              try {
-                const aliasFull = path.isAbsolute(action.aliasPath)
-                  ? action.aliasPath
-                  : path.join(ctx.contextDir, action.aliasPath);
-                fs.mkdirSync(path.dirname(aliasFull), { recursive: true });
-                fs.copyFileSync(logPath, aliasFull);
-              } catch {
-                /* alias is a convenience; never fail action on copy */
-              }
-            }
-            resolve({ id: action.id, status: "passed", durationMs, evidence: logPath });
-            return;
-          }
-          resolve({
-            id: action.id,
-            status: "failed",
-            durationMs,
-            evidence: logPath,
-            message: `phase action ${action.id} exit ${code ?? "null"}: ${stderrTail.split("\n").slice(-3).join(" | ").trim()}`,
-          });
-        });
-      });
+    // Every byte from the child passes through redactAction before
+    // hitting the evidence log or the stderr tail; raw output never
+    // touches disk or PhaseActionResult.message. Explicit secretEnv
+    // values are sanitised alongside the canonical regex shapes.
+    const supervised = await superviseChild(child, {
+      timeoutMs: timeoutSeconds * 1_000,
+      onStdout: (chunk) => {
+        logStream.write(redactAction(chunk));
+      },
+      onStderr: (chunk) => {
+        const redacted = redactAction(chunk);
+        logStream.write(redacted);
+        stderrTail = (stderrTail + redacted).slice(-4096);
+      },
     });
+    await finishLog();
+
+    const durationMs = Date.now() - startedAt;
+    if (supervised.spawnError) {
+      return {
+        id: action.id,
+        status: "failed",
+        durationMs,
+        evidence: logPath,
+        message: redactAction(
+          `phase action ${action.id} spawn error: ${supervised.spawnError.message}`,
+        ),
+      };
+    }
+    if (supervised.timedOut) {
+      return {
+        id: action.id,
+        status: "failed",
+        durationMs,
+        evidence: logPath,
+        message: `phase action ${action.id} exceeded ${timeoutSeconds}s (signal=${supervised.signal ?? "SIGTERM"})`,
+      };
+    }
+    if (supervised.exitCode === 0) {
+      // Publish the action's evidence log under a stable alias for
+      // legacy assertions that reference fixed filenames
+      // (onboard.log, install.log, ...). Best-effort; alias copy
+      // failures do not fail the action.
+      if (action.aliasPath) {
+        try {
+          const aliasFull = path.isAbsolute(action.aliasPath)
+            ? action.aliasPath
+            : path.join(ctx.contextDir, action.aliasPath);
+          fs.mkdirSync(path.dirname(aliasFull), { recursive: true });
+          fs.copyFileSync(logPath, aliasFull);
+        } catch {
+          /* alias is a convenience; never fail action on copy */
+        }
+      }
+      return { id: action.id, status: "passed", durationMs, evidence: logPath };
+    }
+    return {
+      id: action.id,
+      status: "failed",
+      durationMs,
+      evidence: logPath,
+      message: `phase action ${action.id} exit ${supervised.exitCode ?? "null"}: ${stderrTail.split("\n").slice(-3).join(" | ").trim()}`,
+    };
   }
 
   private async runStep(ctx: RunContext, step: AssertionStep): Promise<AssertionResult> {
@@ -463,98 +477,84 @@ export class PhaseOrchestrator {
       }
     }
 
-    return await new Promise<StepAttemptOutcome>((resolve) => {
-      // detached: true puts the child (and any of its children, e.g. a `sleep`
-      // spawned by bash) into its own process group. We send signals to the
-      // negative pid so the whole group dies on timeout. Without this, bash
-      // ignores SIGTERM until its current foreground command (e.g. sleep)
-      // returns, and timeouts effectively don't work.
-      const child = spawn("bash", [scriptPath], { env, cwd: REPO_ROOT, detached: true });
-      const pgid = child.pid;
-      const logStream = fs.createWriteStream(logPath);
-      let stderrTail = "";
-      // Redact at the I/O boundary; raw bytes from the child must not
-      // reach the evidence log or the stderr tail that flows into
-      // step result.message.
-      pipeRedacted(child.stdout, logStream);
-      pipeRedacted(child.stderr, logStream, (redactedChunk) => {
-        stderrTail = (stderrTail + redactedChunk).slice(-4096);
-      });
-
-      const killGroup = (signal: NodeJS.Signals) => {
-        if (typeof pgid !== "number") {
-          child.kill(signal);
+    // detached: true puts the child (and any of its children, e.g. a `sleep`
+    // spawned by bash) into its own process group. The supervisor sends
+    // signals to the negative pid so the whole group dies on timeout.
+    // Without this, bash ignores SIGTERM until its current foreground
+    // command (e.g. sleep) returns, and timeouts effectively don't work.
+    let safeArg: string;
+    try {
+      safeArg = validateShellToken(scriptPath, "runShellStep scriptPath");
+    } catch (err) {
+      return {
+        status: "failed",
+        classifier: "runner-infra",
+        message: `shell step ${step.id} rejected at the trusted-command boundary: ${redactString(err instanceof Error ? err.message : String(err))}`,
+      };
+    }
+    // Explicit secret values declared via step.secretEnv must be
+    // scrubbed verbatim from evidence, not only when they happen to
+    // match a canonical regex shape.
+    const explicitSecretValues = collectExplicitSecretValues(env, step.secretEnv);
+    const redactStep = (text: string): string => redactString(text, explicitSecretValues);
+    const child = spawn("bash", [safeArg], { env, cwd: REPO_ROOT, detached: true });
+    const logStream = fs.createWriteStream(logPath);
+    let stderrTail = "";
+    // Wait for the log writeStream to fully flush before resolving so
+    // callers can synchronously read the evidence file. Without this, the
+    // child 'close' event fires before the WriteStream finishes draining,
+    // and tests/orchestrators see an empty log file.
+    const finishLog = (): Promise<void> =>
+      new Promise((res) => {
+        if ((logStream as unknown as { closed?: boolean }).closed) {
+          res();
           return;
         }
-        try {
-          process.kill(-pgid, signal);
-        } catch {
-          /* group already gone */
-        }
-      };
-
-      let timedOut = false;
-      const timeout = setTimeout(() => {
-        timedOut = true;
-        killGroup("SIGTERM");
-        setTimeout(() => {
-          if (!child.killed) {
-            killGroup("SIGKILL");
-          }
-        }, 5_000).unref();
-      }, timeoutSeconds * 1_000);
-
-      // Wait for the log writeStream to fully flush before resolving so
-      // callers can synchronously read the evidence file. Without this, the
-      // 'close' event on the child fires before the WriteStream finishes
-      // draining, and tests/orchestrators see an empty log file.
-      const finishLog = (): Promise<void> =>
-        new Promise((res) => {
-          if ((logStream as unknown as { closed?: boolean }).closed) {
-            res();
-            return;
-          }
-          logStream.once("finish", () => res());
-          logStream.once("error", () => res());
-          logStream.end();
-        });
-
-      child.on("error", (err) => {
-        clearTimeout(timeout);
-        void finishLog().then(() =>
-          resolve({
-            status: "failed",
-            message: redactString(`shell step ${step.id} spawn error: ${err.message}`),
-            evidence: logPath,
-          }),
-        );
+        logStream.once("finish", () => res());
+        logStream.once("error", () => res());
+        logStream.end();
       });
-
-      child.on("close", (code, signal) => {
-        clearTimeout(timeout);
-        void finishLog().then(() => {
-          if (timedOut) {
-            resolve({
-              status: "failed",
-              classifier: "runner-infra",
-              message: `shell step ${step.id} exceeded ${timeoutSeconds}s (signal=${signal ?? "SIGTERM"})`,
-              evidence: logPath,
-            });
-            return;
-          }
-          if (code === 0) {
-            resolve({ status: "passed", evidence: logPath });
-            return;
-          }
-          resolve({
-            status: "failed",
-            classifier: classifierForRef(ref),
-            message: `shell step ${step.id} exit ${code ?? "null"}: ${stderrTail.split("\n").slice(-3).join(" | ").trim()}`,
-            evidence: logPath,
-          });
-        });
-      });
+    // Redact at the I/O boundary; raw bytes from the child must not
+    // reach the evidence log or the stderr tail that flows into
+    // step result.message. Explicit secretEnv values are sanitised
+    // alongside the canonical regex shapes.
+    const supervised = await superviseChild(child, {
+      timeoutMs: timeoutSeconds * 1_000,
+      onStdout: (chunk) => {
+        logStream.write(redactStep(chunk));
+      },
+      onStderr: (chunk) => {
+        const redacted = redactStep(chunk);
+        logStream.write(redacted);
+        stderrTail = (stderrTail + redacted).slice(-4096);
+      },
     });
+    await finishLog();
+
+    if (supervised.spawnError) {
+      return {
+        status: "failed",
+        message: redactStep(`shell step ${step.id} spawn error: ${supervised.spawnError.message}`),
+        evidence: logPath,
+      };
+    }
+    if (supervised.timedOut) {
+      return {
+        status: "failed",
+        classifier: "runner-infra",
+        message: `shell step ${step.id} exceeded ${timeoutSeconds}s (signal=${supervised.signal ?? "SIGTERM"})`,
+        evidence: logPath,
+      };
+    }
+    if (supervised.exitCode === 0) {
+      return { status: "passed", evidence: logPath };
+    }
+    return {
+      status: "failed",
+      classifier: classifierForRef(ref),
+      message: `shell step ${step.id} exit ${supervised.exitCode ?? "null"}: ${stderrTail.split("\n").slice(-3).join(" | ").trim()}`,
+      evidence: logPath,
+    };
   }
 
   private writePhaseResult(ctx: RunContext, result: PhaseResult) {
