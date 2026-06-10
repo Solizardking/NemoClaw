@@ -1901,7 +1901,7 @@ async function preflight(
     !sandboxGpuConfig.sandboxGpuEnabled;
   assertCdiNvidiaGpuSpecPresent(host, optedOutGpuPassthrough, sandboxGpuConfig.hostGpuPlatform);
 
-  assertDockerBridgeAndContainerDnsHealthy(host);
+  assertDockerBridgeAndContainerDnsHealthy(host, isNonInteractive());
 
   if (host.runtime !== "unknown") {
     console.log(`  ✓ Container runtime: ${host.runtime}`);
