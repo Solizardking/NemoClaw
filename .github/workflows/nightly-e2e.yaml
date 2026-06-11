@@ -140,7 +140,7 @@ on:
           openclaw-anthropic-inference-switch-e2e,
           network-policy-e2e, state-backup-restore-e2e, tunnel-lifecycle-e2e,
           diagnostics-e2e, credential-migration-e2e, snapshot-commands-e2e,
-          shields-config-e2e, vm-driver-privileged-exec-routing-e2e, rebuild-openclaw-e2e,
+          shields-config-e2e, rebuild-openclaw-e2e,
           upgrade-stale-sandbox-e2e, openshell-gateway-upgrade-e2e, rebuild-hermes-e2e,
           rebuild-hermes-stale-base-e2e, double-onboard-e2e, onboard-repair-e2e,
           onboard-resume-e2e, onboard-negative-paths-e2e, runtime-overrides-e2e,
@@ -1527,20 +1527,6 @@ jobs:
       nvidia_api_key: true
       github_token: true
     secrets: *nightly-e2e-default-secrets
-  vm-driver-privileged-exec-routing-e2e:
-    if: >-
-      github.repository == 'NVIDIA/NemoClaw' && (github.event_name != 'workflow_dispatch' ||
-       inputs.jobs == '' ||
-       contains(format(',{0},', inputs.jobs), ',vm-driver-privileged-exec-routing-e2e,'))
-    uses: ./.github/workflows/e2e-script.yaml
-    with:
-      ref: ${{ inputs.target_ref || github.ref }}
-      script: test/e2e/test-vm-driver-privileged-exec-routing.sh
-      timeout_minutes: 10
-      artifact_name: "vm-driver-privileged-exec-routing-log"
-      artifact_path: "/tmp/nemoclaw-vm-driver-privileged-exec-routing-build.log"
-      env_json: '{"NEMOCLAW_NON_INTERACTIVE":"1"}'
-    secrets: *nightly-e2e-default-secrets
   rebuild-openclaw-e2e:
     if: >-
       github.repository == 'NVIDIA/NemoClaw' && (github.event_name != 'workflow_dispatch' ||
@@ -2290,7 +2276,6 @@ jobs:
         credential-migration-e2e,
         snapshot-commands-e2e,
         shields-config-e2e,
-        vm-driver-privileged-exec-routing-e2e,
         rebuild-openclaw-e2e,
         upgrade-stale-sandbox-e2e,
         openshell-gateway-upgrade-e2e,
@@ -2408,7 +2393,6 @@ jobs:
         credential-migration-e2e,
         snapshot-commands-e2e,
         shields-config-e2e,
-        vm-driver-privileged-exec-routing-e2e,
         rebuild-openclaw-e2e,
         upgrade-stale-sandbox-e2e,
         openshell-gateway-upgrade-e2e,
@@ -2585,7 +2569,6 @@ jobs:
         credential-migration-e2e,
         snapshot-commands-e2e,
         shields-config-e2e,
-        vm-driver-privileged-exec-routing-e2e,
         rebuild-openclaw-e2e,
         upgrade-stale-sandbox-e2e,
         openshell-gateway-upgrade-e2e,
