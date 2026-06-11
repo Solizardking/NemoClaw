@@ -27,6 +27,7 @@ const {
   abortNonInteractive,
 }: typeof import("./onboard/non-interactive-abort") = require("./onboard/non-interactive-abort");
 const { stopStaleDashboardListenersForSandbox } = require("./onboard/stale-gateway-cleanup");
+const extraPlaceholderKeysModule: typeof import("./onboard/extra-placeholder-keys") = require("./onboard/extra-placeholder-keys");
 const {
   ensureOllamaLoopbackSystemdOverride,
 }: typeof import("./onboard/ollama-systemd") = require("./onboard/ollama-systemd");
@@ -411,6 +412,7 @@ const {
   messagingChannelConfigsEqual,
   persistMessagingChannelConfigToSession,
 } = messagingConfig;
+const messagingPrep: typeof import("./onboard/messaging-prep") = require("./onboard/messaging-prep");
 const sandboxAgent: typeof import("./onboard/sandbox-agent") = require("./onboard/sandbox-agent");
 const sandboxLifecycle: typeof import("./onboard/sandbox-lifecycle") = require("./onboard/sandbox-lifecycle");
 const sandboxRegistryMetadata: typeof import("./onboard/sandbox-registry-metadata") = require("./onboard/sandbox-registry-metadata");
@@ -593,7 +595,7 @@ import type { SelectionDrift } from "./onboard/selection-drift";
 import { formatOnboardConfigSummary, formatSandboxBuildEstimateNote } from "./onboard/summary";
 import type { ModelValidationResult, ValidationFailureLike } from "./onboard/types";
 import type { ContainerRuntime } from "./platform";
-import { getChannelTokenKeys, listChannels } from "./sandbox/channels";
+import { listChannels } from "./sandbox/channels";
 import type { GatewayReuseState } from "./state/gateway";
 import type { Session, SessionUpdates } from "./state/onboard-session";
 import type { SandboxEntry } from "./state/registry";
@@ -924,12 +926,7 @@ function upsertProvider(
   return result;
 }
 
-type MessagingTokenDef = {
-  name: string;
-  envKey: string;
-  token: string | null;
-  providerType?: string;
-};
+type MessagingTokenDef = import("./onboard/messaging-prep").MessagingTokenDef;
 
 type EndpointValidationResult =
   | { ok: true; api: string | null; retry?: undefined }
@@ -2625,93 +2622,35 @@ async function createSandbox(
     error: (message) => console.error(message),
   });
 
-  // When enabledChannels is provided (from the toggle picker), only include
-  // channels the user selected. When null (backward compat), include all.
-  const enabledEnvKeys =
-    enabledChannels != null
-      ? new Set(
-          MESSAGING_CHANNELS.filter((c) => enabledChannels.includes(c.name)).flatMap((c) =>
-            getChannelTokenKeys(c),
-          ),
-        )
-      : null;
-
-  const disabledEnvKeys = new Set(
-    MESSAGING_CHANNELS.filter((c) => disabledChannelNames.has(c.name)).flatMap((c) =>
-      getChannelTokenKeys(c),
-    ),
-  );
-
-  const messagingTokenDefs: MessagingTokenDef[] = [
-    {
-      name: `${sandboxName}-discord-bridge`,
-      envKey: "DISCORD_BOT_TOKEN",
-      token: getValidatedMessagingTokenByEnvKey(MESSAGING_CHANNELS, "DISCORD_BOT_TOKEN"),
-    },
-    {
-      name: `${sandboxName}-slack-bridge`,
-      envKey: "SLACK_BOT_TOKEN",
-      token: getValidatedMessagingTokenByEnvKey(MESSAGING_CHANNELS, "SLACK_BOT_TOKEN"),
-    },
-    {
-      name: `${sandboxName}-slack-app`,
-      envKey: "SLACK_APP_TOKEN",
-      token: getValidatedMessagingTokenByEnvKey(MESSAGING_CHANNELS, "SLACK_APP_TOKEN"),
-    },
-    {
-      name: `${sandboxName}-telegram-bridge`,
-      envKey: "TELEGRAM_BOT_TOKEN",
-      token: getValidatedMessagingTokenByEnvKey(MESSAGING_CHANNELS, "TELEGRAM_BOT_TOKEN"),
-    },
-    {
-      name: `${sandboxName}-wechat-bridge`,
-      envKey: "WECHAT_BOT_TOKEN",
-      token: getValidatedMessagingTokenByEnvKey(MESSAGING_CHANNELS, "WECHAT_BOT_TOKEN"),
-    },
-  ]
-    .filter(({ envKey }) => !enabledEnvKeys || enabledEnvKeys.has(envKey))
-    .filter(({ envKey }) => !disabledEnvKeys.has(envKey));
-
-  const braveWebSearchEnabled = braveProviderProfile.shouldEnableBraveWebSearch(webSearchConfig);
-  const braveApiKey = braveWebSearchEnabled
-    ? getCredential(webSearch.BRAVE_API_KEY_ENV) ||
-      normalizeCredentialValue(process.env[webSearch.BRAVE_API_KEY_ENV])
-    : null;
+  const {
+    messagingTokenDefs,
+    extraPlaceholderKeys,
+    hasMessagingTokens,
+    reusableMessagingProviders,
+    reusableMessagingChannels,
+    missingBraveApiKey,
+  } = messagingPrep.prepareCreateSandboxMessaging({
+    sandboxName,
+    channels: MESSAGING_CHANNELS,
+    enabledChannels,
+    disabledChannels,
+    webSearchConfig,
+    env: process.env,
+    getValidatedMessagingTokenByEnvKey,
+    getCredential,
+    normalizeCredentialValue,
+    registerExtraPlaceholderProviders: extraPlaceholderKeysModule.registerExtraPlaceholderProviders,
+    getMessagingChannelForEnvKey,
+    providerExistsInGateway,
+  });
   // Fail before any recreate/delete path runs: otherwise a missing key would
   // destroy the existing sandbox first and only then surface the abort (#3626).
-  if (braveWebSearchEnabled && !braveApiKey) {
+  if (missingBraveApiKey) {
     console.error("  Brave Search is enabled, but BRAVE_API_KEY is not available in this process.");
     console.error(
       "  Re-run with BRAVE_API_KEY set, or disable Brave Search before recreating the sandbox.",
     );
     process.exit(1);
-  }
-  if (braveWebSearchEnabled)
-    messagingTokenDefs.push({
-      name: `${sandboxName}-brave-search`,
-      envKey: webSearch.BRAVE_API_KEY_ENV,
-      token: braveApiKey,
-      providerType: braveProviderProfile.BRAVE_PROVIDER_PROFILE_ID,
-    });
-  const extraPlaceholderKeys: string[] =
-    require("./onboard/extra-placeholder-keys").registerExtraPlaceholderProviders(
-      sandboxName,
-      messagingTokenDefs,
-    );
-  const hasMessagingTokens = messagingTokenDefs.some(({ token }) => !!token);
-  const reusableMessagingProviders: string[] = [];
-  const reusableMessagingChannels: string[] = [];
-  if (enabledChannels != null) {
-    for (const { name, envKey, token } of messagingTokenDefs) {
-      if (token) continue;
-      const channel = envKey === "SLACK_APP_TOKEN" ? "slack" : getMessagingChannelForEnvKey(envKey);
-      if (!channel || !enabledChannels.includes(channel)) continue;
-      if (!providerExistsInGateway(name)) continue;
-      reusableMessagingProviders.push(name);
-      if (!reusableMessagingChannels.includes(channel)) {
-        reusableMessagingChannels.push(channel);
-      }
-    }
   }
 
   const existingRegistryEntryBeforePrune = registry.getSandbox(sandboxName);
