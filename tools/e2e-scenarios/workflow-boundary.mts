@@ -26,6 +26,7 @@ const FREE_STANDING_SCENARIO_JOBS = new Map([
   ["network-policy", "network-policy-vitest"],
   ["token-rotation", "token-rotation-vitest"],
   ["openclaw-tui-chat-correlation", "openclaw-tui-chat-correlation-vitest"],
+  ["issue-4434-tui-unreachable-inference", "issue-4434-tui-unreachable-inference-vitest"],
 ]);
 const ALLOWED_FREE_STANDING_JOBS = new Set([
   ...FREE_STANDING_SCENARIO_JOBS.values(),
@@ -1230,6 +1231,12 @@ export function validateE2eVitestScenariosWorkflowBoundary(
     "openclaw-tui-chat-correlation",
   );
   validateFreeStandingJobSelector(errors, jobs, "gateway-guard-recovery");
+  validateFreeStandingJobSelector(
+    errors,
+    jobs,
+    "issue-4434-tui-unreachable-inference-vitest",
+    "issue-4434-tui-unreachable-inference",
+  );
 
   const reportToPr = asRecord(jobs["report-to-pr"]);
   if (Object.keys(reportToPr).length === 0) {
@@ -1250,6 +1257,7 @@ export function validateE2eVitestScenariosWorkflowBoundary(
       "double-onboard-vitest",
       "openclaw-tui-chat-correlation-vitest",
       "gateway-guard-recovery",
+      "issue-4434-tui-unreachable-inference-vitest",
     ]) {
       if (!needs.includes(required)) errors.push(`report-to-pr job must wait for ${required}`);
     }
