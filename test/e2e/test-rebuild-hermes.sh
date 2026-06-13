@@ -253,16 +253,15 @@ try:
         sess = json.load(f)
 except Exception:
     sess = {}
-provider = sess.get('provider') or (
-    'compatible-endpoint'
-    if os.environ.get('NEMOCLAW_ENDPOINT_URL') and os.environ.get('COMPATIBLE_API_KEY')
-    else 'nvidia-prod'
-)
+env_provider = (os.environ.get('NEMOCLAW_PROVIDER') or '').strip()
+if env_provider == 'custom':
+    env_provider = 'compatible-endpoint'
+provider = sess.get('provider') or env_provider or 'compatible-endpoint'
 model = (
     sess.get('model')
     or os.environ.get('NEMOCLAW_MODEL')
     or os.environ.get('NEMOCLAW_COMPAT_MODEL')
-    or 'nvidia/nemotron-3-super-120b-a12b'
+    or 'nvidia/nvidia/nemotron-3-super-v3'
 )
 credential_hash = hashlib.sha256('${DISCORD_FAKE_TOKEN}'.encode()).hexdigest()
 plan = {
@@ -401,10 +400,11 @@ fi
 
 # Inference works after rebuild (proves credential chain is intact)
 info "Verifying inference after rebuild..."
+POST_REBUILD_INFERENCE_MODEL="${NEMOCLAW_MODEL:-${NEMOCLAW_COMPAT_MODEL:-nvidia/nvidia/nemotron-3-super-v3}}"
 INFERENCE_RESPONSE=$(openshell sandbox exec --name "${SANDBOX_NAME}" -- \
   curl -s --max-time 60 https://inference.local/v1/chat/completions \
   -H 'Content-Type: application/json' \
-  -d '{"model":"nvidia/nemotron-3-super-120b-a12b","messages":[{"role":"user","content":"Reply with exactly one word: PONG"}],"max_tokens":100}' \
+  -d "{\"model\":\"${POST_REBUILD_INFERENCE_MODEL}\",\"messages\":[{\"role\":\"user\",\"content\":\"Reply with exactly one word: PONG\"}],\"max_tokens\":100}" \
   2>&1 || true)
 if echo "${INFERENCE_RESPONSE}" | python3 -c "import json,sys; r=json.load(sys.stdin); c=r['choices'][0]['message']; print(c.get('content',''))" 2>/dev/null | grep -qi "PONG"; then
   pass "Inference works after rebuild (NVIDIA API key + provider chain intact)"

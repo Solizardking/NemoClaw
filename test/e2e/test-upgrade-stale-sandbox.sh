@@ -162,16 +162,15 @@ try:
         sess = json.load(f)
 except Exception:
     sess = {}
-provider = sess.get('provider') or (
-    'compatible-endpoint'
-    if os.environ.get('NEMOCLAW_ENDPOINT_URL') and os.environ.get('COMPATIBLE_API_KEY')
-    else 'nvidia-prod'
-)
+env_provider = (os.environ.get('NEMOCLAW_PROVIDER') or '').strip()
+if env_provider == 'custom':
+    env_provider = 'compatible-endpoint'
+provider = sess.get('provider') or env_provider or 'compatible-endpoint'
 model = (
     sess.get('model')
     or os.environ.get('NEMOCLAW_MODEL')
     or os.environ.get('NEMOCLAW_COMPAT_MODEL')
-    or 'nvidia/nemotron-3-super-120b-a12b'
+    or 'nvidia/nvidia/nemotron-3-super-v3'
 )
 reg = {'sandboxes': {'${SANDBOX_NAME}': {
     'name': '${SANDBOX_NAME}',
