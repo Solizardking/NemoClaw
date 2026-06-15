@@ -351,6 +351,45 @@ function registryHasSandbox(fixture: ReturnType<typeof createFixture>): boolean 
 
 describe("Issue #2273: atomic rebuild", () => {
   describe("Layer 2: preflight credential check", () => {
+    it("cancels interactive rebuild before credential preflight or backup on non-affirmative input", {
+      timeout: 60_000,
+    }, () => {
+      const f = createFixture({
+        credentialEnv: "NVIDIA_INFERENCE_API_KEY",
+        providerRegistered: false,
+      });
+
+      const result = runRebuild(f, {}, { yes: false, input: "n\n" });
+      const output = (result.stderr || "") + (result.stdout || "");
+
+      expect(result.status).toBe(0);
+      expect(output).toContain("Proceed? [y/N]:");
+      expect(output).toContain("Cancelled.");
+      expect(output).not.toContain("preflight failed");
+      expect(output).not.toContain("Backing up sandbox state");
+      expect(registryHasSandbox(f)).toBe(true);
+    });
+
+    it("accepts trimmed case-insensitive yes input before continuing rebuild", {
+      timeout: 60_000,
+    }, () => {
+      const f = createFixture({
+        credentialEnv: "NVIDIA_INFERENCE_API_KEY",
+        savedCredential: {
+          key: "NVIDIA_INFERENCE_API_KEY",
+          value: "nvapi-test-key-for-rebuild",
+        },
+      });
+
+      const result = runRebuild(f, {}, { yes: false, input: " YES \n" });
+      const output = (result.stderr || "") + (result.stdout || "");
+
+      expect(output).toContain("Proceed? [y/N]:");
+      expect(output).not.toContain("Cancelled.");
+      expect(output).not.toContain("preflight failed");
+      expect(output).toContain("Backing up sandbox state");
+    });
+
     it("prints active SSH session warning before interactive confirmation", {
       timeout: 60_000,
     }, () => {
