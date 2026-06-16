@@ -25,6 +25,7 @@ const {
   applyCloudFallbackSelection,
   clearNimContainerBeforeRetry,
   createRemoteModelValidator,
+  requireProviderChoice,
 }: typeof import("./onboard/setup-nim-selection") = require("./onboard/setup-nim-selection");
 const inferenceInputCapability = require("./onboard/inference-input-capability");
 const { cleanupTempDir }: typeof import("./onboard/temp-files") = require("./onboard/temp-files");
@@ -4071,10 +4072,7 @@ async function setupNim(
         });
       }
 
-      if (!selected) {
-        console.error("  No provider was selected.");
-        process.exit(1);
-      }
+      selected = requireProviderChoice(selected);
       if (selected.key !== "hermesProvider") {
         hermesAuthMethod = null;
         hermesToolGateways = [];

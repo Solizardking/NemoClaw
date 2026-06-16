@@ -507,6 +507,16 @@ function preflightRebuildCredentials(
   return false;
 }
 
+function hydrateMessagingConfigForRebuild(sandboxName: string, log: (msg: string) => void): void {
+  const rebuildSession = onboardSession.loadSession();
+  const hydratedMessagingConfig = hydrateMessagingChannelConfig(
+    getStoredMessagingChannelConfig(sandboxName, rebuildSession),
+  );
+  if (hydratedMessagingConfig) {
+    log(`Stashed messaging config for rebuild: ${Object.keys(hydratedMessagingConfig).join(",")}`);
+  }
+}
+
 function printRebuildVersionSummary(
   sandboxName: string,
   agentName: string,
@@ -595,17 +605,7 @@ export async function rebuildSandbox(
   // destructive. The manifest plan in registry is the durable source; legacy
   // session channel fields are read only as compatibility fallback by
   // getStoredMessagingChannelConfig().
-  {
-    const rebuildSession = onboardSession.loadSession();
-    const hydratedMessagingConfig = hydrateMessagingChannelConfig(
-      getStoredMessagingChannelConfig(sandboxName, rebuildSession),
-    );
-    if (hydratedMessagingConfig) {
-      log(
-        `Stashed messaging config for rebuild: ${Object.keys(hydratedMessagingConfig).join(",")}`,
-      );
-    }
-  }
+  hydrateMessagingConfigForRebuild(sandboxName, log);
 
   // Version check — show what's changing
   const versionCheck = sandboxVersion.checkAgentVersion(sandboxName);

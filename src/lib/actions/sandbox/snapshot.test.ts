@@ -3,13 +3,24 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const shieldsMock = vi.hoisted(() => {
+  const isShieldsDownMock = vi.fn(() => true);
+  let isShieldsDownExport: unknown = isShieldsDownMock;
+  return {
+    isShieldsDownMock,
+    getIsShieldsDownExport: () => isShieldsDownExport,
+    setIsShieldsDownExport: (value: unknown) => {
+      isShieldsDownExport = value;
+    },
+  };
+});
+
 const backupSandboxStateMock = vi.fn();
 const captureOpenshellMock = vi.fn(() => ({ status: 0, output: "alpha Ready\n" }));
 const dockerInspectMock = vi.fn(() => ({ status: 0, stdout: "true\n" }));
-const getSandboxMock = vi.fn(() => null);
 const findBackupMock = vi.fn();
+const getSandboxMock = vi.fn(() => null);
 const isGatewayHealthyMock = vi.fn(() => true);
-const isShieldsDownMock = vi.fn();
 const listBackupsMock = vi.fn<() => Array<Record<string, unknown>>>(() => []);
 const parseLiveSandboxNamesMock = vi.fn(() => new Set(["alpha"]));
 const restoreSandboxStateMock = vi.fn();
@@ -47,7 +58,9 @@ vi.mock("../../runtime-recovery", () => ({
 }));
 
 vi.mock("../../shields", () => ({
-  isShieldsDown: isShieldsDownMock,
+  get isShieldsDown() {
+    return shieldsMock.getIsShieldsDownExport();
+  },
   repairMutableConfigPerms: vi.fn(() => ({ applied: true, verified: true, errors: [] })),
 }));
 
@@ -77,12 +90,13 @@ vi.mock("./destroy", () => ({
 describe("runSandboxSnapshot", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    shieldsMock.setIsShieldsDownExport(shieldsMock.isShieldsDownMock);
+    shieldsMock.isShieldsDownMock.mockReturnValue(true);
     captureOpenshellMock.mockReturnValue({ status: 0, output: "alpha Ready\n" });
     dockerInspectMock.mockReturnValue({ status: 0, stdout: "true\n" });
     findBackupMock.mockReturnValue({ match: null });
     getSandboxMock.mockReturnValue(null);
     isGatewayHealthyMock.mockReturnValue(true);
-    isShieldsDownMock.mockReturnValue(true);
     listBackupsMock.mockReturnValue([]);
     restoreSandboxStateMock.mockReturnValue({
       success: true,
@@ -99,9 +113,8 @@ describe("runSandboxSnapshot", () => {
   });
 
   it("refuses snapshot creation before backup when the shields gate helper is unavailable", async () => {
+    shieldsMock.setIsShieldsDownExport(undefined);
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
-    const shields = await import("../../shields");
-    vi.mocked(shields).isShieldsDown = undefined as never;
     const { runSandboxSnapshot } = await import("./snapshot");
 
     await expect(runSandboxSnapshot("alpha", { kind: "create" })).rejects.toMatchObject({
@@ -112,7 +125,6 @@ describe("runSandboxSnapshot", () => {
     expect(consoleError.mock.calls.flat().join("\n")).toContain(
       "Cannot verify shields state. Refusing to create snapshot.",
     );
-    vi.mocked(shields).isShieldsDown = isShieldsDownMock as never;
   });
 
   it("creates a named snapshot after gateway, liveness, and shields checks pass", async () => {
@@ -171,5 +183,59 @@ describe("runSandboxSnapshot", () => {
     expect(output).toContain("initial");
     expect(output).toContain("/tmp/alpha/v2");
     expect(output).toContain("2 snapshot(s). Restore with:");
+  });
+
+  it("refuses snapshot creation before backup when the sandbox is not live", async () => {
+    parseLiveSandboxNamesMock.mockReturnValue(new Set(["beta"]));
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { runSandboxSnapshot } = await import("./snapshot");
+
+    await expect(runSandboxSnapshot("alpha", { kind: "create" })).rejects.toMatchObject({
+      exitCode: 1,
+    });
+
+    expect(backupSandboxStateMock).not.toHaveBeenCalled();
+    expect(consoleError.mock.calls.flat().join("\n")).toContain(
+      "Sandbox 'alpha' is not running. Cannot create snapshot.",
+    );
+  });
+
+  it("prints backup error details when snapshot creation fails with an error", async () => {
+    backupSandboxStateMock.mockReturnValue({
+      success: false,
+      error: "tar exploded",
+      failedDirs: [],
+      failedFiles: [],
+    });
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const { runSandboxSnapshot } = await import("./snapshot");
+
+    await expect(runSandboxSnapshot("alpha", { kind: "create" })).rejects.toMatchObject({
+      exitCode: 1,
+    });
+
+    expect(backupSandboxStateMock).toHaveBeenCalledWith("alpha", { name: null });
+    expect(consoleError.mock.calls.flat().join("\n")).toContain("tar exploded");
+  });
+
+  it("prints failed dirs and files when snapshot creation fails without an error", async () => {
+    backupSandboxStateMock.mockReturnValue({
+      success: false,
+      failedDirs: ["workspace", "skills"],
+      failedFiles: ["openclaw.json"],
+    });
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "log").mockImplementation(() => {});
+    const { runSandboxSnapshot } = await import("./snapshot");
+
+    await expect(runSandboxSnapshot("alpha", { kind: "create" })).rejects.toMatchObject({
+      exitCode: 1,
+    });
+
+    const errors = consoleError.mock.calls.flat().join("\n");
+    expect(errors).toContain("Snapshot failed.");
+    expect(errors).toContain("Failed directories: workspace, skills");
+    expect(errors).toContain("Failed files: openclaw.json");
   });
 });
