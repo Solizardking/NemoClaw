@@ -328,9 +328,11 @@ function verifyRestoreDestinationOnOwnGateway(targetSandbox: string): void {
 }
 
 function isSnapshotCreationAllowedByShields(sandboxName: string): boolean {
-  // Snapshot creation is a shields/policy boundary. If a packaged or mocked
-  // CommonJS interop surface ever omits the helper, fail closed before any
-  // backup side effect instead of throwing an ambiguous TypeError.
+  // Snapshot creation is a shields/policy boundary. Production builds should
+  // always export this helper, but stale compiled artifacts, package-boundary
+  // skew, or test doubles can present a missing CommonJS interop surface. There
+  // is no safe runtime source fix once snapshot creation has started, so keep
+  // this as permanent defense-in-depth and fail closed before backup side effects.
   const isShieldsDown = shields.isShieldsDown;
   if (typeof isShieldsDown !== "function") {
     console.error("  Cannot verify shields state. Refusing to create snapshot.");
@@ -339,57 +341,57 @@ function isSnapshotCreationAllowedByShields(sandboxName: string): boolean {
   return isShieldsDown(sandboxName);
 }
 
+function runSnapshotCreate(
+  sandboxName: string,
+  request: Extract<SnapshotRequest, { kind: "create" }>,
+): void {
+  const liveNames = requireLiveSandboxesOnSandboxGateway(
+    sandboxName,
+    "  Failed to query live sandbox state from OpenShell.",
+  );
+  if (!liveNames.has(sandboxName)) {
+    console.error(`  Sandbox '${sandboxName}' is not running. Cannot create snapshot.`);
+    snapshotExit(1);
+  }
+  if (!isSnapshotCreationAllowedByShields(sandboxName)) {
+    console.error("  Cannot create snapshot while shields are up.");
+    console.error(`  Run \`${CLI_NAME} ${sandboxName} shields down\` first, then retry.`);
+    snapshotExit(1);
+  }
+  const label = request.name ? ` (--name ${request.name})` : "";
+  console.log(`  Creating snapshot of '${sandboxName}'${label}...`);
+  const result = sandboxState.backupSandboxState(sandboxName, { name: request.name ?? null });
+  if (result.success) {
+    const manifest = result.manifest!;
+    const entry = sandboxState.findBackup(sandboxName, manifest.timestamp).match ?? manifest;
+    const v = formatSnapshotVersion(entry);
+    const nameSuffix = entry.name ? ` name=${entry.name}` : "";
+    const itemSummary = `${result.backedUpDirs.length} directories, ${result.backedUpFiles.length} files`;
+    console.log(`  ${G}✓${R} Snapshot ${v}${nameSuffix} created (${itemSummary})`);
+    console.log(`    ${manifest.backupPath}`);
+    return;
+  }
+  if (result.error) {
+    console.error(`  ${result.error}`);
+  } else {
+    console.error("  Snapshot failed.");
+    if (result.failedDirs.length > 0) {
+      console.error(`  Failed directories: ${result.failedDirs.join(", ")}`);
+    }
+    if (result.failedFiles.length > 0) {
+      console.error(`  Failed files: ${result.failedFiles.join(", ")}`);
+    }
+  }
+  snapshotExit(1);
+}
+
 export async function runSandboxSnapshot(
   sandboxName: string,
   request: SnapshotRequest = { kind: "help" },
 ) {
   switch (request.kind) {
     case "create": {
-      // Select the sandbox's gateway before the health probe and `sandbox list`
-      // — Docker/VM-driver health and the sandbox listing both require the
-      // sandbox's gateway to be the active one, otherwise a sandbox registered
-      // on a non-default `NEMOCLAW_GATEWAY_PORT` fails health-check before the
-      // subsequent list ever runs.
-      const liveNames = requireLiveSandboxesOnSandboxGateway(
-        sandboxName,
-        "  Failed to query live sandbox state from OpenShell.",
-      );
-      if (!liveNames.has(sandboxName)) {
-        console.error(`  Sandbox '${sandboxName}' is not running. Cannot create snapshot.`);
-        snapshotExit(1);
-      }
-      if (!isSnapshotCreationAllowedByShields(sandboxName)) {
-        console.error("  Cannot create snapshot while shields are up.");
-        console.error(`  Run \`${CLI_NAME} ${sandboxName} shields down\` first, then retry.`);
-        snapshotExit(1);
-      }
-      const label = request.name ? ` (--name ${request.name})` : "";
-      console.log(`  Creating snapshot of '${sandboxName}'${label}...`);
-      const result = sandboxState.backupSandboxState(sandboxName, { name: request.name ?? null });
-      if (result.success) {
-        // Virtual snapshotVersion is only assigned by listBackups, so re-resolve
-        // the just-created snapshot by its timestamp to get a valid v<N>.
-        const manifest = result.manifest!;
-        const entry = sandboxState.findBackup(sandboxName, manifest.timestamp).match ?? manifest;
-        const v = formatSnapshotVersion(entry);
-        const nameSuffix = entry.name ? ` name=${entry.name}` : "";
-        const itemSummary = `${result.backedUpDirs.length} directories, ${result.backedUpFiles.length} files`;
-        console.log(`  ${G}\u2713${R} Snapshot ${v}${nameSuffix} created (${itemSummary})`);
-        console.log(`    ${manifest.backupPath}`);
-      } else {
-        if (result.error) {
-          console.error(`  ${result.error}`);
-        } else {
-          console.error("  Snapshot failed.");
-          if (result.failedDirs.length > 0) {
-            console.error(`  Failed directories: ${result.failedDirs.join(", ")}`);
-          }
-          if (result.failedFiles.length > 0) {
-            console.error(`  Failed files: ${result.failedFiles.join(", ")}`);
-          }
-        }
-        snapshotExit(1);
-      }
+      runSnapshotCreate(sandboxName, request);
       break;
     }
     case "list": {
