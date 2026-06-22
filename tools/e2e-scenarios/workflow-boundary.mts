@@ -3299,6 +3299,192 @@ function validateModelRouterProviderRoutedInferenceVitestJob(
   requireRunContains(errors, cleanup, 'rm -rf "${DOCKER_CONFIG}"');
 }
 
+function runContainsCloudflaredAptInstall(run: string): boolean {
+  return /apt-get\s+install[\s\S]*cloudflared|apt\s+install[\s\S]*cloudflared|pkg\.cloudflare\.com\/cloudflared/.test(
+    run,
+  );
+}
+
+function validateTunnelLifecycleVitestJob(errors: string[], jobs: WorkflowRecord): void {
+  const jobName = "tunnel-lifecycle-vitest";
+  const scenarioName = "tunnel-lifecycle";
+  const job = asRecord(jobs[jobName]);
+  if (Object.keys(job).length === 0) {
+    errors.push("workflow missing tunnel-lifecycle-vitest job");
+    return;
+  }
+
+  if (job["runs-on"] !== "ubuntu-latest") {
+    errors.push("tunnel-lifecycle-vitest job must run on ubuntu-latest");
+  }
+  if (job["timeout-minutes"] !== 75) {
+    errors.push("tunnel-lifecycle-vitest job must keep the 75 minute timeout");
+  }
+  validateFreeStandingJobSelector(errors, jobs, jobName, scenarioName);
+
+  const jobEnv = asRecord(job.env);
+  if ("DOCKER_CONFIG" in jobEnv) {
+    errors.push("tunnel-lifecycle-vitest job must not set DOCKER_CONFIG at job level");
+  }
+  if (jobEnv.NEMOCLAW_CLI_BIN !== "${{ github.workspace }}/bin/nemoclaw.js") {
+    errors.push("tunnel-lifecycle-vitest job must point NEMOCLAW_CLI_BIN at the repo CLI");
+  }
+  if (jobEnv.FREE_STANDING_VITEST_JOB !== "1") {
+    errors.push("tunnel-lifecycle-vitest job must set FREE_STANDING_VITEST_JOB=1");
+  }
+  if (jobEnv.FREE_STANDING_SCENARIO_ID !== scenarioName) {
+    errors.push(`tunnel-lifecycle-vitest job must set FREE_STANDING_SCENARIO_ID=${scenarioName}`);
+  }
+  if (jobEnv.NEMOCLAW_RUN_E2E_SCENARIOS !== "1") {
+    errors.push("tunnel-lifecycle-vitest job must set NEMOCLAW_RUN_E2E_SCENARIOS=1");
+  }
+  requireEnvDoesNotExposeSecret(
+    errors,
+    "tunnel-lifecycle-vitest job",
+    jobEnv,
+    "NVIDIA_INFERENCE_API_KEY",
+  );
+
+  const steps = asSteps(job.steps);
+  requireNoDispatchInputInterpolation(errors, steps);
+  for (const step of steps) {
+    const stepName = `tunnel-lifecycle-vitest step '${step.name ?? step.uses ?? "<unnamed>"}'`;
+    const stepEnv = asRecord(step.env);
+    requireEnvDoesNotExposeSecret(errors, stepName, stepEnv, "GITHUB_TOKEN");
+    if (step.name !== "Run tunnel lifecycle live test") {
+      requireEnvDoesNotExposeSecret(errors, stepName, stepEnv, "NVIDIA_INFERENCE_API_KEY");
+      requireEnvDoesNotExposeSecret(errors, stepName, stepEnv, "NVIDIA_API_KEY");
+    }
+    if (step.name !== "Authenticate to Docker Hub") {
+      requireEnvDoesNotExposeSecret(errors, stepName, stepEnv, "DOCKERHUB_USERNAME");
+      requireEnvDoesNotExposeSecret(errors, stepName, stepEnv, "DOCKERHUB_TOKEN");
+      requireNoDockerHubAuthInRun(errors, stepName, stringValue(step.run));
+    }
+  }
+
+  const checkout = steps.find((step) => stringValue(step.uses).startsWith("actions/checkout@"));
+  if (!checkout) {
+    errors.push("tunnel-lifecycle-vitest job missing checkout step");
+  }
+  requireFullShaAction(errors, checkout, "tunnel-lifecycle-vitest checkout");
+  if (asRecord(checkout?.with)["persist-credentials"] !== false) {
+    errors.push("tunnel-lifecycle-vitest checkout step must set persist-credentials=false");
+  }
+
+  const configureDockerAuth = requireJobStep(
+    errors,
+    jobName,
+    steps,
+    "Configure isolated Docker auth directory",
+  );
+  requireRunContains(
+    errors,
+    configureDockerAuth,
+    'echo "DOCKER_CONFIG=${RUNNER_TEMP}/docker-config-tunnel-lifecycle" >> "$GITHUB_ENV"',
+  );
+  requireRunDoesNotContain(errors, configureDockerAuth, "${{ runner.temp }}");
+  requireRunDoesNotContain(errors, configureDockerAuth, "${{ github.workspace }}");
+
+  const dockerLogin = requireJobStep(errors, jobName, steps, "Authenticate to Docker Hub");
+  const dockerLoginEnv = asRecord(dockerLogin?.env);
+  if (dockerLoginEnv.DOCKERHUB_USERNAME !== "${{ secrets.DOCKERHUB_USERNAME }}") {
+    errors.push(
+      "tunnel-lifecycle-vitest Docker Hub auth must receive DOCKERHUB_USERNAME from secrets",
+    );
+  }
+  if (dockerLoginEnv.DOCKERHUB_TOKEN !== "${{ secrets.DOCKERHUB_TOKEN }}") {
+    errors.push(
+      "tunnel-lifecycle-vitest Docker Hub auth must receive DOCKERHUB_TOKEN from secrets",
+    );
+  }
+  requireRunContains(errors, dockerLogin, 'mkdir -p "${DOCKER_CONFIG}"');
+  requireRunContains(errors, dockerLogin, 'chmod 700 "${DOCKER_CONFIG}"');
+  requireRunContains(errors, dockerLogin, "docker login docker.io");
+  requireRunContains(errors, dockerLogin, "--password-stdin");
+  requireRunContains(errors, dockerLogin, "continuing with anonymous pulls");
+
+  const setupNode = namedStep(steps, "Set up Node");
+  if (!setupNode) {
+    errors.push("tunnel-lifecycle-vitest job missing step: Set up Node");
+  }
+  requireFullShaAction(errors, setupNode, "tunnel-lifecycle-vitest setup-node");
+
+  const installRootDependencies = requireJobStep(
+    errors,
+    jobName,
+    steps,
+    "Install root dependencies",
+  );
+  requireRunContains(errors, installRootDependencies, "npm ci --ignore-scripts");
+
+  const buildCli = requireJobStep(errors, jobName, steps, "Build CLI");
+  requireRunContains(errors, buildCli, "npm run build:cli");
+
+  const cloudflaredPrereq = requireJobStep(
+    errors,
+    jobName,
+    steps,
+    "Install and verify cloudflared prerequisite",
+  );
+  const cloudflaredPrereqEnv = asRecord(cloudflaredPrereq?.env);
+  requireEnvDoesNotExposeSecret(
+    errors,
+    "tunnel-lifecycle-vitest cloudflared prerequisite step",
+    cloudflaredPrereqEnv,
+    "NVIDIA_INFERENCE_API_KEY",
+  );
+  requireEnvDoesNotExposeSecret(
+    errors,
+    "tunnel-lifecycle-vitest cloudflared prerequisite step",
+    cloudflaredPrereqEnv,
+    "NVIDIA_API_KEY",
+  );
+  requireRunContains(errors, cloudflaredPrereq, "cloudflared --version");
+  requireRunContains(errors, cloudflaredPrereq, "test/e2e/lib/cloudflared-version-resolver.sh");
+  requireRunContains(errors, cloudflaredPrereq, "sudo apt-get install -y");
+  requireRunContains(errors, cloudflaredPrereq, "cloudflared=${cf_version}");
+
+  const runVitest = requireJobStep(errors, jobName, steps, "Run tunnel lifecycle live test");
+  const runVitestEnv = asRecord(runVitest?.env);
+  if (runVitestEnv.NVIDIA_INFERENCE_API_KEY !== "${{ secrets.NVIDIA_INFERENCE_API_KEY }}") {
+    errors.push(
+      "tunnel-lifecycle-vitest Vitest step must receive NVIDIA_INFERENCE_API_KEY from secrets",
+    );
+  }
+  if (runContainsCloudflaredAptInstall(stringValue(runVitest?.run))) {
+    errors.push(
+      "tunnel-lifecycle-vitest Vitest step must not run cloudflared APT installation with NVIDIA_INFERENCE_API_KEY in scope",
+    );
+  }
+  requireRunContains(errors, runVitest, "npx vitest run --project e2e-scenarios-live");
+  requireRunContains(errors, runVitest, "test/e2e-scenario/live/tunnel-lifecycle.test.ts");
+
+  const upload = requireJobStep(errors, jobName, steps, "Upload tunnel lifecycle artifacts");
+  requireFullShaAction(errors, upload, "tunnel-lifecycle-vitest upload-artifact");
+  const uploadWith = asRecord(upload?.with);
+  if (uploadWith.name !== "e2e-vitest-scenarios-tunnel-lifecycle") {
+    errors.push("tunnel-lifecycle-vitest artifact upload name must be stable");
+  }
+  const uploadPath = stringValue(uploadWith.path);
+  requireUploadPathContains(errors, uploadPath, "e2e-artifacts/vitest/tunnel-lifecycle/");
+  if (uploadWith["include-hidden-files"] !== false) {
+    errors.push("tunnel-lifecycle-vitest artifact upload must set include-hidden-files: false");
+  }
+  if (uploadWith["if-no-files-found"] !== "ignore") {
+    errors.push("tunnel-lifecycle-vitest artifact upload must ignore missing fixture artifacts");
+  }
+  if (uploadWith["retention-days"] !== 14) {
+    errors.push("tunnel-lifecycle-vitest artifact upload retention-days must be 14");
+  }
+
+  const cleanup = requireJobStep(errors, jobName, steps, "Clean up Docker auth");
+  if (cleanup?.if !== "always()") {
+    errors.push("tunnel-lifecycle-vitest Docker auth cleanup must always run");
+  }
+  requireRunContains(errors, cleanup, "docker logout docker.io");
+  requireRunContains(errors, cleanup, 'rm -rf "${DOCKER_CONFIG}"');
+}
+
 function validateIssue2478CrashLoopRecoveryVitestJob(errors: string[], jobs: WorkflowRecord): void {
   const jobName = "issue-2478-crash-loop-recovery-vitest";
   const scenarioName = "issue-2478-crash-loop-recovery";
@@ -4490,6 +4676,8 @@ export function validateE2eVitestScenariosWorkflowBoundary(
   validateBedrockRuntimeCompatibleAnthropicVitestJob(errors, jobs);
 
   validateIssue2478CrashLoopRecoveryVitestJob(errors, jobs);
+
+  validateTunnelLifecycleVitestJob(errors, jobs);
 
   validateFreeStandingJobSelector(
     errors,
