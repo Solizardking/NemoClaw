@@ -64,6 +64,44 @@ describe("nemo-clawd agent packaging", () => {
     assert.ok(!packageJson.files.includes("agents/clawd-operator/.env"));
     assert.ok(!packageJson.files.includes("agents/clawd-operator/clawd-agent/.env.local"));
   });
+
+  it("packages the Hermes base contract and imported dist runtime without local artifacts", () => {
+    const packageJson = JSON.parse(readRepoFile("package.json"));
+    const nemoClawdDockerfile = readRepoFile("agents/nemo-clawd/Dockerfile");
+    const files = packageJson.files;
+
+    assert.equal(packageJson.scripts["build:plugin"], "tsc -p tsconfig.nemoclawd.json");
+    assert.ok(files.includes("dist/**"));
+    assert.ok(files.includes("dist/acp/**"));
+    assert.ok(files.includes("dist/agents/**"));
+    assert.ok(files.includes("dist/gateway/**"));
+    assert.ok(files.includes("dist/plugin-sdk/**"));
+    assert.ok(files.includes("dist/*.js"));
+    assert.ok(files.includes("dist/*.d.ts"));
+    assert.ok(files.includes("dist/*.map"));
+
+    assert.ok(files.includes("agents/hermes/Dockerfile"));
+    assert.ok(files.includes("agents/hermes/Dockerfile.base"));
+    assert.ok(files.includes("agents/hermes/generate-config.ts"));
+    assert.ok(files.includes("agents/hermes/hermes-wrapper.py"));
+    assert.ok(files.includes("agents/hermes/manifest.yaml"));
+    assert.ok(files.includes("agents/hermes/policy-additions.yaml"));
+    assert.ok(files.includes("agents/hermes/policy-permissive.yaml"));
+    assert.ok(files.includes("agents/hermes/runtime-config-guard.py"));
+    assert.ok(files.includes("agents/hermes/seed-dashboard-config.py"));
+    assert.ok(files.includes("agents/hermes/start.sh"));
+    assert.ok(files.includes("agents/hermes/validate-env-secret-boundary.py"));
+    assert.ok(files.includes("agents/hermes/config/**"));
+    assert.ok(files.includes("agents/hermes/host/**"));
+    assert.ok(files.includes("agents/hermes/plugin/**"));
+
+    assert.ok(!files.includes("agents/hermes/**"));
+    assert.ok(!files.includes("agents/hermes/.DS_Store"));
+    assert.ok(!files.includes("agents/hermes/.env"));
+    assert.ok(!files.includes("agents/hermes/.env.local"));
+    assert.match(nemoClawdDockerfile, /FROM \$\{BASE_IMAGE\}/);
+    assert.match(nemoClawdDockerfile, /command -v hermes/);
+  });
 });
 
 describe("nemo-clawd MCP transports", () => {
