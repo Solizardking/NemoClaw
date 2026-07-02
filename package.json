@@ -1,7 +1,7 @@
 {
   "name": "@mawdbotsonsolana/nemoclawd",
   "version": "0.5.0",
-  "description": "nemoClawd — xAI Grok powered Solana agentic trading engine with $CLAWD token, 31 MCP tools, multi-agent research, and Telegram trading bot.",
+  "description": "Nemo Clawd — xAI Grok powered Solana agentic trading engine with $CLAWD token, 31 MCP tools, multi-agent research, and Telegram trading bot.",
   "license": "Apache-2.0",
   "keywords": [
     "solana",
