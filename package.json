@@ -39,6 +39,7 @@
     "public:audit": "bash scripts/public-release-audit.sh",
     "tools:solana:readiness": "node --experimental-strip-types tools/e2e/solana-readiness.mts --no-network --json",
     "tools:solana:payments": "node --experimental-strip-types tools/e2e/solana-payments.mts --network devnet --recipient So11111111111111111111111111111111111111112 --tokens usdc,clawd --resource-url https://nemoclawd.local/api/paid --json",
+    "tools:solana:keychain": "node --experimental-strip-types tools/e2e/solana-keychain.mts --backend memory --environment development --cluster local-validator --private-key-path ~/.config/solana/id.json --json",
     "pack:check": "npm pack --dry-run --cache /tmp/nemoclawd-npm-cache",
     "release:check": "npm run build && npm test && npm run public:audit && npm run pack:check",
     "publish:public": "npm publish --access public",
