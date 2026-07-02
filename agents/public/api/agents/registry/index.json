@@ -1,0 +1,387 @@
+{
+  "schemaVersion": "openclawd.metaplex.registry.index.v1",
+  "generatedAt": "2026-07-02T23:10:23.787Z",
+  "registry": "metaplex-agent-registry",
+  "host": "https://agents.openclawd.biz",
+  "count": 54,
+  "agents": [
+    {
+      "id": "airdrop-hunter",
+      "name": "DeFi Airdrop Hunter",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/airdrop-hunter.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "alpha-leak-detector",
+      "name": "Crypto Alpha & Signal Detector",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/alpha-leak-detector.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "apy-vs-apr-educator",
+      "name": "APY vs APR Educator",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/apy-vs-apr-educator.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "bridge-security-analyst",
+      "name": "Cross-Chain Bridge Security Analyst",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/bridge-security-analyst.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "clawd-bridge-assistant",
+      "name": "CLAWD Bridge Assistant",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/clawd-bridge-assistant.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "clawd-firecrawl",
+      "name": "CLAWD Firecrawl Researcher",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/clawd-firecrawl.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "clawd-governance-guide",
+      "name": "CLAWD Governance Guide",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/clawd-governance-guide.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "clawd-liquidity-strategist",
+      "name": "CLAWD Liquidity Provider Strategist",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/clawd-liquidity-strategist.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "clawd-mayhem-mode",
+      "name": "CLAWD Mayhem Mode",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/clawd-mayhem-mode.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "clawd-onboarding-guide",
+      "name": "CLAWD Ecosystem Onboarding Guide",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/clawd-onboarding-guide.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "clawd-portfolio-tracker",
+      "name": "CLAWD Portfolio Tracker",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/clawd-portfolio-tracker.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "clawd-pumpfun-official",
+      "name": "CLAWD × Pump.fun Official Agent",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/clawd-pumpfun-official.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "clawd-risk-monitor",
+      "name": "CLAWD Protocol Risk Monitor",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/clawd-risk-monitor.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "clawd-web3-domain-agent",
+      "name": ".clawd Web3 Domain Agent",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/clawd-web3-domain-agent.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "clawd-yield-aggregator",
+      "name": "CLAWD Yield Aggregator",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/clawd-yield-aggregator.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "crypto-news-analyst",
+      "name": "Crypto News Analyst",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/crypto-news-analyst.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "crypto-tax-strategist",
+      "name": "Crypto Tax Strategy Advisor",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/crypto-tax-strategist.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "defi-insurance-advisor",
+      "name": "DeFi Insurance & Risk Coverage Advisor",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/defi-insurance-advisor.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "defi-onboarding-mentor",
+      "name": "DeFi Beginner Onboarding Mentor",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/defi-onboarding-mentor.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "defi-protocol-comparator",
+      "name": "DeFi Protocol Comparison Expert",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/defi-protocol-comparator.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "defi-risk-scoring-engine",
+      "name": "DeFi Protocol Risk Scoring Engine",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/defi-risk-scoring-engine.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "defi-yield-farmer",
+      "name": "DeFi Yield Farming Strategist",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/defi-yield-farmer.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "dex-aggregator-optimizer",
+      "name": "DEX Aggregator Route Optimizer",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/dex-aggregator-optimizer.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "gas-optimization-expert",
+      "name": "Gas Cost Optimization Expert",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/gas-optimization-expert.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "governance-proposal-analyst",
+      "name": "DAO Governance Proposal Analyst",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/governance-proposal-analyst.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "impermanent-loss-calculator",
+      "name": "Impermanent Loss Calculator",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/impermanent-loss-calculator.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "layer-2-comparison-guide",
+      "name": "Layer 2 Comparison Guide",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/layer-2-comparison-guide.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "liquidation-risk-manager",
+      "name": "Liquidation Risk Manager",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/liquidation-risk-manager.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "liquidity-pool-analyzer",
+      "name": "Liquidity Pool Deep Analyzer",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/liquidity-pool-analyzer.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "mev-protection-advisor",
+      "name": "MEV Protection Advisor",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/mev-protection-advisor.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "narrative-trend-analyst",
+      "name": "Crypto Narrative & Trend Analyst",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/narrative-trend-analyst.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "nft-liquidity-advisor",
+      "name": "NFT Liquidity & Lending Advisor",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/nft-liquidity-advisor.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "nvidia-glm-5-2-wallet-agent",
+      "name": "NVIDIA GLM 5.2 Wallet Agent",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/nvidia-glm-5-2-wallet-agent.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "pay-agent",
+      "name": "Pay Agent",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/pay-agent.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "portfolio-rebalancing-advisor",
+      "name": "DeFi Portfolio Rebalancing Advisor",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/portfolio-rebalancing-advisor.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "protocol-revenue-analyst",
+      "name": "Protocol Revenue & Fundamentals Analyst",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/protocol-revenue-analyst.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "protocol-treasury-analyst",
+      "name": "DAO Treasury & Resource Analyst",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/protocol-treasury-analyst.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "pump-fun-sdk-expert",
+      "name": "Pump Fun SDK Expert",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/pump-fun-sdk-expert.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "smart-contract-auditor",
+      "name": "Smart Contract Security Auditor",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/smart-contract-auditor.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "solana-jupiter-router",
+      "name": "Solana Jupiter Router",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/solana-jupiter-router.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "solana-kamino-picker",
+      "name": "Solana Kamino Vault Picker",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/solana-kamino-picker.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "solana-mpl-core-launcher",
+      "name": "Solana MPL Core Launcher",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/solana-mpl-core-launcher.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "solana-pumpfun-screener",
+      "name": "Solana Pump.fun Rug Screener",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/solana-pumpfun-screener.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "solana-validator-picker",
+      "name": "Solana Validator Picker",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/solana-validator-picker.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "spa-tokenomics-analyst",
+      "name": "SPA Tokenomics Analyst",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/spa-tokenomics-analyst.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "stablecoin-comparator",
+      "name": "Stablecoin Deep Comparator",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/stablecoin-comparator.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "staking-rewards-calculator",
+      "name": "Staking Rewards Calculator",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/staking-rewards-calculator.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "token-unlock-tracker",
+      "name": "Token Unlock Schedule Tracker",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/token-unlock-tracker.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "usds-stablecoin-expert",
+      "name": "USDs Stablecoin Expert",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/usds-stablecoin-expert.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "vespa-optimizer",
+      "name": "veSPA Lock Optimizer",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/vespa-optimizer.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "wallet-security-advisor",
+      "name": "Crypto Wallet Security Advisor",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/wallet-security-advisor.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "whale-watcher",
+      "name": "Crypto Whale Watcher",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/whale-watcher.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "yield-dashboard-builder",
+      "name": "Personal DeFi Dashboard Builder",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/yield-dashboard-builder.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    },
+    {
+      "id": "yield-sustainability-analyst",
+      "name": "DeFi Yield Sustainability Analyst",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/yield-sustainability-analyst.json",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration"
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "erc-8004-agent-registration-v1",
+  "protocol": "metaplex-agent-registry",
+  "name": "DeFi Airdrop Hunter",
+  "description": "Identify and strategize for potential protocol airdrops",
+  "image": "https://agents.openclawd.biz/nich.jpg",
+  "external_url": "https://agents.openclawd.biz/agents/airdrop-hunter",
+  "active": true,
+  "createdAt": "2026-04-16",
+  "updatedAt": "2026-07-02T23:10:23.787Z",
+  "tags": [
+    "airdrop",
+    "rewards",
+    "strategy",
+    "farming",
+    "allocation",
+    "clawd",
+    "solana",
+    "jupiter",
+    "lfg",
+    "one-shot"
+  ],
+  "categories": [
+    "trading"
+  ],
+  "owner": {
+    "organization": "OpenClawd",
+    "website": "https://openclawd.biz",
+    "token": {
+      "symbol": "CLAWD",
+      "chain": "solana",
+      "mint": "8cHzQHUS2s2h8TzCmfqPKYiM4dSt4roa3n7MyRLApump"
+    }
+  },
+  "services": [
+    {
+      "name": "web",
+      "endpoint": "https://agents.openclawd.biz/agents/airdrop-hunter"
+    },
+    {
+      "name": "A2A",
+      "endpoint": "https://agents.openclawd.biz/api/agents/a2a",
+      "version": "0.3.0"
+    },
+    {
+      "name": "catalog",
+      "endpoint": "https://agents.openclawd.biz/api/agents/catalog/airdrop-hunter.json"
+    },
+    {
+      "name": "registration",
+      "endpoint": "https://agents.openclawd.biz/api/agents/registry/airdrop-hunter.json"
+    }
+  ],
+  "registrations": [
+    {
+      "agentId": "openclawd:airdrop-hunter",
+      "agentRegistry": "solana:mainnet:metaplex-agent-registry",
+      "status": "pending-onchain-registration",
+      "registrationUri": "https://agents.openclawd.biz/api/agents/registry/airdrop-hunter.json"
+    }
+  ],
+  "supportedTrust": [
+    "reputation",
+    "crypto-economic",
+    "token-gated"
+  ],
+  "metaplex": {
+    "programs": [
+      "agent-registry"
+    ],
+    "sdk": "@metaplex-foundation/mpl-agent-registry",
+    "expectedIdentity": {
+      "asset": null,
+      "agentIdentityPda": null,
+      "assetSignerPda": null,
+      "executiveProfilePda": null
+    },
+    "registrationFlow": [
+      "mint MPL Core agent asset",
+      "register AgentIdentity with this registrationUri",
+      "optionally register an executive profile",
+      "delegate execution only after operator review"
+    ]
+  },
+  "openclawd": {
+    "identifier": "airdrop-hunter",
+    "capabilities": [
+      "read-only",
+      "swap-execution",
+      "a2a-message"
+    ],
+    "payment": null,
+    "agentToken": null
+  }
+}
