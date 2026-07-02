@@ -137,6 +137,16 @@ CLI commands for launching, connecting, monitoring, wallet setup, and Solana ser
 {bdg-secondary}`Reference`
 :::
 
+:::{grid-item-card} AI Training
+:link: reference/ai-training
+:link-type: doc
+
+Source lanes, build checks, model-kit commands, NVIDIA adapters, and generated-data policy.
+
++++
+{bdg-secondary}`Reference`
+:::
+
 :::{grid-item-card} Inference Profiles
 :link: reference/inference-profiles
 :link-type: doc
@@ -264,6 +274,7 @@ Monitor Sandbox Activity <monitoring/monitor-sandbox-activity>
 :hidden:
 
 Architecture <reference/architecture>
+AI Training <reference/ai-training>
 Commands <reference/commands>
 Inference Profiles <reference/inference-profiles>
 Network Policies <reference/network-policies>

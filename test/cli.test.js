@@ -32,6 +32,7 @@ describe("CLI dispatch", () => {
     assert.ok(r.out.includes("doctor"), "missing doctor command");
     assert.ok(r.out.includes("launch"), "missing launch command");
     assert.ok(r.out.includes("financial-harness"), "missing financial harness command");
+    assert.ok(r.out.includes("ai-training"), "missing ai-training command");
     assert.ok(r.out.includes("birth"), "missing birth command");
     assert.ok(r.out.includes("Lobster-themed"), "missing lobster theme");
     assert.ok(r.out.includes("solana-agent"), "missing Solana agent action");

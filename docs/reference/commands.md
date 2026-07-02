@@ -50,6 +50,7 @@ $ nemoclawd doctor
 $ nemoclawd launch
 $ nemoclawd solana
 $ nemoclawd financial-harness
+$ nemoclawd ai-training
 ```
 
 Create a wallet and start runtime services only after the dry-run report matches your intended posture:
@@ -110,6 +111,25 @@ This checks:
 - OpenShell installation state
 - sandbox registry state
 - Solana RPC, Privy wallet, Telegram token, and Helius configuration
+
+### `nemoclawd ai-training`
+
+Inspect the bundled AI training source lanes and print the commands for deeper model-kit and local-stack checks.
+
+```console
+$ nemoclawd ai-training
+$ nemoclawd ai-training --json
+```
+
+Run the build gate explicitly when changing imported training assets.
+
+```console
+$ nemoclawd ai-training check
+$ npm run ai-training:check
+```
+
+The command verifies source files under `ai-training/` and rejects generated training data, model outputs, local virtual environments, caches, and secret-like files.
+See [AI Training Integration](ai-training.md) for the lane map and generated-data policy.
 
 ### `nemoclawd onboard`
 
