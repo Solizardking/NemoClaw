@@ -2,10 +2,10 @@
 title:
   page: "NVIDIA Nemo Clawd Developer Guide"
   nav: "Nemo Clawd"
-description: "Sandbox Nemo Clawd with NVIDIA inference routing and strict network policies."
-keywords: ["nemoclawd sandboxed ai agent", "nemo clawd openshell plugin"]
-topics: ["generative_ai", "ai_agents"]
-tags: ["nemoclawd", "openshell", "sandboxing", "inference_routing", "nemoclawd"]
+description: "Onboard new users to Solana-aware blockchain AI with Nemo Clawd, OpenShell sandboxes, routed inference, wallets, and network policies."
+keywords: ["nemoclawd sandboxed ai agent", "solana blockchain ai onboarding", "nemo clawd openshell plugin"]
+topics: ["generative_ai", "ai_agents", "solana"]
+tags: ["nemoclawd", "openshell", "sandboxing", "inference_routing", "solana", "wallets"]
 content:
   type: get_started
   difficulty: technical_beginner
@@ -18,20 +18,20 @@ status: published
   SPDX-License-Identifier: Apache-2.0
 -->
 
-# NVIDIA Nemo Clawd
+# NVIDIA Nemo Clawd Developer Guide
 
 ```{include} ../README.md
 :start-after: <!-- start-badges -->
 :end-before: <!-- end-badges -->
 ```
 
-Nemo Clawd is the Nemo Clawd plugin for [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell).
-It runs Nemo Clawd inside a sandboxed environment with NVIDIA cloud inference, such as Nemotron 3 Super 120B through [build.nvidia.com](https://build.nvidia.com).
-The sandbox enforces strict network policies and operator-controlled egress approval.
+Nemo Clawd is a Solana-aware blockchain AI runtime for [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell).
+It runs Nemo Clawd inside a sandboxed environment with routed inference, a Hermes-derived agent image, the Nemo Clawd MCP server, clawd operator services, Solana tooling, and strict network policies.
+The docs start with new-user onboarding and then move into reference material for operators who need deeper control.
 
 ## Get Started
 
-Install the CLI and launch a sandboxed Nemo Clawd instance in a few commands.
+Install the CLI, create a sandboxed agent, and run dry-run Solana checks before wallet-aware services start.
 
 ```{raw} html
 <style>
@@ -78,14 +78,17 @@ Install the CLI and launch a sandboxed Nemo Clawd instance in a few commands.
   </div>
   <div class="nc-term-body">
     <div><span class="nc-ps">$ </span>npm install -g @mawdbotsonsolana/nemoclawd</div>
+    <div><span class="nc-ps">$ </span>nemoclawd doctor</div>
+    <div><span class="nc-ps">$ </span>nemoclawd launch</div>
+    <div><span class="nc-ps">$ </span>nemoclawd financial-harness</div>
   </div>
 </div>
 ```
 
-Run `nemoclawd doctor ` to validate your machine, or `nemoclawd --help` to view the full CLI reference.
-You can also clone the [Nemo Clawd repository](https://github.com/x402agent/Nemo Clawd) to explore the plugin source and blueprint.
+Run `nemoclawd doctor` to validate your machine, or `nemoclawd --help` to view the full CLI reference.
+Use `nemoclawd launch`, `nemoclawd solana`, and `nemoclawd financial-harness` as the first blockchain AI onboarding checkpoints.
 
-Proceed to the [Quickstart](get-started/quickstart.md) for step-by-step instructions.
+Proceed to the [Quickstart](get-started/quickstart.md) for step-by-step setup, or read [Solana and Blockchain AI Onboarding](solana/onboarding.md) first if you are new to Solana wallets, RPC, clusters, and policy controls.
 
 ---
 
@@ -108,17 +111,27 @@ Learn what Nemo Clawd does and how it integrates Nemo Clawd with OpenShell.
 :link: get-started/quickstart
 :link-type: doc
 
-Install the CLI, configure inference, and launch your first sandboxed agent.
+Install the CLI, launch your first sandboxed agent, and run Solana safety checks.
 
 +++
 {bdg-secondary}`Tutorial`
+:::
+
+:::{grid-item-card} Solana Onboarding
+:link: solana/onboarding
+:link-type: doc
+
+Learn the wallet, RPC, network policy, and blockchain AI concepts needed for a safe first run.
+
++++
+{bdg-secondary}`Get Started`
 :::
 
 :::{grid-item-card} Commands
 :link: reference/commands
 :link-type: doc
 
-CLI commands for launching, connecting, monitoring, and managing sandboxes.
+CLI commands for launching, connecting, monitoring, wallet setup, and Solana services.
 
 +++
 {bdg-secondary}`Reference`
@@ -178,7 +191,7 @@ Task-oriented guides for inference, deployment, and policy management.
 :link: solana/financial-harness
 :link-type: doc
 
-Dry-run Solana wallet, RPC, policy, and trading guardrail preflight.
+Dry-run Solana wallet, RPC, policy, and signing guardrail preflight.
 
 +++
 {bdg-secondary}`How-To`
@@ -227,6 +240,7 @@ Customize the Network Policy <network-policy/customize-network-policy>
 :caption: Solana
 :hidden:
 
+Solana and Blockchain AI Onboarding <solana/onboarding>
 Financial Harness <solana/financial-harness>
 ```
 

@@ -37,7 +37,7 @@ $ openshell inference set --provider nvidia-nim --model nvidia/nemotron-3-super-
 ```
 
 This requires the `NVIDIA_API_KEY` environment variable.
-The `nemoclawd onboard ` command stores this key in `~/.nemoclawd/credentials.json` on first run.
+The `nemoclawd onboard` command stores this key in `~/.nemoclawd/credentials.json` on first run.
 
 ## Verify the Active Model
 
@@ -70,3 +70,4 @@ You can switch to any of these models at runtime.
 ## Related Topics
 
 - [Inference Profiles](../reference/inference-profiles.md) for full profile configuration details.
+- [Solana and Blockchain AI Onboarding](../solana/onboarding.md) for the first-run Solana path.

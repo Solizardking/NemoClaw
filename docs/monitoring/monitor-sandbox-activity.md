@@ -102,7 +102,7 @@ $  nemoclawd agent --agent main --local -m "Test inference" --session-id debug
 
 If the request fails, check the following:
 
-1. Run `nemoclawd status ` to confirm the active provider and endpoint.
+1. Run `nemoclawd status` to confirm the active provider and endpoint.
 2. Run `nemoclawd logs -f` to view error messages from the blueprint runner.
 3. Verify that the inference endpoint is reachable from the host.
 
@@ -112,8 +112,8 @@ The following table lists common problems and their resolution steps:
 
 | Symptom | Resolution |
 |---|---|
-| Sandbox shows as stopped | Run `nemoclawd onboard ` to recreate the sandbox. |
-| Inference requests time out | Verify the provider endpoint is reachable. Check `nemoclawd status ` for the active endpoint. |
+| Sandbox shows as stopped | Run `nemoclawd onboard` to recreate the sandbox. |
+| Inference requests time out | Verify the provider endpoint is reachable. Check `nemoclawd status` for the active endpoint. |
 | Agent cannot reach an external host | Open the TUI with `openshell term` and approve the blocked request, or add the endpoint to the policy. |
 | Blueprint run failed | Run `nemoclawd logs --run-id <id>` to view the error output for the failed run. |
 
@@ -122,3 +122,4 @@ The following table lists common problems and their resolution steps:
 - [Commands](../reference/commands.md) for the full CLI reference.
 - [Approve or Deny Agent Network Requests](../network-policy/approve-network-requests.md) for the operator approval flow.
 - [Switch Inference Providers](../inference/switch-inference-providers.md) to change the active provider.
+- [Solana and Blockchain AI Onboarding](../solana/onboarding.md) for the first-run Solana path.

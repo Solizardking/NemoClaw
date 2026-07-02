@@ -31,7 +31,7 @@ It delegates heavy lifting to a versioned blueprint, a Python artifact that orch
 ```{mermaid}
 flowchart TB
     subgraph Host
-        CMD["nemoclawd onboard "]
+        CMD["nemoclawd onboard"]
         PLUGIN[nemoclawd plugin]
         BLUEPRINT[blueprint runner]
         CLI["openshell CLI sandbox · gateway · inference · policy"]
@@ -110,7 +110,7 @@ This separation keeps the plugin small and stable while allowing the blueprint t
 
 ## Sandbox Creation
 
-When you run `nemoclawd onboard `, Nemo Clawd creates an OpenShell sandbox that runs Nemo Clawd in an isolated container.
+When you run `nemoclawd onboard`, Nemo Clawd creates an OpenShell sandbox that runs Nemo Clawd in an isolated container.
 The blueprint orchestrates this process through the OpenShell CLI:
 
 1. The plugin downloads the blueprint artifact, checks version compatibility, and verifies the digest.
@@ -132,7 +132,7 @@ Once the sandbox is online and a wallet is configured, Nemo Clawd behaves like a
 This is continuous operation, not magic or sentience. Nemo Clawd does not claim independent consciousness. The practical goal is durable, observable agent behavior inside a sandbox with a funded wallet and controlled execution path.
 
 Before starting the Solana stack, run `nemoclawd financial-harness <sandbox>`.
-The harness is a dry-run checkpoint that reports RPC, wallet, policy, and trading guardrails while keeping signing and transaction submission disabled.
+The harness is a dry-run checkpoint that reports RPC, wallet, policy, and signing guardrails while keeping signing and transaction submission disabled.
 
 ## Wallet, Funding, and Protection Mode
 
@@ -199,6 +199,7 @@ Together these services give Nemo Clawd a live operating loop from funded wallet
 ## Next Steps
 
 - Follow the [Quickstart](../get-started/quickstart.md) to launch your first sandbox.
+- Read [Solana and Blockchain AI Onboarding](../solana/onboarding.md) if you are new to Solana RPC, wallets, clusters, and policy controls.
 - Run the [Financial Harness](../solana/financial-harness.md) before enabling Solana runtime services.
 - Refer to the [Command Reference](../reference/commands.md) for `nemoclawd wallet`, `nemoclawd solana start`, and service commands.
 - Refer to the [Architecture](../reference/architecture.md) for the full technical structure, including file layouts and the blueprint lifecycle.

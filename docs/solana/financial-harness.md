@@ -1,9 +1,9 @@
 ---
 title:
-  page: "Nemo Clawd Financial Harness — Dry-Run Solana Wallet and Trading Guardrails"
+  page: "Nemo Clawd Financial Harness - Dry-Run Solana Wallet and Signing Guardrails"
   nav: "Financial Harness"
-description: "Use the dry-run financial harness to inspect Solana RPC, wallet metadata, network policy coverage, and trading guardrails before enabling live signing work."
-keywords: ["nemoclawd financial harness", "solana wallet guardrails", "openshell trading preflight"]
+description: "Use the dry-run financial harness to inspect Solana RPC, wallet metadata, network policy coverage, and signing guardrails before enabling wallet-aware services."
+keywords: ["nemoclawd financial harness", "solana wallet guardrails", "blockchain ai safety preflight"]
 topics: ["generative_ai", "ai_agents", "solana"]
 tags: ["nemoclawd", "openshell", "solana", "wallets", "network_policy", "guardrails"]
 content:
@@ -18,17 +18,20 @@ status: published
   SPDX-License-Identifier: Apache-2.0
 -->
 
-# Financial Harness
+# Nemo Clawd Financial Harness - Dry-Run Solana Wallet and Signing Guardrails
 
 The financial harness is the first safe checkpoint for Solana-oriented Nemo Clawd development.
-It reports the active RPC endpoint, inferred cluster, wallet metadata, applied policy presets, missing policy presets, and the trading mechanism guardrails that must be satisfied before any future live signing adapter is considered.
+It reports the active RPC endpoint, inferred cluster, wallet metadata, applied policy presets, missing policy presets, and signing guardrails before wallet-aware runtime services start.
 
 The harness is intentionally dry-run only.
 It does not create wallets, store private keys, sign transactions, submit orders, or provide trading advice.
 
+Use it whenever you change RPC configuration, wallet configuration, policy presets, or service mode.
+For new users, run the [Solana and Blockchain AI Onboarding](onboarding.md) path first.
+
 ## Run the Harness
 
-Run it before creating a sandbox, after onboarding, or against a specific sandbox:
+Run it before creating a sandbox, after onboarding, or against a specific sandbox.
 
 ```console
 $ nemoclawd financial-harness
@@ -44,7 +47,7 @@ $ nemoclawd financial-harness my-assistant --json
 
 ## What It Checks
 
-The report covers:
+The report covers the areas that determine whether a blockchain AI runtime is still in a safe onboarding posture:
 
 | Area | What the harness reports |
 |---|---|
@@ -54,6 +57,18 @@ The report covers:
 | Guardrails | Signing disabled, transaction submission disabled, live-trading env gate, default spend limit, and private-key storage policy. |
 | Mechanism | Observe, orient, propose, approve, execute, and settle stages for the future financial loop. |
 | Blockers | Explicit reasons live execution must remain disabled. |
+
+## How to Read the Report
+
+Start with the cluster and RPC fields.
+They tell you whether the agent is looking at mainnet, devnet, testnet, or a local validator.
+
+Then check wallet posture.
+For a first run, no wallet or a low-balance development wallet is acceptable.
+For wallet-aware services, confirm that the reported wallet identity matches the one you intended to use.
+
+Finally, review blockers and missing policy presets.
+Do not start runtime services until each blocker is either resolved or intentionally accepted for your development stage.
 
 ## Dry-Run Mechanism
 
@@ -80,6 +95,7 @@ Future live adapters must keep signing outside the sandbox filesystem and enforc
 
 ## Related Pages
 
+- [Solana and Blockchain AI Onboarding](onboarding.md) for the beginner path and core concepts.
 - [Commands](../reference/commands.md) for CLI syntax.
 - [How It Works](../about/how-it-works.md) for the financial runtime loop.
 - [Network Policies](../reference/network-policies.md) for egress control.

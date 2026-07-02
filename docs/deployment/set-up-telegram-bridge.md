@@ -21,7 +21,7 @@ status: published
 # Set Up the Telegram Bridge
 
 Forward messages between a Telegram bot and the Nemo Clawd agent running inside the sandbox.
-The Telegram bridge is an auxiliary service managed by `nemoclawd start `.
+The Telegram bridge is an auxiliary service managed by `nemoclawd start`.
 
 ## Prerequisites
 
