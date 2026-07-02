@@ -189,6 +189,7 @@ describe("nemo-clawd agent packaging", () => {
     assert.ok(files.includes("nemo-clawd-python/orchestrator/*.py"));
     assert.ok(files.includes("nemo-clawd-python/policies/**/*.yaml"));
     assert.ok(files.includes("schemas/*.json"));
+    assert.ok(files.includes("extensions/**"));
     assert.ok(!files.includes("agents/**"));
     assert.ok(!files.includes("node_modules"));
     assert.ok(!files.some((entry) => entry.startsWith(legacyPluginPrefix)));

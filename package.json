@@ -172,6 +172,7 @@
     "nemoclaw-blueprint/orchestrator/*.py",
     "nemoclaw-blueprint/policies/**/*.yaml",
     "schemas/*.json",
+    "extensions/**",
     "Pump-Fun/src/",
     "Pump-Fun/agent-app/",
     "Pump-Fun/agent-tasks/",

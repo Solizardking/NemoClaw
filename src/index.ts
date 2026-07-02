@@ -250,6 +250,72 @@ export default function register(api: NemoclawdPluginApi): void {
     ],
   });
 
+  api.registerProvider({
+    id: "xai-grok",
+    label: "xAI Grok",
+    docsPath: "https://docs.x.ai",
+    aliases: ["xai", "grok"],
+    envVars: ["XAI_API_KEY"],
+    models: {
+      chat: [
+        {
+          id: "grok-4.20-reasoning",
+          label: "Grok 4.20 Reasoning",
+          contextWindow: 131072,
+          maxOutput: 8192,
+        },
+        {
+          id: "grok-4.20-multi-agent",
+          label: "Grok 4.20 Multi-Agent",
+          contextWindow: 131072,
+          maxOutput: 8192,
+        },
+        {
+          id: "grok-4-1-fast",
+          label: "Grok 4.1 Fast",
+          contextWindow: 131072,
+          maxOutput: 4096,
+        },
+      ],
+    },
+    auth: [
+      {
+        type: "bearer",
+        envVar: "XAI_API_KEY",
+        headerName: "Authorization",
+        label: "xAI API Key (XAI_API_KEY)",
+      },
+    ],
+  });
+
+  api.registerProvider({
+    id: "openrouter",
+    label: "OpenRouter",
+    docsPath: "https://openrouter.ai/docs",
+    aliases: ["or", "router", "magic-router"],
+    envVars: ["OPENROUTER_API_KEY"],
+    models: {
+      chat: [
+        {
+          id: "~openai/gpt-latest",
+          label: "OpenAI latest via OpenRouter",
+        },
+        {
+          id: "~anthropic/claude-sonnet-latest",
+          label: "Claude Sonnet latest via OpenRouter",
+        },
+      ],
+    },
+    auth: [
+      {
+        type: "bearer",
+        envVar: "OPENROUTER_API_KEY",
+        headerName: "Authorization",
+        label: "OpenRouter API Key (OPENROUTER_API_KEY)",
+      },
+    ],
+  });
+
   const bannerEndpoint = onboardCfg?.endpointType ?? "build.nvidia.com";
   const bannerModel = onboardCfg?.model ?? "nvidia/nemotron-3-super-120b-a12b";
 

@@ -1,0 +1,144 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Agent manifest for Nemo Clawd.
+# Declares the Hermes-derived sandbox contract plus the bundled clawd MCP
+# server and Python blueprint runner.
+
+name: nemo-clawd
+display_name: "Nemo Clawd"
+description: "Hermes Agent runtime with bundled Nemo Clawd MCP/Solana tooling"
+version_constraint: ">=0.1.0"
+language: mixed
+license: Apache-2.0
+
+# ── Base agent ─────────────────────────────────────────────────
+base_agent: hermes
+
+# ── Binary & process ────────────────────────────────────────────
+install_method: image
+binary_path: /usr/local/bin/hermes
+version_command: "hermes --version"
+expected_version: "0.17.0"
+version_scheme: semver
+gateway_command: "hermes gateway run"
+
+# ── Health probe ────────────────────────────────────────────────
+health_probe:
+  url: "http://localhost:8642/health"
+  port: 8642
+  timeout_seconds: 90
+
+# ── Dashboard / UI ──────────────────────────────────────────────
+dashboard:
+  kind: ui
+  label: "Dashboard"
+  path: "/"
+  health_path: "/api/status"
+  auth: session
+forward_ports:
+  - 18789
+  - 8642
+
+# ── Configuration ───────────────────────────────────────────────
+config:
+  dir: /sandbox/.hermes
+  config_file: config.yaml
+  env_file: .env
+  auth_file: auth.json
+  format: yaml
+
+# ── Bundled clawd services ──────────────────────────────────────
+mcp_servers:
+  - name: nemo-clawd
+    transport: stdio
+    command: /usr/local/bin/nemo-clawd-mcp
+    package_dir: /opt/nemo-clawd-mcp
+    tool_count: 31
+
+blueprint:
+  path: /opt/nemo-clawd-python
+  runner: /opt/nemo-clawd-python/orchestrator/runner.py
+  state_dir: /sandbox/.nemoclawd
+  state_dirs:
+    - state
+    - migration
+    - snapshots
+    - staging
+
+operator:
+  name: clawd-operator
+  display_name: "OpenClawd Operator"
+  package_dir: /opt/clawd-operator
+  binary_path: /usr/local/bin/clawd-operator
+  module: ralph_orchestrator
+  default_config: /opt/clawd-operator/ralph.yml
+  codex_acp_config: /opt/clawd-operator/ralph.codex-acp.yml
+  prompt_file: /opt/clawd-operator/PROMPT.md
+  skills_dir: /opt/clawd-operator/skills
+  clawd_agent_dir: /opt/clawd-operator/clawd-agent
+  env_example: /opt/clawd-operator/.env.example
+
+# ── State directories ──────────────────────────────────────────
+state_dirs:
+  - memories
+  - sessions
+  - skills
+  - plugins
+  - cron
+  - logs
+  - skins
+  - plans
+  - workspace
+  - profiles
+  - cache
+  - pairing
+  - platforms
+  - weixin
+  - runtime
+  - dashboard-home
+
+state_files:
+  - path: SOUL.md
+  - path: .hermes_history
+  - path: runtime/state.db
+    strategy: sqlite_backup
+user_managed_files:
+  - .hermes/.env
+  - .hermes/.mcp.json
+  - .nemoclawd/config.json
+
+device_pairing: false
+web_auth_method: bearer_token
+web_auth_env: API_SERVER_KEY
+
+# ── Inference ───────────────────────────────────────────────────
+inference:
+  provider_type: custom
+  base_url_config_key: "model.base_url"
+  model_config_key: "model.default"
+  proxy_support: implicit
+  provider_options:
+    - hermesProvider
+
+# ── Network / registries ────────────────────────────────────────
+phone_home_hosts:
+  - api.x.ai
+  - mainnet.helius-rpc.com
+  - api.birdeye.so
+  - public-api.birdeye.so
+  - api.coingecko.com
+  - api.jup.ag
+  - public-api-v2.bags.fm
+  - pump.fun
+  - data.solanatracker.io
+  - api.telegram.org
+
+package_registry:
+  hosts:
+    - registry.npmjs.org
+    - pypi.org
+    - files.pythonhosted.org
+  binaries:
+    - /usr/local/bin/npm
+    - /usr/local/bin/pip3

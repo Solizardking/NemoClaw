@@ -16,6 +16,7 @@ import { cliConnect } from "./commands/connect.js";
 import { cliEject } from "./commands/eject.js";
 import { cliLogs } from "./commands/logs.js";
 import { cliOnboard } from "./commands/onboard.js";
+import { cliMagicRouter } from "./commands/magic-router.js";
 
 export function registerCliCommands(ctx: PluginCliContext, api: NemoclawdPluginApi): void {
   const { program, logger } = ctx;
@@ -128,6 +129,43 @@ export function registerCliCommands(ctx: PluginCliContext, api: NemoclawdPluginA
           ncpPartner: opts.ncpPartner,
           endpointUrl: opts.endpointUrl,
           model: opts.model,
+          logger,
+          pluginConfig,
+        });
+      },
+    );
+
+  // nemoclawd magic-router
+  nemoclawd
+    .command("magic-router [goal...]")
+    .description("Recommend the best inference provider, model, and Nemo Clawd tool set")
+    .option("--goal <text>", "Task or operator goal to optimize for")
+    .option("--budget <level>", "Routing budget: low, balanced, premium", "balanced")
+    .option("--use-openrouter", "Fetch OpenRouter model metadata when routing", false)
+    .option("--offline", "Use only bundled routing rules", false)
+    .option("--apply", "Apply the recommendation with OpenShell", false)
+    .option("--json", "Output as JSON", false)
+    .action(
+      async (
+        goalParts: string[] | string | undefined,
+        opts: {
+          goal?: string;
+          budget?: string;
+          useOpenrouter?: boolean;
+          useOpenRouter?: boolean;
+          offline?: boolean;
+          apply?: boolean;
+          json?: boolean;
+        },
+      ) => {
+        const goalFromArgs = Array.isArray(goalParts) ? goalParts.join(" ") : goalParts;
+        await cliMagicRouter({
+          goal: opts.goal ?? goalFromArgs,
+          budget: opts.budget,
+          useOpenRouter: opts.useOpenRouter ?? opts.useOpenrouter,
+          offline: opts.offline,
+          apply: opts.apply,
+          json: opts.json,
           logger,
           pluginConfig,
         });

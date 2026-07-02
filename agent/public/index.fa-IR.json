@@ -1,0 +1,1176 @@
+{
+  "schemaVersion": 1,
+  "agents": [
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/alpha-leak-detector",
+      "identifier": "alpha-leak-detector",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "کشفگر آلفا و سیگنال کریپتو",
+        "description": "شناسایی آلفای معاملاتی و سیگنال‌های اولیه در بازارهای دیفای",
+        "avatar": "🎯",
+        "category": "cryptocurrency",
+        "tags": [
+          "آلفا",
+          "معاملات",
+          "سیگنال‌ها",
+          "تحقیقات",
+          "فرصت‌ها",
+          "clawd",
+          "solana",
+          "helius",
+          "birdeye",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 801
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/vespa-optimizer",
+      "identifier": "vespa-optimizer",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "بهینه‌ساز قفل veSPA",
+        "description": "بیشینه‌سازی بازده از طریق استراتژی‌های بهینه قفل veSPA",
+        "avatar": "🐝",
+        "category": "ابزارها",
+        "tags": [
+          "clawd",
+          "vespa",
+          "staking",
+          "بهینه‌سازی",
+          "قدرت رأی‌دهی",
+          "solana",
+          "defi",
+          "ve-model",
+          "governance"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 588
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/impermanent-loss-calculator",
+      "identifier": "impermanent-loss-calculator",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "ماشین حساب ضرر موقت",
+        "description": "محاسبه و توضیح سناریوهای ضرر موقت برای موقعیت‌های LP",
+        "avatar": "📉",
+        "category": "ابزارها",
+        "tags": [
+          "defi",
+          "نقدینگی",
+          "ضرر-موقت",
+          "ماشین-حساب",
+          "amm",
+          "clawd",
+          "solana",
+          "il",
+          "meteora",
+          "orca"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 645
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/clawd-yield-aggregator",
+      "identifier": "clawd-yield-aggregator",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "جمع‌آوری‌کننده سود سپراکس",
+        "description": "پیدا کردن و بهینه‌سازی بهترین فرصت‌های سود در اکوسیستم سپراکس",
+        "avatar": "🌾",
+        "category": "دیفای",
+        "tags": [
+          "clawd",
+          "yield",
+          "farming",
+          "optimization",
+          "apy",
+          "solana",
+          "kamino",
+          "marginfi",
+          "drift",
+          "meteora",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 617
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/yield-dashboard-builder",
+      "identifier": "yield-dashboard-builder",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "ساخت داشبورد شخصی DeFi",
+        "description": "طراحی و پیگیری داشبورد پرتفوی DeFi سفارشی شما",
+        "avatar": "📊",
+        "category": "معاملات",
+        "tags": [
+          "داشبورد",
+          "پیگیری",
+          "پرتفوی",
+          "تحلیل",
+          "نظارت",
+          "clawd",
+          "solana",
+          "yield",
+          "dev-tools"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 813
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/clawd-liquidity-strategist",
+      "identifier": "clawd-liquidity-strategist",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "استراتژیست تأمین‌کننده نقدینگی CLAWD",
+        "description": "بهینه‌سازی استراتژی‌های تأمین نقدینگی در استخرهای CLAWD",
+        "avatar": "💧",
+        "category": "deFi",
+        "tags": [
+          "clawd",
+          "نقدینگی",
+          "amm",
+          "کشاورزی-بازده",
+          "ضرر-غیرموقت",
+          "solana",
+          "meteora",
+          "orca",
+          "raydium",
+          "dlmm",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 582
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/defi-protocol-comparator",
+      "identifier": "defi-protocol-comparator",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "کارشناس مقایسه پروتکل‌های دیفای",
+        "description": "مقایسه پروتکل‌های دیفای مشابه در ویژگی‌ها، ریسک‌ها و بازده‌ها",
+        "avatar": "⚖️",
+        "category": "دیفای",
+        "tags": [
+          "defi",
+          "مقایسه",
+          "پروتکل‌ها",
+          "تحلیل",
+          "پژوهش",
+          "clawd",
+          "solana",
+          "analytics"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 676
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/gas-optimization-expert",
+      "identifier": "gas-optimization-expert",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "کارشناس بهینه‌سازی هزینه گاز",
+        "description": "کاهش هزینه‌های گاز و بهینه‌سازی زمان‌بندی تراکنش‌ها",
+        "avatar": "⛽",
+        "category": "ابزارها",
+        "tags": [
+          "ethereum",
+          "gas",
+          "optimization",
+          "layer-2",
+          "efficiency",
+          "clawd",
+          "solana",
+          "priority-fees",
+          "compute-units",
+          "jito",
+          "dev-tools"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 658
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/clawd-onboarding-guide",
+      "identifier": "clawd-onboarding-guide",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "راهنمای شروع به کار در اکوسیستم اسپراکس",
+        "description": "کمک به تازه‌واردان برای درک و شروع استفاده از پروتکل اسپراکس",
+        "avatar": "🎓",
+        "category": "تحصیلات",
+        "tags": [
+          "clawd",
+          "آموزش",
+          "شروع به کار",
+          "مبتدی",
+          "راهنما",
+          "solana",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 639
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/defi-onboarding-mentor",
+      "identifier": "defi-onboarding-mentor",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "مرشد آموزش مقدماتی DeFi",
+        "description": "راهنمایی کامل مبتدیان در تجربه‌های اولیه DeFi",
+        "avatar": "👋",
+        "category": "تحصیلات",
+        "tags": [
+          "آموزش",
+          "مبتدی",
+          "آغازین",
+          "راهنما",
+          "اصول-DeFi",
+          "clawd",
+          "solana",
+          "defi"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 792
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/spa-tokenomics-analyst",
+      "identifier": "spa-tokenomics-analyst",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "تحلیل‌گر توکنومیکس SPA",
+        "description": "متخصص در اقتصاد توکن SPA، پاداش‌های استیکینگ و درآمد پروتکل",
+        "avatar": "🔬",
+        "category": "رمزارز",
+        "tags": [
+          "clawd",
+          "spa",
+          "tokenomics",
+          "staking",
+          "governance",
+          "solana",
+          "analytics"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 589
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/defi-risk-scoring-engine",
+      "identifier": "defi-risk-scoring-engine",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "موتور امتیازدهی ریسک پروتکل‌های دیفای",
+        "description": "چارچوب ارزیابی جامع ریسک برای پروتکل‌های دیفای",
+        "avatar": "📊",
+        "category": "security",
+        "tags": [
+          "ریسک",
+          "ارزیابی",
+          "امتیازدهی",
+          "تحلیل",
+          "چارچوب",
+          "clawd",
+          "solana",
+          "defi",
+          "risk-scoring",
+          "security",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 816
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/wallet-security-advisor",
+      "identifier": "wallet-security-advisor",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "مشاور امنیت کیف پول کریپتو",
+        "description": "بهترین شیوه‌ها برای ایمن‌سازی کیف‌پول‌ها و دارایی‌های کریپتو",
+        "avatar": "🔐",
+        "category": "security",
+        "tags": [
+          "امنیت",
+          "کیف‌پول",
+          "ایمنی",
+          "بهترین-شیوه‌ها",
+          "سخت‌افزار",
+          "clawd",
+          "solana",
+          "phantom",
+          "solflare",
+          "ledger"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 788
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/defi-yield-farmer",
+      "identifier": "defi-yield-farmer",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "استراتژیست کاشت سود در دیفای",
+        "description": "شناسایی و بهینه‌سازی فرصت‌های کاشت سود در پروتکل‌های دیفای",
+        "avatar": "🚜",
+        "category": "دِفای",
+        "tags": [
+          "defi",
+          "yield-farming",
+          "apy",
+          "strategy",
+          "optimization",
+          "clawd",
+          "solana",
+          "kamino",
+          "meteora",
+          "drift",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 624
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/clawd-risk-monitor",
+      "identifier": "clawd-risk-monitor",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "نظارت بر ریسک پروتکل CLAWD",
+        "description": "پیگیری و تحلیل ریسک‌های امنیتی در قراردادهای هوشمند CLAWD",
+        "avatar": "⚠️",
+        "category": "امنیت",
+        "tags": [
+          "clawd",
+          "امنیت",
+          "ریسک",
+          "بازرسی",
+          "نظارت",
+          "solana",
+          "alerts",
+          "kamino",
+          "drift",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 618
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/stablecoin-comparator",
+      "identifier": "stablecoin-comparator",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "مقایسه‌گر عمیق استیبل‌کوین‌ها",
+        "description": "مقایسه مکانیزم‌ها، ریسک‌ها و موارد استفاده استیبل‌کوین‌ها",
+        "avatar": "💵",
+        "category": "defi",
+        "tags": [
+          "stablecoin",
+          "usdc",
+          "dai",
+          "usdt",
+          "comparison",
+          "clawd",
+          "solana",
+          "stablecoins",
+          "pyusd",
+          "susd"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 642
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/portfolio-rebalancing-advisor",
+      "identifier": "portfolio-rebalancing-advisor",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "مشاور توازن مجدد سبد دارایی‌های DeFi",
+        "description": "بهینه‌سازی تخصیص سبد و استراتژی‌های توازن مجدد",
+        "avatar": "♻️",
+        "category": "تجارت",
+        "tags": [
+          "سبد دارایی",
+          "توازن مجدد",
+          "تخصیص",
+          "استراتژی",
+          "بهینه‌سازی",
+          "clawd",
+          "solana",
+          "rebalance",
+          "analytics",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 731
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/clawd-bridge-assistant",
+      "identifier": "clawd-bridge-assistant",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "راهنمای دستیار پل اسپراکس",
+        "description": "راهنمایی کاربران در عبور زنجیره‌ای با مسیرها و هزینه‌های بهینه",
+        "avatar": "🌉",
+        "category": "برنامه‌نویسی",
+        "tags": [
+          "clawd",
+          "پل",
+          "عبور زنجیره‌ای",
+          "اربیتروم",
+          "لایه-۲",
+          "solana",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 612
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/airdrop-hunter",
+      "identifier": "airdrop-hunter",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "کاوشگر ایردراپ DeFi",
+        "description": "شناسایی و استراتژی‌سازی برای ایردراپ‌های احتمالی پروتکل‌ها",
+        "avatar": "🪂",
+        "category": "معاملات",
+        "tags": [
+          "airdrop",
+          "جوایز",
+          "استراتژی",
+          "کشاورزی",
+          "تخصیص",
+          "clawd",
+          "solana",
+          "jupiter",
+          "lfg",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 736
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/yield-sustainability-analyst",
+      "identifier": "yield-sustainability-analyst",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "تحلیل‌گر پایداری بازده دیفای",
+        "description": "تحلیل اینکه آیا بازده‌های بالا پایدار هستند یا موقت",
+        "avatar": "📉",
+        "category": "deFi",
+        "tags": [
+          "defi",
+          "بازده",
+          "پایداری",
+          "تحلیل",
+          "توکنومیکس",
+          "clawd",
+          "solana",
+          "emission-decay",
+          "analytics"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 751
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/apy-vs-apr-educator",
+      "identifier": "apy-vs-apr-educator",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "آموزش دهنده APY در مقابل APR",
+        "description": "توضیح و محاسبه تفاوت بین APY و APR در دنیای DeFi",
+        "avatar": "📈",
+        "category": "ابزارها",
+        "tags": [
+          "defi",
+          "آموزش",
+          "apy",
+          "apr",
+          "بازده",
+          "clawd",
+          "solana",
+          "kamino",
+          "marginfi"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 676
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/crypto-tax-strategist",
+      "identifier": "crypto-tax-strategist",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "مشاور استراتژی مالیات کریپتو",
+        "description": "بهینه‌سازی مالیات کریپتو و ارائه استراتژی‌های مالیاتی کارآمد در دیفای",
+        "avatar": "🧾",
+        "category": "تجارت",
+        "tags": [
+          "tax",
+          "strategy",
+          "accounting",
+          "optimization",
+          "compliance",
+          "clawd",
+          "solana"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 773
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/bridge-security-analyst",
+      "identifier": "bridge-security-analyst",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "تحلیلگر امنیت پل‌های زنجیره‌ای متقاطع",
+        "description": "ارزیابی امنیت پل و پیشنهاد امن‌ترین مسیرهای زنجیره‌ای متقاطع",
+        "avatar": "🌉",
+        "category": "امنیت",
+        "tags": [
+          "پل",
+          "امنیت",
+          "زنجیره‌ای متقاطع",
+          "ریسک",
+          "چندزنجیره‌ای",
+          "clawd",
+          "solana",
+          "wormhole",
+          "debridge",
+          "allbridge"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 817
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/narrative-trend-analyst",
+      "identifier": "narrative-trend-analyst",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "تحلیلگر روایت و روند کریپتو",
+        "description": "پیگیری و تحلیل روایت‌ها و روندهای غالب در بازارهای کریپتو",
+        "avatar": "📡",
+        "category": "cryptocurrency",
+        "tags": [
+          "روایت",
+          "روندها",
+          "تحلیل",
+          "احساسات",
+          "چرخه‌های بازار",
+          "clawd",
+          "solana",
+          "analytics"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 839
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/governance-proposal-analyst",
+      "identifier": "governance-proposal-analyst",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "تحلیلگر پیشنهادات حاکمیت DAO",
+        "description": "تحلیل و توضیح پیشنهادات حاکمیت DAO و پیامدهای آن‌ها",
+        "avatar": "📜",
+        "category": "حاکمیت",
+        "tags": [
+          "حاکمیت",
+          "DAO",
+          "رأی‌گیری",
+          "پیشنهادات",
+          "تحلیل",
+          "clawd",
+          "solana",
+          "realms",
+          "spl-governance"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 752
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/staking-rewards-calculator",
+      "identifier": "staking-rewards-calculator",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "محاسبه‌گر پاداش‌های استیکینگ",
+        "description": "محاسبه و بهینه‌سازی پاداش‌های استیکینگ در پروتکل‌های مختلف",
+        "avatar": "🪙",
+        "category": "ابزارها",
+        "tags": [
+          "staking",
+          "rewards",
+          "calculator",
+          "pos",
+          "yields",
+          "clawd",
+          "solana",
+          "validator",
+          "lst",
+          "education"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 710
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/dex-aggregator-optimizer",
+      "identifier": "dex-aggregator-optimizer",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "بهینه‌ساز مسیر تجمیع‌کننده DEX",
+        "description": "یافتن مسیرهای تبادل بهینه در سراسر تجمیع‌کننده‌های DEX",
+        "avatar": "🔀",
+        "category": "defi",
+        "tags": [
+          "dex",
+          "swap",
+          "routing",
+          "aggregator",
+          "optimization",
+          "clawd",
+          "solana",
+          "jupiter",
+          "router",
+          "trading",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 692
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/layer-2-comparison-guide",
+      "identifier": "layer-2-comparison-guide",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "راهنمای مقایسه لایه ۲",
+        "description": "مقایسه راه‌حل‌های لایه ۲ اتریوم: Arbitrum، Optimism، Base، zkSync",
+        "avatar": "⚡",
+        "category": "دفاعی",
+        "tags": [
+          "layer-2",
+          "اسکیلینگ",
+          "arbitrum",
+          "optimism",
+          "ethereum",
+          "clawd",
+          "solana"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 691
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/liquidation-risk-manager",
+      "identifier": "liquidation-risk-manager",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "مدیر ریسک تصفیه حساب",
+        "description": "نظارت و مدیریت ریسک‌های تصفیه در پروتکل‌های وام‌دهی",
+        "avatar": "🚨",
+        "category": "ابزارها",
+        "tags": [
+          "وام‌دهی",
+          "تصفیه حساب",
+          "ریسک",
+          "ضمانت",
+          "دِفای",
+          "clawd",
+          "solana",
+          "kamino",
+          "drift",
+          "marginfi",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 775
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/nft-liquidity-advisor",
+      "identifier": "nft-liquidity-advisor",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "مشاور نقدینگی و وام‌دهی NFT",
+        "description": "راهنمایی در زمینه وام و راه‌حل‌های نقدینگی مبتنی بر NFT",
+        "avatar": "🖼️",
+        "category": "ديفی",
+        "tags": [
+          "nft",
+          "نقدینگی",
+          "وام‌دهی",
+          "ضمانت",
+          "defi",
+          "clawd",
+          "solana",
+          "tensor",
+          "magic-eden"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 734
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/liquidity-pool-analyzer",
+      "identifier": "liquidity-pool-analyzer",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "تحلیلگر عمیق استخر نقدینگی",
+        "description": "تحلیل سلامت، ریسک‌ها و زمان‌بندی بهینه ورود/خروج استخرهای LP",
+        "avatar": "🧪",
+        "category": "deFi",
+        "tags": [
+          "defi",
+          "liquidity-pools",
+          "amm",
+          "analysis",
+          "risk",
+          "clawd",
+          "solana",
+          "liquidity",
+          "meteora",
+          "orca",
+          "raydium",
+          "analytics"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 662
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/protocol-revenue-analyst",
+      "identifier": "protocol-revenue-analyst",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "تحلیلگر درآمد و بنیادی‌های پروتکل",
+        "description": "تحلیل مدل‌های کسب‌وکار و تولید درآمد پروتکل‌های دیفای",
+        "avatar": "💹",
+        "category": "deFi",
+        "tags": [
+          "defi",
+          "revenue",
+          "analysis",
+          "fundamentals",
+          "tokenomics",
+          "clawd",
+          "solana",
+          "analytics",
+          "defillama"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 747
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/protocol-treasury-analyst",
+      "identifier": "protocol-treasury-analyst",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "تحلیل‌گر خزانه‌داری و منابع DAO",
+        "description": "تحلیل دارایی‌های خزانه‌داری DAO، مسیر مالی و تخصیص سرمایه",
+        "avatar": "🏛️",
+        "category": "حاکمیت",
+        "tags": [
+          "خزانه‌داری",
+          "dao",
+          "سرمایه",
+          "مسیر مالی",
+          "تخصیص",
+          "clawd",
+          "solana",
+          "governance",
+          "analytics"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 799
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/clawd-governance-guide",
+      "identifier": "clawd-governance-guide",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "راهنمای حاکمیت اسپراکس",
+        "description": "مسیردهی به پیشنهادات DAO اسپراکس، رأی‌گیری و به‌روزرسانی‌های پروتکل",
+        "avatar": "🗳️",
+        "category": "حاکمیت",
+        "tags": [
+          "clawd",
+          "حاکمیت",
+          "dao",
+          "رأی‌گیری",
+          "پیشنهادات",
+          "solana",
+          "realms",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 596
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/usds-stablecoin-expert",
+      "identifier": "usds-stablecoin-expert",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "کارشناس استیبل کوین USDs",
+        "description": "متخصص در مکانیزم استیبل کوین CLAWD USDs، وثیقه‌گذاری و استراتژی‌های بازده",
+        "avatar": "🪙",
+        "category": "defi",
+        "tags": [
+          "clawd",
+          "stablecoin",
+          "usds",
+          "defi",
+          "yield",
+          "solana",
+          "stablecoins",
+          "sky"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 560
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/defi-insurance-advisor",
+      "identifier": "defi-insurance-advisor",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "مشاور بیمه و پوشش ریسک DeFi",
+        "description": "راهنمایی گزینه‌های بیمه DeFi برای حفاظت از قراردادهای هوشمند",
+        "avatar": "🛡️",
+        "category": "defi",
+        "tags": [
+          "بیمه",
+          "حفاظت",
+          "ریسک",
+          "پوشش",
+          "ایمنی",
+          "clawd",
+          "solana",
+          "defi"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 812
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/token-unlock-tracker",
+      "identifier": "token-unlock-tracker",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "پیگیری برنامه بازگشایی توکن",
+        "description": "نظارت و تحلیل رویدادهای بازگشایی توکن و تأثیر بازار آن‌ها",
+        "avatar": "🔓",
+        "category": "cryptocurrency",
+        "tags": [
+          "توکنومیکس",
+          "بازگشایی‌ها",
+          "vesting",
+          "عرضه",
+          "تحلیل",
+          "clawd",
+          "solana",
+          "analytics"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 709
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/clawd-portfolio-tracker",
+      "identifier": "clawd-portfolio-tracker",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "ردیاب پرتفوی CLAWD",
+        "description": "پیگیری و تحلیل دارایی‌های کامل اکوسیستم CLAWD شما",
+        "avatar": "💼",
+        "category": "معاملات",
+        "tags": [
+          "clawd",
+          "portfolio",
+          "tracking",
+          "analytics",
+          "dashboard",
+          "solana",
+          "helius",
+          "das",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 651
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/whale-watcher",
+      "identifier": "whale-watcher",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "نظارت بر نهنگ‌های کریپتو",
+        "description": "پیگیری و تحلیل جابجایی‌های بزرگ کیف پول و رفتار نهنگ‌ها",
+        "avatar": "🐋",
+        "category": "رمزارز",
+        "tags": [
+          "on-chain",
+          "whale",
+          "analytics",
+          "trading",
+          "monitoring",
+          "clawd",
+          "solana",
+          "whales",
+          "helius",
+          "das"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 690
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/smart-contract-auditor",
+      "identifier": "smart-contract-auditor",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "بازرس امنیت قرارداد هوشمند",
+        "description": "بازبینی و ارزیابی امنیت قراردادهای هوشمند برای پروتکل‌های دیفای",
+        "avatar": "🔍",
+        "category": "امنیت",
+        "tags": [
+          "امنیت",
+          "قراردادهای هوشمند",
+          "بازرسی",
+          "سالیدیتی",
+          "ریسک",
+          "clawd",
+          "solana",
+          "anchor",
+          "dev-tools"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 707
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/mev-protection-advisor",
+      "identifier": "mev-protection-advisor",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "مشاور محافظت از MEV",
+        "description": "حفاظت از کاربران در برابر حملات پیش‌دستی، حملات ساندویچی و بهره‌برداری از MEV",
+        "avatar": "🥷",
+        "category": "security",
+        "tags": [
+          "mev",
+          "امنیت",
+          "پیش‌دستی",
+          "فلاشباتس",
+          "محافظت",
+          "clawd",
+          "solana",
+          "jito",
+          "bundles"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 722
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-01-03",
+      "homepage": "https://solanaclawd.com/agents/crypto-news-analyst",
+      "identifier": "crypto-news-analyst",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "تحلیلگر اخبار رمزارز",
+        "description": "جمع‌آوری و تحلیل اخبار فوری رمزارز از CoinDesk، The Block، Decrypt و نشریات بزرگ",
+        "avatar": "📰",
+        "category": "crypto",
+        "tags": [
+          "news",
+          "analysis",
+          "market",
+          "research",
+          "sentiment",
+          "clawd",
+          "solana",
+          "narrative",
+          "analytics"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 900
+    }
+  ],
+  "tags": [
+    "clawd",
+    "solana",
+    "one-shot",
+    "defi",
+    "analytics",
+    "تحلیل",
+    "ریسک",
+    "meteora",
+    "optimization",
+    "kamino",
+    "امنیت",
+    "drift",
+    "helius",
+    "staking",
+    "governance",
+    "نقدینگی",
+    "amm",
+    "orca",
+    "yield",
+    "apy",
+    "marginfi",
+    "dev-tools",
+    "آموزش",
+    "تخصیص",
+    "analysis"
+  ]
+}
