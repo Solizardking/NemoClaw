@@ -1,331 +1,63 @@
-<!--
-  SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
-  SPDX-License-Identifier: Apache-2.0
--->
+# Contributing
 
-# Contributing to NVIDIA NemoClaw
+## Signing Your Work
 
-Thank you for your interest in contributing to NVIDIA NemoClaw. This guide covers how to set up your development environment, run tests, and submit changes.
+* We require that all contributors "sign-off" on their commits. This certifies
+  that the contribution is your original work, or you have rights to submit it
+  under the same license, or a compatible license.
 
-All participants are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+  * Any contribution which contains commits that are not Signed-Off will not be
+    accepted.
 
-## Types of Contributions
+* To sign off on a commit you simply use the `--signoff` (or `-s`) option when
+  committing your changes:
 
-We welcome many types of contributions:
+  ```bash
+  git commit -s -m "Add cool feature."
+  ```
 
-| Contribution type | Description |
-|---|---|
-| **Bug reports** | Confirmed bugs with reproduction steps — see [Before You Open an Issue](#before-you-open-an-issue) |
-| **Documentation fixes** | Typos, clarifications, and missing information in `docs/` |
-| **Tests** | New or improved test coverage in `test/` or `nemoclaw/test/` |
-| **Feature proposals** | Design-first proposals opened as issues before any implementation |
-| **Integrations** | Support for new inference backends, providers, or tools |
-| **Examples** | Worked usage examples added under `docs/` |
+  This will append the following to your commit message:
 
-Security vulnerabilities must follow [SECURITY.md](SECURITY.md) — **not** GitHub issues.
+  ```text
+  Signed-off-by: Your Name <your@email.com>
+  ```
 
-## Where to Start
+* Full text of the DCO:
 
-New contributors should start with issues labeled [`good first issue`](https://github.com/NVIDIA/NemoClaw/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22). These are scoped tasks with clear acceptance criteria that do not require deep project knowledge.
+  ```text
+    Developer Certificate of Origin
+    Version 1.1
 
-Before starting larger work:
+    Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
+    1 Letterman Drive
+    Suite D4700
+    San Francisco, CA, 94129
 
-- Search open issues and pull requests to avoid duplicates.
-- Start a [GitHub Discussion](https://github.com/NVIDIA/NemoClaw/discussions) before writing code for significant changes.
-- Open an issue after the proposal has enough scope and design detail for maintainer review.
-- For questions, open a [GitHub Discussion](https://github.com/NVIDIA/NemoClaw/discussions) or comment on a related issue.
+    Everyone is permitted to copy and distribute verbatim copies of this
+    license document, but changing it is not allowed.
+  ```
 
-## Before You Open an Issue
+  ```text
+    Developer's Certificate of Origin 1.1
 
-Open an issue when you encounter one of the following situations.
+    By making a contribution to this project, I certify that:
 
-- A real bug that you confirmed and could not fix.
-- A feature proposal with a design — not a "please build this" request.
-- Security vulnerabilities must follow [SECURITY.md](SECURITY.md) — **not** GitHub issues.
+    (a) The contribution was created in whole or in part by me and I have the
+    right to submit it under the open source license indicated in the file; or
 
-Use [GitHub Discussions](https://github.com/NVIDIA/NemoClaw/discussions) for questions, design exploration, and larger feature proposals before implementation.
-Maintainers may ask you to move broad or still-forming proposals from an issue to a discussion so the design can settle before code review.
+    (b) The contribution is based upon previous work that, to the best of my
+    knowledge, is covered under an appropriate open source license and I have
+    the right under that license to submit that work with modifications,
+    whether created in whole or in part by me, under the same open source
+    license (unless I am permitted to submit under a different license), as
+    indicated in the file; or
 
-## Community Response Expectations
+    (c) The contribution was provided directly to me by some other person who
+    certified (a), (b) or (c) and I have not modified it.
 
-NemoClaw is an alpha project, and maintainer availability varies with release, security, and stability work.
-Issues, discussions, and pull requests are reviewed on a best-effort basis.
-The project does not publish guaranteed response or review timelines.
-
-Maintainers prioritize work using severity, security impact, release readiness, reproducibility, maintainer capacity, and community impact.
-For public roadmap context and current priorities, see [Current Priorities](README.md#current-priorities).
-That section is a planning aid, not a commitment that a specific issue or feature will ship in a specific release.
-
-## Prerequisites
-
-Install the following before you begin.
-
-- Node.js 22.16+ and npm 10+
-- Python 3.11+ (for documentation tooling)
-- Docker (running)
-- [uv](https://docs.astral.sh/uv/) (for Python dependency management)
-- [hadolint](https://github.com/hadolint/hadolint) (Dockerfile linter — `brew install hadolint` on macOS)
-
-## Getting Started
-
-Install the root dependencies and build the TypeScript plugin:
-
-```bash
-# Install root dependencies (OpenClaw + CLI entry point)
-npm install
-
-# Install and build the TypeScript plugin
-cd nemoclaw && npm install && npm run build && cd ..
-
-# Install Python documentation dependencies from the repository root
-uv sync
-```
-
-Verify that the checkout is ready for contributor work:
-
-```bash
-npm run dev:doctor
-```
-
-The contributor doctor is read-only.
-It checks the toolchain, dependencies, build artifacts, Git hooks, contributor identity and signing, GitHub authentication, Docker availability, and the locally linked NemoClaw CLI.
-It does not install packages, change configuration, start services, or create a sandbox.
-It complements the end-user installer and coding-agent starter prompt; those paths install and operate NemoClaw but do not prepare a source checkout for contribution.
-Fix any reported failures, then run the command again before creating a feature branch.
-
-## Building
-
-The TypeScript plugin lives in `nemoclaw/` and compiles with `tsc`:
-
-```bash
-cd nemoclaw
-npm run build        # one-time compile
-npm run dev          # watch mode
-```
-
-The CLI (`bin/`, `scripts/`) is type-checked separately:
-
-```bash
-npm run typecheck:cli   # or: npx tsc -p tsconfig.cli.json
-```
-
-### Local Development Testing
-
-After building, return to the repository root and link the CLI so the `nemoclaw` command is available locally.
-If you followed the build step above, you are still inside `nemoclaw/` and must `cd ..` first:
-
-```bash
-cd ..                   # back to the repo root (from nemoclaw/ subdirectory)
-npm link
-nemoclaw --version      # verify the linked version
-```
-
-To unlink when you are done: `npm unlink -g nemoclaw`
-
-## Main Tasks
-
-These are the primary `make` and `npm` targets for day-to-day development:
-
-| Task | Purpose |
-|------|---------|
-| `npm run dev:doctor` | Run read-only contributor environment readiness checks |
-| `make check` | Run all linters (TypeScript + Python) |
-| `make lint` | Same as `make check` |
-| `make format` | Auto-format TypeScript and Python source |
-| `npm run typecheck:cli` | Type-check CLI TypeScript using `tsconfig.cli.json` (`bin/`, `scripts/`, `src/`, `test/`, `nemoclaw-blueprint/scripts/`) |
-| `npm test` | Build package artifacts and run every non-live Vitest project |
-| `npm run test:spec` | Run every non-live test with hierarchical behavior-oriented output |
-| `npm run test:fast` | Clean `dist/` and run source CLI, plugin, and E2E-support tests |
-| `npm run test:integration` | Clean-build the CLI and run root integration and installer tests |
-| `npm run test:package` | Clean-build CLI/plugin artifacts and run compiled-package contracts |
-| `npm run test:live-e2e` | Opt into live E2E scenarios (mutates real external state) |
-| `cd nemoclaw && npm test` | Run plugin unit tests (Vitest) |
-| `npm run docs` | Validate Fern documentation with the pinned Fern CLI version |
-| `npm run docs:live` | Serve Fern docs locally with auto-rebuild |
-| `npm run docs:preview:watch` | Publish branch-based Fern previews when docs files change |
-| `npm run docs:deps` | Print the pinned Fern CLI version used by docs commands |
-| `npx prek run --all-files` | Run all hooks from `.pre-commit-config.yaml` — see below |
-
-### Test Titles as Behavioral Documentation
-
-Write `describe` and `it` titles so the Vitest tree reads as behavioral documentation. Start test
-titles with behavior or context rather than issue numbers, flags, or scenario labels, and put local
-issue references in a final suffix such as `(#1234)`. Prefer
-`it("reticulates splines correctly (#1234)")` over
-`it("#1234 fixes spline reticulation")`.
-
-Run `npm run test:spec` to render the suite with Vitest's hierarchical tree reporter. Run
-`npm run test:titles:check` to enforce the objective title-shape conventions without attempting to
-lint subjective English grammar.
-
-### Git hooks (prek)
-
-All git hooks are managed by [prek](https://prek.j178.dev/), a fast, single-binary pre-commit hook runner installed as a devDependency (`@j178/prek`). The `npm install` step runs `prek install` automatically via the `prepare` script, which wires up the following hooks from [`.pre-commit-config.yaml`](.pre-commit-config.yaml):
-
-| Hook | What runs |
-|------|-----------|
-| **pre-commit** | File fixers, formatters, linters, skill frontmatter validation, Vitest (plugin) |
-| **commit-msg** | commitlint (Conventional Commits) |
-| **pre-push** | TypeScript type check (`tsc --noEmit` for plugin, JS, and CLI) |
-
-For PR preparation, normal commit and push hooks are valid verification when they ran without `--no-verify`.
-If hooks were skipped, missing, failed, or uncertain, use a scoped fallback: `npx prek run --from-ref <base> --to-ref HEAD`.
-Reserve `npx prek run --all-files` for whole-repository baselines, such as hook, formatter, generated-check, or repo-wide validation changes.
-
-For TypeScript changes under `src/`, `test/`, `scripts/`, `bin/`, or
-`nemoclaw-blueprint/scripts/` (and for `tsconfig.cli.json` updates), the pre-push
-hook runs `npm run typecheck:cli` before the branch is pushed.
-CI runs this unconditionally.
-If the pre-push hook was skipped or unavailable, run `npm run typecheck:cli`
-manually before opening a PR.
-
-If you still have `core.hooksPath` set from an old Husky setup, Git will ignore `.git/hooks`. Run `git config --unset core.hooksPath` in this repo, then `npm install` so `prek install` (via `prepare`) can register the hooks.
-
-`make check` remains the primary documented linter entry point.
-
-For doc-only changes, you do not need to run the full test suite by default.
-Commit and push normally so the hooks run, then run the docs build:
-
-```bash
-npm run docs
-```
-
-Leave `npm test` unchecked in the PR verification checklist unless you actually ran it.
-If hooks were skipped or unavailable, run `npx prek run --from-ref main --to-ref HEAD` before opening the PR.
-For code changes, run targeted tests for the changed behavior.
-Reserve full `npm test` for broad runtime changes, test harness changes, or cases where targeted coverage is hard to justify.
-
-## Project Structure
-
-The repository is organized as follows.
-
-| Path | Purpose |
-|------|---------|
-| `nemoclaw/` | TypeScript plugin (Commander CLI, OpenClaw extension) |
-| `nemoclaw-blueprint/` | Python blueprint for sandbox orchestration |
-| `bin/` | CLI entry point (`nemoclaw.js`) |
-| `scripts/` | Install helpers and automation scripts |
-| `test/` | Root-level integration tests |
-| `docs/` | User-facing documentation (Fern MDX plus legacy MyST source during migration) |
-| `fern/` | Fern site configuration, theme, and assets |
-
-## Language Policy
-
-All new source files must be TypeScript. Do not add new `.js` files to the project. When modifying an existing JavaScript file, prefer migrating it to TypeScript in the same PR.
-
-Only a small CommonJS launcher/compatibility layer remains in `bin/`, while the main CLI implementation now lives in `src/lib/` and compiles to `dist/`. Tests in `test/` may remain ESM JavaScript for now but new test files should use TypeScript where practical.
-
-Shell scripts (`scripts/*.sh`) must pass ShellCheck and use `shfmt` formatting.
-
-## Documentation
-
-If your change affects user-facing behavior (new commands, changed defaults, new features, bug fixes that contradict existing docs), update the relevant pages under `docs/` in the same PR.
-
-If you use an AI coding agent (Cursor, Claude Code, Codex, etc.), the repo includes the `nemoclaw-contributor-update-docs` skill that drafts doc updates. Use it before writing from scratch and follow the style guide in [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
-During release prep, run that skill first, make any doc version bumps, then open the docs refresh PR.
-
-To build and preview docs locally:
-
-```console
-$ npm run docs                 # validate Fern docs with the pinned Fern CLI version
-$ npm run docs:live            # serve Fern docs locally with auto-rebuild
-$ npm run docs:preview:watch   # publish branch-based Fern previews on file changes
-```
-
-Use these npm scripts when validating docs for a PR.
-
-See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for the full style guide and writing conventions.
-
-### Markdown Docs for AI Agents
-
-For Markdown docs routing, user-skill guidance, and release-prep documentation workflow, see [Markdown Docs for AI Agents](docs/CONTRIBUTING.md#markdown-docs-for-ai-agents).
-
-## Pull Requests
-
-We welcome contributions. Every PR requires maintainer review before merge. To keep the review queue healthy, limit the number of open PRs you have at any time to fewer than 10.
-Maintainers review pull requests according to project priority, security impact, release readiness, and reviewer availability.
-PRs that solve issues with Priority set to Urgent or High are more likely to receive earlier review when maintainers have capacity.
-For substantial features or behavior changes, start with a GitHub Discussion before opening a large implementation PR.
-
-### DCO Sign-Off
-
-This project requires a [Developer Certificate of Origin (DCO)](https://developercertificate.org/) sign-off declaration in every pull request description.
-Add the following trailer at the bottom of the PR description:
-
-```text
-Signed-off-by: Your Name <your.email@example.com>
-```
-
-CI will reject PRs whose descriptions are missing this declaration.
-
-### Verified Commit Signatures
-
-This project also requires every PR commit to appear as `Verified` in GitHub.
-Configure your local Git client or GitHub web editor to create verified signed commits before you open a pull request.
-Maintainers do not repair contributor signature failures.
-
-Use GitHub's official documentation to set this up:
-
-- [About commit signature verification](https://docs.github.com/en/authentication/managing-commit-signature-verification/about-commit-signature-verification)
-- [Signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits)
-
-If the PR description is missing the DCO declaration, update the PR description before requesting review.
-If any commit is missing GitHub verification, fix the branch before opening a PR.
-If force-push is not allowed after an unverified commit is published, open a fresh branch and fresh PR with a clean compliant history.
-
-> [!WARNING]
-> Accounts that repeatedly exceed this limit or submit automated bulk PRs may have their PRs closed or their access restricted.
-
-### No External Project Links
-
-Do not add links to third-party code repositories, community collections, or unofficial resources in documentation, README files, or code. This includes "awesome lists," community template repositories, wrapper projects, and similar community-maintained resources — regardless of popularity or utility.
-
-Links to official documentation for tools we depend on (e.g., Node.js, Python, uv) and industry standards (e.g., Conventional Commits) are acceptable.
-
-**Why:** External repositories are outside our control. They can change ownership, inject malicious content, or misrepresent an endorsement by NVIDIA. Keeping references within our own repo avoids these risks entirely.
-
-If you believe an external resource belongs in our docs, open an issue to discuss it with maintainers first.
-
-### Submitting a Pull Request
-
-Follow these steps to submit a pull request.
-
-1. Create a feature branch from `main`.
-2. Make your changes with tests.
-3. Run the relevant checks.
-   Let normal commit and push hooks provide hook verification, run targeted tests for changed behavior, and run `npm run docs` for doc changes.
-   If hooks were skipped or unavailable, run `npx prek run --from-ref main --to-ref HEAD`.
-4. Confirm the PR description includes the DCO declaration and every commit appears as `Verified` in GitHub.
-5. Open a PR.
-
-### Commit Messages
-
-This project uses [Conventional Commits](https://www.conventionalcommits.org/). All commit messages must follow the format:
-
-```text
-<type>(<scope>): <description>
-
-[optional body]
-
-[optional footer(s)]
-```
-
-**Types:**
-
-- `feat` - New feature
-- `fix` - Bug fix
-- `docs` - Documentation only
-- `chore` - Maintenance tasks (dependencies, build config)
-- `refactor` - Code change that neither fixes a bug nor adds a feature
-- `test` - Adding or updating tests
-- `ci` - CI/CD changes
-- `perf` - Performance improvements
-
-**Examples:**
-
-```text
-feat(cli): add --profile flag to nemoclaw onboard
-fix(blueprint): handle missing API key gracefully
-docs: update quickstart for new install wizard
-chore(deps): bump commander to 13.2
-```
+    (d) I understand and agree that this project and the contribution are
+    public and that a record of the contribution (including all personal
+    information I submit with it, including my sign-off) is maintained
+    indefinitely and may be redistributed consistent with this project or the
+    open source license(s) involved.
+  ```

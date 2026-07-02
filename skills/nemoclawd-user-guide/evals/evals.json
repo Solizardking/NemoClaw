@@ -1,0 +1,47 @@
+[
+  {
+    "id": "nemoclawd-user-guide-install-001",
+    "question": "Help me install nemoclawd from my coding assistant and keep secrets out of chat.",
+    "expected_skill": "nemoclawd-user-guide",
+    "ground_truth": "A Nemo Clawd-specific answer that starts from README.md and install.sh, uses the `nemoclawd` binary, gives redacted xAI/Solana environment placeholders, and avoids asking for secrets in chat.",
+    "expected_behavior": [
+      "Uses `nemoclawd-user-guide`.",
+      "Starts from local README.md and install.sh.",
+      "Uses `nemoclawd` command examples.",
+      "Does not ask the user to paste secrets into chat."
+    ]
+  },
+  {
+    "id": "nemoclawd-user-guide-mcp-001",
+    "question": "Configure the bundled MCP server for Solana tools.",
+    "expected_skill": "nemoclawd-user-guide",
+    "ground_truth": "A Nemo Clawd-specific answer that uses nemo-clawd-mcp/README.md, identifies the stdio and HTTP entrypoints, and explains which Solana credentials are optional or required.",
+    "expected_behavior": [
+      "Uses `nemo-clawd-mcp/README.md`.",
+      "Mentions `nemoclawd-mcp`.",
+      "Keeps API keys and wallet secrets redacted."
+    ]
+  },
+  {
+    "id": "nemoclawd-user-guide-solana-001",
+    "question": "Set up Solana RPC for Nemo Clawd without live trades.",
+    "expected_skill": "nemoclawd-user-guide",
+    "ground_truth": "A safe Solana-native setup answer that distinguishes local/test-validator or read-only RPC checks from mainnet trading and recommends a validation command.",
+    "expected_behavior": [
+      "Distinguishes local, devnet, and mainnet risk.",
+      "Uses Solana RPC environment variables.",
+      "Recommends a validation command such as `nemoclawd solana`."
+    ]
+  },
+  {
+    "id": "nemoclawd-user-guide-blueprint-001",
+    "question": "Explain how the Nemo Clawd OpenShell blueprint migrates my local state.",
+    "expected_skill": "nemoclawd-user-guide",
+    "ground_truth": "A Nemo Clawd answer that points to nemoclaw-blueprint and src/commands/migration-state.ts, explains `.nemoclawd` snapshots, and warns about preserving secrets and symlinks.",
+    "expected_behavior": [
+      "Uses blueprint and migration source files.",
+      "Mentions `.nemoclawd` state.",
+      "Warns before destructive or mainnet-affecting actions."
+    ]
+  }
+]

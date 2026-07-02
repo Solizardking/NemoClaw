@@ -1,45 +1,31 @@
-.PHONY: check lint format format-biome lint-ts format-ts check-installer-hash docs docs-deps docs-strict docs-live docs-preview-watch docs-clean
+.PHONY: check lint format lint-ts lint-py format-ts format-py docs docs-live docs-clean
 
-check:
-	npm run check
+check: lint-ts lint-py
+	@echo "All checks passed."
 
-lint:
-	npm run check
+lint: lint-ts lint-py
 
-# Targeted subproject checks (not part of `make check` — use for focused runs).
 lint-ts:
-	npm run lint:ts
+	cd nemo-clawd-mcp && npm run lint
 
-format:
-	npm run format
+lint-py:
+	cd nemo-clawd-python && $(MAKE) check
 
-format-biome:
-	npm run format
+format: format-ts format-py
 
 format-ts:
-	npm run format:ts
+	cd nemo-clawd-mcp && npm run lint
 
-# --- Integrity checks ---
-
-check-installer-hash:
-	npm run check:installer-hash
+format-py:
+	cd nemo-clawd-python && $(MAKE) format
 
 # --- Documentation ---
 
 docs:
-	npm run docs
-
-docs-deps:
-	npm run docs:deps
-
-docs-strict:
-	npm run docs:strict
+	uv run --group docs sphinx-build -b html docs docs/_build/html
 
 docs-live:
-	npm run docs:live
-
-docs-preview-watch:
-	npm run docs:preview:watch
+	uv run --group docs sphinx-autobuild docs docs/_build/html --open-browser
 
 docs-clean:
-	npm run docs:clean
+	rm -rf docs/_build

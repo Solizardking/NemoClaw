@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [project]
-name = "nemoclaw-docs"
+name = "nemoclawd-docs"
 version = "0.1.0"
-description = "Documentation build for NemoClaw"
+description = "Documentation build for Nemo Clawd"
 requires-python = ">=3.11"
 
 [dependency-groups]
@@ -17,7 +17,6 @@ docs = [
     "sphinxcontrib-mermaid",
     "nvidia-sphinx-theme",
     "sphinx-llm>=0.3.0",
-    "sphinx-reredirects",
 ]
 
 [tool.uv]

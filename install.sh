@@ -2,171 +2,185 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Thin bootstrap for the NemoClaw installer.
-# Public curl|bash installs should select a ref once, clone that ref, then
-# execute installer logic from that same clone. Historical tags that predate
-# the extracted payload fall back to their own root install.sh.
+# Nemo Clawd installer.
+# Installs the README-facing nemoclawd CLI, builds the bundled Solana MCP
+# server, and seeds local Solana-native runtime defaults.
 
 set -euo pipefail
 
-if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
-  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-else
-  SCRIPT_DIR=""
-fi
-LOCAL_PAYLOAD="${SCRIPT_DIR:+${SCRIPT_DIR}/scripts/install.sh}"
-BOOTSTRAP_TMPDIR=""
-PAYLOAD_MARKER="NEMOCLAW_VERSIONED_INSTALLER_PAYLOAD=1"
-DEFAULT_INSTALL_REF="lkg"
-INSTALL_TAG_EXAMPLE="vX.Y.Z"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+NEMOCLAWD_HOME="${NEMOCLAWD_HOME:-${HOME}/.nemoclawd}"
+NPM_PACKAGE="@mawdbotsonsolana/nemoclawd"
+MIN_NODE_MAJOR=20
+MIN_NPM_MAJOR=10
 
-resolve_release_tag() {
-  if [[ -n "${NEMOCLAW_INSTALL_REF:-}" ]]; then
-    printf "%s" "${NEMOCLAW_INSTALL_REF}"
-    return
-  fi
-  printf "%s" "${NEMOCLAW_INSTALL_TAG:-$DEFAULT_INSTALL_REF}"
+info() { printf '[INFO] %s\n' "$*"; }
+warn() { printf '[WARN] %s\n' "$*" >&2; }
+fail() {
+  printf '[ERROR] %s\n' "$*" >&2
+  exit 1
 }
 
-verify_downloaded_script() {
-  local file="$1" label="${2:-installer}" expected_hash="${3:-}"
-  if [[ ! -s "$file" ]]; then
-    printf "[ERROR] %s download is empty or missing\n" "$label" >&2
-    exit 1
-  fi
-  if ! head -1 "$file" | grep -qE '^#!.*(sh|bash)'; then
-    printf "[ERROR] %s does not start with a shell shebang\n" "$label" >&2
-    exit 1
-  fi
-  if [[ -n "$expected_hash" ]]; then
-    local actual_hash=""
-    if command -v sha256sum >/dev/null 2>&1; then
-      actual_hash="$(sha256sum "$file" | awk '{print $1}')"
-    elif command -v shasum >/dev/null 2>&1; then
-      actual_hash="$(shasum -a 256 "$file" | awk '{print $1}')"
-    fi
-    if [[ -z "$actual_hash" ]]; then
-      printf "[ERROR] No SHA-256 tool available — cannot verify %s integrity\n" "$label" >&2
-      exit 1
-    fi
-    if [[ "$actual_hash" != "$expected_hash" ]]; then
-      rm -f "$file"
-      printf "[ERROR] %s integrity check failed\n  Expected: %s\n  Actual:   %s\n" "$label" "$expected_hash" "$actual_hash" >&2
-      exit 1
-    fi
-  fi
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
 }
 
-has_payload_marker() {
-  local file="$1"
-  [[ -f "$file" ]] && grep -q "$PAYLOAD_MARKER" "$file"
+version_major() {
+  printf '%s\n' "${1#v}" | cut -d. -f1
 }
 
-clone_nemoclaw_ref() {
-  local ref="$1" dest="$2"
+ensure_node_runtime() {
+  command_exists node || fail "Node.js >= ${MIN_NODE_MAJOR} is required."
+  command_exists npm || fail "npm >= ${MIN_NPM_MAJOR} is required."
 
-  git init --quiet "$dest"
-  git -C "$dest" remote add origin https://github.com/NVIDIA/NemoClaw.git
-  if ! git -C "$dest" fetch --quiet --depth 1 origin "$ref"; then
-    printf "[ERROR] Requested install ref '%s' is not available from https://github.com/NVIDIA/NemoClaw.git.\n" "$ref" >&2
-    printf "        Check NEMOCLAW_INSTALL_TAG/NEMOCLAW_INSTALL_REF and try again.\n" >&2
-    exit 1
+  local node_version npm_version node_major npm_major
+  node_version="$(node --version 2>/dev/null || true)"
+  npm_version="$(npm --version 2>/dev/null || true)"
+  node_major="$(version_major "$node_version")"
+  npm_major="$(version_major "$npm_version")"
+
+  [[ "$node_major" =~ ^[0-9]+$ ]] || fail "Could not parse Node.js version: ${node_version}"
+  [[ "$npm_major" =~ ^[0-9]+$ ]] || fail "Could not parse npm version: ${npm_version}"
+
+  if ((node_major < MIN_NODE_MAJOR)); then
+    fail "Node.js ${node_version} is too old. Install Node.js >= ${MIN_NODE_MAJOR} and rerun."
   fi
-  git -C "$dest" -c advice.detachedHead=false checkout --quiet --detach FETCH_HEAD
-}
-
-exec_installer_from_ref() {
-  local ref="$1"
-  shift
-
-  local tmpdir source_root payload_script legacy_script
-  tmpdir="$(mktemp -d)"
-  BOOTSTRAP_TMPDIR="$tmpdir"
-  trap 'rm -rf "${BOOTSTRAP_TMPDIR:-}"' EXIT
-  source_root="${tmpdir}/source"
-
-  clone_nemoclaw_ref "$ref" "$source_root"
-
-  payload_script="${source_root}/scripts/install.sh"
-  legacy_script="${source_root}/install.sh"
-
-  if has_payload_marker "$payload_script"; then
-    verify_downloaded_script "$payload_script" "versioned installer"
-    NEMOCLAW_INSTALL_REF="$ref" NEMOCLAW_INSTALL_TAG="$ref" NEMOCLAW_BOOTSTRAP_PAYLOAD=1 \
-      bash "$payload_script" "$@"
-    return
+  if ((npm_major < MIN_NPM_MAJOR)); then
+    fail "npm ${npm_version} is too old. Install npm >= ${MIN_NPM_MAJOR} and rerun."
   fi
 
-  verify_downloaded_script "$legacy_script" "legacy installer"
-  NEMOCLAW_INSTALL_TAG="$ref" bash "$legacy_script" "$@"
+  info "Runtime OK: Node.js ${node_version}, npm ${npm_version}"
 }
 
-bootstrap_version() {
-  printf "nemoclaw-installer\n"
+refresh_global_npm_path() {
+  local npm_bin
+  npm_bin="$(npm config get prefix 2>/dev/null)/bin" || true
+  if [[ -n "${npm_bin}" && -d "${npm_bin}" && ":${PATH}:" != *":${npm_bin}:"* ]]; then
+    export PATH="${npm_bin}:${PATH}"
+  fi
 }
 
-bootstrap_usage() {
-  printf "\n"
-  printf "  NemoClaw Installer\n\n"
-  printf "  Usage:\n"
-  printf "    curl -fsSL https://www.nvidia.com/nemoclaw.sh | bash\n"
-  printf "    curl -fsSL https://www.nvidia.com/nemoclaw.sh | bash -s -- [options]\n\n"
-  printf "  Options:\n"
-  printf "    --non-interactive    Skip prompts (uses env vars / defaults)\n"
-  printf "    --yes-i-accept-third-party-software Accept the third-party software notice without prompting\n"
-  printf "    --fresh              Discard any failed/interrupted onboarding session and start over\n"
-  printf "    --version, -v        Print installer version and exit\n"
-  printf "    --help, -h           Show this help message and exit\n\n"
-  printf "  Environment:\n"
-  printf "    NEMOCLAW_INSTALL_REF         Exact Git ref/SHA to install\n"
-  printf "    NEMOCLAW_INSTALL_TAG         Git ref to install (default: %s)\n" "$DEFAULT_INSTALL_REF"
-  printf "                                 In curl pipes, set this on bash or export it first.\n"
-  printf "                                 Example: curl -fsSL https://www.nvidia.com/nemoclaw.sh | NEMOCLAW_INSTALL_TAG=%s bash\n" "$INSTALL_TAG_EXAMPLE"
-  printf "    NEMOCLAW_NON_INTERACTIVE=1   Same as --non-interactive\n"
-  printf "    NEMOCLAW_FRESH=1             Same as --fresh\n"
-  printf "    NEMOCLAW_ACCEPT_THIRD_PARTY_SOFTWARE=1 Same as --yes-i-accept-third-party-software\n"
-  printf "    NEMOCLAW_NO_EXPRESS=1        Skip express install prompt on supported platforms\n"
-  printf "    NEMOCLAW_SANDBOX_NAME        Sandbox name to create/use\n"
-  printf "    NEMOCLAW_ACCEPT_EXPERIMENTAL_OPENSHELL_UPGRADE=1\n"
-  printf "                                 Allow automatic pre-0.0.37 OpenShell gateway upgrade\n"
-  printf "    NEMOCLAW_OPENSHELL_UPGRADE_PREPARED=1\n"
-  printf "                                 Continue after manually backing up and retiring old gateway\n"
-  printf "    NEMOCLAW_PROVIDER            build | openai | anthropic | anthropicCompatible\n"
-  printf "                                 | gemini | ollama | custom | nim-local | vllm | routed\n"
-  printf "                                 | hermes-provider\n"
-  printf "                                 (aliases: cloud -> build, nim -> nim-local)\n"
-  printf "    NEMOCLAW_POLICY_MODE         suggested | custom | skip\n"
-  printf "\n"
+package_name() {
+  node -p "try { require(process.argv[1]).name || '' } catch { '' }" "$1" 2>/dev/null || true
 }
 
-bootstrap_main() {
-  for arg in "$@"; do
-    case "$arg" in
-      --help | -h)
-        bootstrap_usage
-        return 0
-        ;;
-      --version | -v)
-        bootstrap_version
-        return 0
-        ;;
-    esac
-  done
+install_cli() {
+  local local_package_name=""
+  if [[ -f "${ROOT_DIR}/package.json" ]]; then
+    local_package_name="$(package_name "${ROOT_DIR}/package.json")"
+  fi
 
-  local ref
-  ref="$(resolve_release_tag)"
-  exec_installer_from_ref "$ref" "$@"
-}
-
-if has_payload_marker "$LOCAL_PAYLOAD"; then
-  # shellcheck source=/dev/null
-  . "$LOCAL_PAYLOAD"
-fi
-
-if [[ "${BASH_SOURCE[0]:-}" == "$0" ]] || { [[ -z "${BASH_SOURCE[0]:-}" ]] && { [[ "$0" == "bash" ]] || [[ "$0" == "-bash" ]]; }; }; then
-  if has_payload_marker "$LOCAL_PAYLOAD"; then
-    main "$@"
+  if [[ "${local_package_name}" == "${NPM_PACKAGE}" ]]; then
+    info "Installing Nemo Clawd from local source at ${ROOT_DIR}"
+    npm install --prefix "${ROOT_DIR}"
+    npm run --prefix "${ROOT_DIR}" build
+    npm link --prefix "${ROOT_DIR}"
   else
-    bootstrap_main "$@"
+    info "Installing Nemo Clawd from npm: ${NPM_PACKAGE}"
+    npm install -g "${NPM_PACKAGE}"
   fi
-fi
+
+  refresh_global_npm_path
+  command_exists nemoclawd || fail "nemoclawd was installed but is not on PATH."
+  info "CLI ready: $(command -v nemoclawd)"
+}
+
+install_mcp() {
+  local mcp_dir="${ROOT_DIR}/nemo-clawd-mcp"
+  if [[ ! -f "${mcp_dir}/package.json" ]]; then
+    warn "Bundled MCP server not found at ${mcp_dir}; skipping MCP build."
+    return
+  fi
+
+  info "Building bundled Solana MCP server"
+  npm install --prefix "${mcp_dir}"
+  npm run --prefix "${mcp_dir}" build
+}
+
+verify_blueprint() {
+  local blueprint_dir="${ROOT_DIR}/nemoclaw-blueprint"
+  if [[ ! -f "${blueprint_dir}/blueprint.yaml" ]]; then
+    warn "Blueprint not found at ${blueprint_dir}; sandbox launch will require a packaged blueprint."
+    return
+  fi
+
+  info "Blueprint available: ${blueprint_dir}"
+  if command_exists python3; then
+    python3 -m py_compile \
+      "${blueprint_dir}/orchestrator/runner.py" \
+      "${blueprint_dir}/migrations/snapshot.py"
+  fi
+}
+
+seed_runtime_profile() {
+  mkdir -p "${NEMOCLAWD_HOME}"
+  chmod 700 "${NEMOCLAWD_HOME}"
+
+  local solana_config="${NEMOCLAWD_HOME}/solana.json"
+  if [[ ! -f "${solana_config}" ]]; then
+    cat >"${solana_config}" <<'JSON'
+{
+  "cluster": "mainnet-beta",
+  "rpcUrl": "https://rpc.solanatracker.io/public",
+  "wsUrl": "wss://rpc.solanatracker.io/public"
+}
+JSON
+    chmod 600 "${solana_config}"
+    info "Wrote Solana defaults to ${solana_config}"
+  else
+    info "Keeping existing Solana config at ${solana_config}"
+  fi
+
+  cat >"${NEMOCLAWD_HOME}/install.json" <<JSON
+{
+  "package": "${NPM_PACKAGE}",
+  "repo": "${ROOT_DIR}",
+  "mcp": "${ROOT_DIR}/nemo-clawd-mcp",
+  "blueprint": "${ROOT_DIR}/nemoclaw-blueprint",
+  "pythonBlueprint": "${ROOT_DIR}/nemo-clawd-python"
+}
+JSON
+  chmod 600 "${NEMOCLAWD_HOME}/install.json"
+}
+
+check_solana_tools() {
+  if command_exists solana; then
+    info "Solana CLI: $(solana --version 2>/dev/null || echo available)"
+  else
+    warn "Solana CLI not found. Nemo Clawd can still use RPC/MCP tools, but local validator commands will be unavailable."
+  fi
+}
+
+post_install() {
+  cat <<EOF
+
+Nemo Clawd is installed.
+
+Recommended environment:
+  export XAI_API_KEY="<XAI_API_KEY>"
+  export HELIUS_API_KEY="<HELIUS_API_KEY>"
+  export SOLANA_RPC_URL="https://rpc.solanatracker.io/public"
+
+Next commands:
+  nemoclawd doctor
+  nemoclawd solana
+  nemoclawd launch
+
+MCP server:
+  npx --prefix "${ROOT_DIR}/nemo-clawd-mcp" nemoclawd-mcp
+
+EOF
+}
+
+main() {
+  info "Nemo Clawd installer"
+  ensure_node_runtime
+  install_cli
+  install_mcp
+  verify_blueprint
+  seed_runtime_profile
+  check_solana_tools
+  post_install
+}
+
+main "$@"

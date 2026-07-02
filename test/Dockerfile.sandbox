@@ -1,40 +1,66 @@
-# hadolint global ignore=DL3002,DL3059
-# Test sandbox for NemoClaw E2E testing.
-# Layers test fixtures on top of the production sandbox image so both
-# e2e jobs share a single Docker build for the base layers.
+# Lightweight test sandbox for Nemo Clawd E2E testing
+# Simulates the Nemo Clawd-in-OpenShell environment without requiring
+# the full NVIDIA base image or openshell CLI
 
-ARG BASE_IMAGE=nemoclaw-sandbox-test
-# hadolint ignore=DL3006
-FROM ${BASE_IMAGE}
+FROM node:22-slim
 
-# Ensure mutable-default permissions and keep an explicit legacy split-layout
-# fixture for migration tests.
-USER root
-RUN rm -rf /sandbox/.openclaw-data \
-    && mkdir -p /sandbox/.openclaw-data/workspace \
-        /sandbox/.openclaw-data/extensions \
-        /sandbox/.openclaw-data/skills \
-        /sandbox/.openclaw-data/hooks \
-        /sandbox/.openclaw-data/logs \
-    && rm -rf /sandbox/.openclaw/workspace \
-        /sandbox/.openclaw/extensions \
-        /sandbox/.openclaw/skills \
-        /sandbox/.openclaw/hooks \
-    && ln -s /sandbox/.openclaw-data/workspace /sandbox/.openclaw/workspace \
-    && ln -s /sandbox/.openclaw-data/extensions /sandbox/.openclaw/extensions \
-    && ln -s /sandbox/.openclaw-data/skills /sandbox/.openclaw/skills \
-    && ln -s /sandbox/.openclaw-data/hooks /sandbox/.openclaw/hooks \
-    && chown -R sandbox:sandbox /sandbox/.openclaw /sandbox/.openclaw-data \
-    && chmod 700 /sandbox/.openclaw \
-    && chmod 600 /sandbox/.openclaw/openclaw.json
+ENV DEBIAN_FRONTEND=noninteractive
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 python3-pip python3-venv \
+        curl git ca-certificates \
+        iproute2 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create sandbox user (matches OpenShell convention)
+RUN groupadd -r sandbox && useradd -r -g sandbox -d /sandbox -s /bin/bash sandbox \
+    && mkdir -p /sandbox/.nemoclawd /sandbox/.nemoclawd \
+    && chown -R sandbox:sandbox /sandbox
+
+# Install Nemo Clawd CLI
+RUN npm install -g nemo clawd@1.0.0
+
+# Install PyYAML for blueprint runner
+RUN pip3 install --break-system-packages pyyaml
+
+# Copy our plugin and blueprint into the sandbox
+COPY nemoclawd/ /opt/nemoclawd/
+COPY nemoclawd-blueprint/ /opt/nemoclawd-blueprint/
+
+# Build the TS plugin inside the container
+WORKDIR /opt/nemoclawd
+RUN npm install && rm -rf dist && npx tsc
+
+# Patch Nemo Clawd's nvidia provider to replace Meta Llama 3.3 70B with
+# Nemotron 3 Super 120B. Nemo Clawd's embedded agent has a hardcoded model
+# catalog that doesn't include Nemotron 3 Super yet. This replaces the
+# one Meta/Llama model with NVIDIA's latest until Nemo Clawd ships an update.
+RUN find /usr/local/lib/node_modules/nemo clawd/dist -name "*.js" \
+      -exec grep -l "meta/llama-3.3-70b-instruct" {} \; \
+    | xargs -I{} sed -i \
+        -e 's|meta/llama-3.3-70b-instruct|nvidia/nemotron-3-super-120b-a12b|g' \
+        -e 's|Meta Llama 3.3 70B Instruct|Nemotron 3 Super 120B|g' \
+        {}
+# Nemotron 3 Super supports reasoning; flip the flag and bump maxTokens
+RUN find /usr/local/lib/node_modules/nemo clawd/dist -name "*.js" \
+      -exec grep -l "nemotron-3-super-120b-a12b" {} \; \
+    | xargs -I{} python3 -c "import re,sys;\
+s=open('{}').read();\
+s=re.sub(r'(id:\\s*\"nvidia/nemotron-3-super-120b-a12b.*?reasoning:\\s*)false',r'\\1true',s,flags=re.DOTALL);\
+s=re.sub(r'(id:\\s*\"nvidia/nemotron-3-super-120b-a12b.*?maxTokens:\\s*)4096',r'\\g<1>8192',s,flags=re.DOTALL);\
+open('{}','w').write(s)"
+
+# Set up blueprint for local resolution
+RUN mkdir -p /sandbox/.nemoclawd/blueprints/0.1.0 \
+    && cp -r /opt/nemoclawd-blueprint/* /sandbox/.nemoclawd/blueprints/0.1.0/
+
+WORKDIR /sandbox
 USER sandbox
 
-# Simulate a host OpenClaw installation for migration testing.
-# Keep the legacy ~/.openclaw fixture for the blueprint snapshot tests.
-# Directories like hooks/ are symlinks to .openclaw-data/; mkdir -p follows
-# them and creates subdirectories in the writable data dir.
-RUN mkdir -p /sandbox/.openclaw/workspace /sandbox/.openclaw/extensions /sandbox/.openclaw/skills /sandbox/.openclaw/hooks/demo-hook \
+# Simulate a host Nemo Clawd installation for migration testing.
+# Keep the legacy ~/.nemoclawd fixture for the blueprint snapshot tests.
+RUN mkdir -p /sandbox/.nemoclawd/workspace /sandbox/.nemoclawd/extensions /sandbox/.nemoclawd/skills /sandbox/.nemoclawd/hooks/demo-hook \
+    && chmod 700 /sandbox/.nemoclawd \
     && printf '%s\n' \
         '{' \
         '  "wizard": {' \
@@ -52,25 +78,19 @@ RUN mkdir -p /sandbox/.openclaw/workspace /sandbox/.openclaw/extensions /sandbox
         '    "lastTouchedVersion": "2026.3.11",' \
         '    "lastTouchedAt": "2026-03-14T00:00:00.000Z"' \
         '  }' \
-        '}' > /sandbox/.openclaw/openclaw.json \
-    && chmod 600 /sandbox/.openclaw/openclaw.json \
-    && rm -f /sandbox/.openclaw/openclaw.json.bak* \
-        /sandbox/.openclaw/openclaw.json.last-good \
-        /sandbox/.openclaw/openclaw.json.clobbered.* \
-        /sandbox/.openclaw/openclaw.json.nemoclaw-baseline \
-        /sandbox/.openclaw-data/logs/config-health.json \
-        /sandbox/.openclaw-data/logs/config-audit.jsonl \
-    && echo "test-skill" > /sandbox/.openclaw/skills/test.md \
-    && echo "test-workspace-file" > /sandbox/.openclaw/workspace/project.md \
-    && printf '%s\n' '---' 'name: demo-hook' 'description: Demo hook fixture' '---' > /sandbox/.openclaw/hooks/demo-hook/HOOK.md \
-    && printf '%s\n' 'export default async function demoHook() {}' > /sandbox/.openclaw/hooks/demo-hook/handler.js
+        '}' > /sandbox/.nemoclawd/nemoclawd.json \
+    && chmod 600 /sandbox/.nemoclawd/nemoclawd.json \
+    && echo "test-skill" > /sandbox/.nemoclawd/skills/test.md \
+    && echo "test-workspace-file" > /sandbox/.nemoclawd/workspace/project.md \
+    && printf '%s\n' '---' 'name: demo-hook' 'description: Demo hook fixture' '---' > /sandbox/.nemoclawd/hooks/demo-hook/HOOK.md \
+    && printf '%s\n' 'export default async function demoHook() {}' > /sandbox/.nemoclawd/hooks/demo-hook/handler.js
 
 # Additional fixture for the TypeScript migration inventory:
-# - external state dir via OPENCLAW_STATE_DIR
-# - external config via OPENCLAW_CONFIG_PATH
+# - external state dir via NEMOCLAW_STATE_DIR
+# - external config via NEMOCLAW_CONFIG_PATH
 # - external workspace/agentDir/skills dir under /sandbox/clawd
 # - symlink inside the workspace to verify tar-based preservation
-RUN mkdir -p /sandbox/openclaw-state/extensions /sandbox/openclaw-state/skills /sandbox/openclaw-state/hooks/demo-hook \
+RUN mkdir -p /sandbox/nemoclawd-state/extensions /sandbox/nemoclawd-state/skills /sandbox/nemoclawd-state/hooks/demo-hook \
         /sandbox/clawd/main-workspace /sandbox/clawd/main-agent /sandbox/clawd/skills-extra /sandbox/config \
     && printf '%s\n' \
         '{' \
@@ -95,19 +115,14 @@ RUN mkdir -p /sandbox/openclaw-state/extensions /sandbox/openclaw-state/skills /
         '    "lastTouchedVersion": "2026.3.11",' \
         '    "lastTouchedAt": "2026-03-14T00:00:00.000Z"' \
         '  }' \
-        '}' > /sandbox/config/openclaw.json \
+        '}' > /sandbox/config/nemoclawd.json \
     && printf '%s\n' 'external-workspace-file' > /sandbox/clawd/main-workspace/project.md \
     && printf '%s\n' 'shared-notes' > /sandbox/clawd/shared-note.md \
     && ln -s /sandbox/clawd/shared-note.md /sandbox/clawd/main-workspace/shared-link.md \
     && printf '%s\n' 'agent-auth' > /sandbox/clawd/main-agent/auth.json \
     && printf '%s\n' 'extra-skill' > /sandbox/clawd/skills-extra/SKILL.md \
-    && printf '%s\n' 'managed-skill' > /sandbox/openclaw-state/skills/test.md \
-    && printf '%s\n' '---' 'name: override-hook' 'description: Override hook fixture' '---' > /sandbox/openclaw-state/hooks/demo-hook/HOOK.md \
-    && printf '%s\n' 'export default async function overrideHook() {}' > /sandbox/openclaw-state/hooks/demo-hook/handler.js
-
-# Test image: no long-running service, so just verify the runtime works.
-# Overrides any inherited HEALTHCHECK to avoid false-positive probes.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD node -e "process.exit(0)"
+    && printf '%s\n' 'managed-skill' > /sandbox/nemoclawd-state/skills/test.md \
+    && printf '%s\n' '---' 'name: override-hook' 'description: Override hook fixture' '---' > /sandbox/nemoclawd-state/hooks/demo-hook/HOOK.md \
+    && printf '%s\n' 'export default async function overrideHook() {}' > /sandbox/nemoclawd-state/hooks/demo-hook/handler.js
 
 ENTRYPOINT ["/bin/bash"]

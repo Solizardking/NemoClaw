@@ -2,19 +2,19 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-# NemoClaw walkthrough — sandboxed agent approval flow.
+# Nemo Clawd walkthrough — sandboxed agent approval flow.
 #
 # This sets up a split-screen workflow:
-#   LEFT:  OpenClaw agent (chat)
+#   LEFT:  Nemo Clawd agent (chat)
 #   RIGHT: OpenShell TUI (monitor + approve network egress)
 #
-# The agent runs inside a sandboxed environment with a controlled network
+# The agent runs inside a sandboxed environment with a strict network
 # policy. When it tries to access a service not in the allow list,
 # the TUI prompts the operator to approve or deny the request.
 #
 # Prerequisites:
-#   - NemoClaw setup complete (nemoclaw onboard)
-#   - NVIDIA_INFERENCE_API_KEY in environment
+#   - Nemo Clawd setup complete (./scripts/setup.sh)
+#   - NVIDIA_API_KEY in environment
 #
 # Suggested prompts that trigger the approval flow:
 #
@@ -36,24 +36,21 @@
 #     openshell term
 #
 #   Terminal 2 (Agent):
-#     openshell sandbox connect nemoclaw
-#     export NVIDIA_INFERENCE_API_KEY=nvapi-...
-#     nemoclaw-start
-#     openclaw agent --agent main --local --session-id live
+#     openshell sandbox connect nemoclawd
+#     export NVIDIA_API_KEY=nvapi-...
+#     nemoclawd-start
+#     nemoclawd agent --agent main --local --session-id live
 
 set -euo pipefail
 
-[ -n "${NVIDIA_INFERENCE_API_KEY:-}" ] || {
-  echo "NVIDIA_INFERENCE_API_KEY required"
-  exit 1
-}
+[ -n "${NVIDIA_API_KEY:-}" ] || { echo "NVIDIA_API_KEY required"; exit 1; }
 
 echo ""
 echo "  ┌─────────────────────────────────────────────────────┐"
-echo "  │  NemoClaw Walkthrough                               │"
+echo "  │  Nemo Clawd Walkthrough                               │"
 echo "  │                                                     │"
 echo "  │  LEFT pane:   OpenShell TUI (monitor + approve)     │"
-echo "  │  RIGHT pane:  OpenClaw agent (chat)                 │"
+echo "  │  RIGHT pane:  Nemo Clawd agent (chat)                 │"
 echo "  │                                                     │"
 echo "  │  When the agent tries to access a new service,      │"
 echo "  │  the TUI will prompt you to approve or deny.        │"
@@ -64,19 +61,21 @@ echo "  │    \"Install requests and get the top HN story\"       │"
 echo "  └─────────────────────────────────────────────────────┘"
 echo ""
 
-if ! command -v tmux >/dev/null 2>&1; then
+if ! command -v tmux > /dev/null 2>&1; then
   echo "tmux not found. Run these in two separate terminals:"
   echo ""
   echo "  Terminal 1 (TUI):"
   echo "    openshell term"
   echo ""
   echo "  Terminal 2 (Agent):"
-  echo "    openshell sandbox connect nemoclaw"
-  echo "    nemoclaw-start openclaw agent --agent main --local --session-id live"
+  echo "    openshell sandbox connect nemoclawd"
+  echo "    export NVIDIA_API_KEY=$NVIDIA_API_KEY"
+  echo "    nemoclawd-start"
+  echo "    nemoclawd agent --agent main --local --session-id live"
   exit 0
 fi
 
-SESSION="nemoclaw-walkthrough"
+SESSION="nemoclawd-walkthrough"
 
 # Kill old session if it exists
 tmux kill-session -t "$SESSION" 2>/dev/null || true
@@ -85,10 +84,8 @@ tmux kill-session -t "$SESSION" 2>/dev/null || true
 tmux new-session -d -s "$SESSION" -x 200 -y 50 "openshell term"
 
 # Split right pane for the agent
-# NVIDIA_INFERENCE_API_KEY is not needed inside the sandbox — inference is proxied
-# through the OpenShell gateway which injects credentials server-side.
 tmux split-window -h -t "$SESSION" \
-  "openshell sandbox connect nemoclaw -- bash -c 'nemoclaw-start openclaw agent --agent main --local --session-id live'"
+  "openshell sandbox connect nemoclawd -- bash -c 'export NVIDIA_API_KEY=$NVIDIA_API_KEY && nemoclawd-start nemoclawd agent --agent main --local --session-id live'"
 
 # Even split
 tmux select-layout -t "$SESSION" even-horizontal

@@ -1,102 +1,250 @@
-<!--
-  SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
-  SPDX-License-Identifier: Apache-2.0
--->
+<p align="center">
+  <strong>🦀 nemoClawd</strong><br/>
+  <em>Solana x xAI Agentic Trading Engine — Powered by $CLAWD</em>
+</p>
+<p align="center">
+  <code>8cHzQHUS2s2h8TzCmfqPKYiM4dSt4roa3n7MyRLApump</code>
+</p>
+<p align="center">
+  <a href="https://www.npmjs.com/package/nemoclawd"><img src="https://img.shields.io/npm/v/nemoclawd.svg?style=flat-square&color=cb3837" alt="npm"></a>
+  <a href="https://github.com/x402agent/Nemo Clawd/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square" alt="License"></a>
+  <img src="https://img.shields.io/badge/status-alpha-orange?style=flat-square" alt="Status">
+  <img src="https://img.shields.io/badge/Solana-Mainnet-9945FF?style=flat-square&logo=solana&logoColor=white" alt="Solana">
+  <img src="https://img.shields.io/badge/xAI-Grok%204.20-black?style=flat-square&logo=x" alt="xAI Grok">
+  <img src="https://img.shields.io/badge/MCP-31%20tools-blueviolet?style=flat-square" alt="MCP Tools">
+  <img src="https://img.shields.io/badge/Multi--Agent-4--16%20agents-purple?style=flat-square" alt="Multi-Agent">
+</p>
 
-# NVIDIA NemoClaw: Reference Stack for Sandboxed AI Agents in OpenShell
+---
 
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue)](https://github.com/NVIDIA/NemoClaw/blob/main/LICENSE)
-[![Security Policy](https://img.shields.io/badge/Security-Report%20a%20Vulnerability-red)](https://github.com/NVIDIA/NemoClaw/blob/main/SECURITY.md)
-[![Discord](https://img.shields.io/badge/Discord-Join-7289da)](https://discord.gg/XFpfPv9Uvx)
+## solana-clawd Integration
 
-NVIDIA NemoClaw is an open source reference stack for running always-on AI agents more safely inside [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell) sandboxes.
-It provides guided onboarding, a hardened blueprint, routed inference, network policy, and lifecycle management through a single CLI.
+**nemoClawd** now integrates **solana-clawd** — the full xAI Grok-powered agentic framework for Solana trading, research, and autonomous agent operations.
 
-**Supported agents:**
+### What You Get
 
-- [OpenClaw](https://openclaw.ai) (default)
-- [Hermes](https://get-hermes.ai/)
-- [LangChain Deep Agents Code](https://docs.langchain.com/oss/python/deepagents/code/overview)
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│   xAI Grok Integration ─── 4-16 Grok agents with web + X search  │
+│   │                     Chat, vision, image gen, voice          │
+│   │                                                             │
+│   $CLAWD Token ───────── 8cHzQHUS2s2h8TzCmfqPKYiM4dSt4roa3n7MyRLApump │
+│   │                     Solana + Pump.fun native                │
+│   │                                                             │
+│   31 MCP Tools ───────── Solana market data, trading, NFTs      │
+│   │                     Helius RPC/DAS, Pump.fun SDK            │
+│   │                                                             │
+│   Multi-Agent Research ─ 4 or 16 Grok agents collaborating     │
+│   │                     Deep Solana research + intelligence   │
+│   │                                                             │
+│   Blockchain Buddies ─── 18 species with trading personalities  │
+│   │                     Procedurally generated companions       │
+│   │                                                             │
+│   Voice Mode ─────────── xAI Grok text-to-speech agent          │
+│   │                     Conversational AI + STT                 │
+│   │                                                             │
+│   Telegram Bot ───────── 60+ commands for trading + research    │
+│                         Real-time alerts, sniping, narration    │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
-For capabilities, architecture, security controls, and the full feature list, see the [NemoClaw documentation](https://docs.nvidia.com/nemoclaw/latest/).
+### Quick Start
 
-## Get Started
+```bash
+npm install -g @mawdbotsonsolana/nemoclawd
 
-Review [Prerequisites](https://docs.nvidia.com/nemoclaw/latest/get-started/prerequisites.html) before installing.
-For Hermes, set `NEMOCLAW_AGENT=hermes` before running the installer, or use the `nemohermes` alias after install.
+# Start with Grok + Solana tools
+nemoclawd launch
 
-| Agent | Guide |
-|-------|-------|
-| OpenClaw (default) | [Quickstart with OpenClaw](https://docs.nvidia.com/nemoclaw/latest/get-started/quickstart.html) |
-| Hermes | [Quickstart with Hermes](https://docs.nvidia.com/nemoclaw/latest/get-started/quickstart-hermes.html) |
-| LangChain Deep Agents Code | [Quickstart with LangChain Deep Agents Code](https://docs.nvidia.com/nemoclaw/latest/get-started/quickstart-langchain-deepagents-code.html) |
+# Run demo walkthrough
+nemoclawd demo
+```
 
-## Documentation
+### xAI Grok Setup
 
-Refer to the following pages on the official documentation website for more information on NemoClaw.
+```bash
+export XAI_API_KEY="your_key"  # One key unlocks everything
+export HELIUS_API_KEY="your_free_key"  # From helius.dev
+```
 
-| Page | Description |
-|------|-------------|
-| [Overview](https://docs.nvidia.com/nemoclaw/latest/about/overview.html) | What NemoClaw does and how it fits together. |
-| [Architecture Overview](https://docs.nvidia.com/nemoclaw/latest/about/how-it-works.html) | High-level overview of Plugin, blueprint, sandbox lifecycle, and protection layers. |
-| [Ecosystem](https://docs.nvidia.com/nemoclaw/latest/about/ecosystem.html) | How OpenClaw, OpenShell, and NemoClaw form a stack and when to use NemoClaw versus OpenShell alone. |
-| [Architecture Details](https://docs.nvidia.com/nemoclaw/latest/reference/architecture.html) | Detailed description of Plugin structure, blueprint lifecycle, sandbox environment, and host-side state. |
-| [Prerequisites](https://docs.nvidia.com/nemoclaw/latest/get-started/prerequisites.html) | Hardware, software, and supported platforms, with any platform-specific pre-setup. |
-| [Inference Options](https://docs.nvidia.com/nemoclaw/latest/inference/inference-options.html) | Supported providers, validation, and routed inference configuration. |
-| [Network Policies](https://docs.nvidia.com/nemoclaw/latest/reference/network-policies.html) | Baseline rules, operator approval flow, and egress control. |
-| [Customize Network Policy](https://docs.nvidia.com/nemoclaw/latest/network-policy/customize-network-policy.html) | Static and dynamic policy changes, presets. |
-| [Security Best Practices](https://docs.nvidia.com/nemoclaw/latest/security/best-practices.html) | Controls reference, risk framework, and posture profiles for sandbox security. |
-| [Sandbox Hardening](https://docs.nvidia.com/nemoclaw/latest/manage-sandboxes/sandbox-hardening.html) | Container security measures, capability drops, process limits. |
-| [CLI Commands](https://docs.nvidia.com/nemoclaw/latest/reference/commands.html) | Full NemoClaw CLI command reference. |
-| [Troubleshooting](https://docs.nvidia.com/nemoclaw/latest/reference/troubleshooting.html) | Common issues and resolution steps. |
+### Grok Models
 
-## Community
+| Model | What it does | Use case |
+|-------|-------------|----------|
+| `grok-4.20-reasoning` | Chat, reasoning, vision, structured output, voice | Default for everything |
+| `grok-4.20-multi-agent` | 4-16 agents collaborating in real-time | Deep research, complex analysis |
+| `grok-4-1-fast` | Quick responses, low latency | Fast queries, real-time UX |
+| `grok-imagine-image` | Image generation + editing | Memes, avatars, visualizations |
 
-Join the NemoClaw community to ask questions, share feedback, and report issues.
-NemoClaw is an alpha project, so maintainers review issues, discussions, and pull requests on a best effort basis without guaranteed response timelines.
+### MCP Tools (31)
 
-| Need | Channel |
-|------|---------|
-| Setup or usage questions | [GitHub Discussions](https://github.com/NVIDIA/NemoClaw/discussions) or [Discord](https://discord.gg/XFpfPv9Uvx) |
-| Reproducible bugs | [GitHub Issues](https://github.com/NVIDIA/NemoClaw/issues) |
-| Feature proposals | Start with [GitHub Discussions](https://github.com/NVIDIA/NemoClaw/discussions), then open an issue when the scope is clear |
-| Current priorities | [Current Priorities](#current-priorities) |
-| Contribution help | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| Security vulnerabilities | Use the private channels in [SECURITY.md](SECURITY.md); do not open public issues |
+**Solana Market Data:**
+- `solana_price`, `solana_trending`, `solana_token_info`, `solana_wallet_pnl`
+- `solana_search`, `solana_top_traders`, `solana_wallet_tokens`, `sol_price`
 
-## Contributing
+**Helius Onchain:**
+- `helius_account_info`, `helius_balance`, `helius_transactions`
+- `helius_priority_fee`, `helius_das_asset`, `helius_webhook_create`
 
-We welcome contributions. See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, coding standards, and the PR process.
+**Agent Fleet:**
+- `agent_spawn`, `agent_list`, `agent_stop`
 
-## Security
+**Memory:**
+- `memory_recall`, `memory_write`
 
-NVIDIA takes security seriously.
-If you discover a vulnerability in NemoClaw, **DO NOT open a public issue.**
-Use one of the private reporting channels described in [SECURITY.md](SECURITY.md):
+**Metaplex:**
+- `metaplex_mint_agent`, `metaplex_register_identity`, `metaplex_read_agent`
 
-- Submit a report through the [NVIDIA Vulnerability Disclosure Program](https://www.nvidia.com/en-us/security/report-vulnerability/).
-- Send an email to [psirt@nvidia.com](mailto:psirt@nvidia.com) encrypted with the [NVIDIA PGP key](https://www.nvidia.com/en-us/security/pgp-key).
-- Use [GitHub's private vulnerability reporting](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/configure-vulnerability-reporting/configuring-private-vulnerability-reporting-for-a-repository) to submit a report directly on this repository.
+**Pump.fun:**
+- `pump_token_scan`, `pump_buy_quote`, `pump_sell_quote`, `pump_graduation`
 
-For security bulletins and PSIRT policies, visit the [NVIDIA Product Security](https://www.nvidia.com/en-us/security/) portal.
+---
 
-## Current Priorities
+## OODA Trading Loop
 
-NemoClaw's current priorities are maintained here as a public orientation point for contributors and community members.
-This list is not a delivery commitment, support promise, or fixed roadmap; priorities can change as maintainers respond to security, quality, platform readiness, and community feedback.
+```
+OBSERVE  → sol_price, trending, helius_priority_fee, memory KNOWN
+ORIENT   → score candidates (trend + momentum + liquidity + participation)
+DECIDE   → confidence ≥ 60? → size band (0.5x / 1.0x / 1.25x / 1.5x)
+ACT      → trade_execute gated at `ask` permission (human approval required)
+LEARN    → write INFERRED signals → Dream agent promotes to LEARNED
+```
 
-- Improve install and onboarding reliability across tested platforms.
-- Strengthen sandbox hardening, credential handling, and network-policy defaults.
-- Validate local and routed inference behavior for supported provider paths.
-- Keep documentation, troubleshooting guidance, and agent skills aligned with supported workflows.
+### Agent Fleet
 
-For specific scoped work, use [GitHub Issues](https://github.com/NVIDIA/NemoClaw/issues) and start broader proposals in [GitHub Discussions](https://github.com/NVIDIA/NemoClaw/discussions).
-Security vulnerabilities must use the private reporting channels in [SECURITY.md](SECURITY.md), not public issues.
+| Agent | Type | Description |
+|-------|------|-------------|
+| **$CLAWD** | `Clawd` | Full autonomous agent — chat, vision, image gen, multi-agent, voice |
+| **Grok Researcher** | `GrokResearcher` | 16-agent deep research with web + X search |
+| **Explorer** | `Explore` | Read-only Solana research (fast, cheap) |
+| **Scanner** | `Scanner` | Trend monitoring, surfaces high-signal opportunities |
+| **OODA** | `OODA` | Full trading cycle: Observe, Orient, Decide, Act, Learn |
+| **Dream** | `Dream` | Memory consolidation (INFERRED to LEARNED promotion) |
+| **Analyst** | `Analyst` | Deep structured research reports |
+| **Monitor** | `Monitor` | Helius WebSocket event listeners |
 
-## Notice and Disclaimer
+---
 
-This software automatically retrieves, accesses or interacts with external materials. Those retrieved materials are not distributed with this software and are governed solely by separate terms, conditions and licenses. You are solely responsible for finding, reviewing and complying with all applicable terms, conditions, and licenses, and for verifying the security, integrity and suitability of any retrieved materials for your specific use case. This software is provided "AS IS", without warranty of any kind. The author makes no representations or warranties regarding any retrieved materials, and assumes no liability for any losses, damages, liabilities or legal consequences from your use or inability to use this software or any retrieved materials. Use this software and the retrieved materials at your own risk.
+## Blockchain Buddies
+
+Every `nemoClawd` user gets a companion — a procedurally generated Blockchain Buddy with its own wallet, trading personality, stats, and animated ASCII sprite.
+
+```bash
+nemoclawd birth   # hatch yours now
+```
+
+### Species (18 total)
+
+| Category | Species | Personality | Risk Level |
+|---|---|---|---|
+| **Solana Natives** | SolDog, BONK Dog, dogwifhat, Jupiter Agg, Raydium LP | Diamond Hands / Degen / Bot | Low → Degen |
+| **DeFi Archetypes** | Whale, Bull, Bear, MEV Shark, Octopus | Whale / Sniper / Ninja | Low → Medium |
+| **Memecoin Culture** | Pepe, Pump.fun, Sniper Bot | Degen / Sniper | High → Degen |
+
+---
+
+## Telegram Trading Bot
+
+### Commands
+
+| Command | Response |
+|---|---|
+| `/sol` | SOL price (CoinGecko) |
+| `/price <mint\|symbol>` | Token price |
+| `/trending` | Top 10 trending tokens |
+| `/wallet <address>` | Wallet PnL analysis |
+| `/scan` | Toggle background pump scanner |
+| `/snipe [config]` | Start sniper bot |
+| `/grok <question>` | Chat with Grok |
+| `/xsearch <query>` | Search X/Twitter live |
+| `/imagine <prompt>` | Generate images |
+
+---
+
+## Deploy to Fly.io
+
+```bash
+cd MCP
+fly launch --config fly.toml
+fly secrets set HELIUS_API_KEY=your-key XAI_API_KEY=your-key MCP_API_KEY=optional-bearer-token
+```
+
+Then connect via:
+```json
+{ "type": "http", "url": "https://your-app.fly.dev/mcp" }
+```
+
+---
+
+## Architecture
+
+```
+                     ┌─────────────────────────────────────────────────────┐
+                     │                  ENTRY POINTS                       │
+                     │  nemoClawd CLI    MCP Server    Telegram Bot        │
+                     │  (interactive/   (stdio/HTTP)   60+ commands       │
+                     │   one-shot)                                        │
+                     └────────┬──────────┬────────────────┬────────────────┘
+                              │          │                │
+                              ▼          ▼                ▼
+                     ┌─────────────────────────────────────────────────────┐
+                     │                  CORE ENGINE                        │
+                     │  QueryEngine ──► xAI Grok ──► Tool Execution       │
+                     │    │              │              │               │
+                     │    │  Providers:   │   ┌──────────┤               │
+                     │    │  - xAI/Grok   │   │          │               │
+                     │    │  - OpenRouter │   ▼          ▼               │
+                     │    │  - Anthropic  │  ToolExecutor  Permission     │
+                     └─────┼──────────────┼──────────────────────────────┘
+                           │              │
+               ┌───────────┴──────────────┴──────────────────────────────┐
+               │                              │                         │
+               ▼                              ▼                         ▼
+┌──────────────────────┐  ┌──────────────────────────┐  ┌────────────────┐
+│     SUPPORT LAYER    │  │      MEMORY SYSTEM       │  │   DATA SOURCES │
+│                      │  │                          │  │                │
+│  AppState (Zustand)  │  │  KNOWN   (ephemeral,     │  │  Helius RPC    │
+│  - PermissionMode    │  │           ~60s TTL)      │  │  Helius DAS    │
+│  - OODA phase        │  │                          │  │  Pump.fun      │
+│  - PumpSignals       │  │  LEARNED (persistent,    │  │  Jupiter       │
+│                      │  │           cross-session)  │  │                │
+│  Risk Engine         │  │                          │  │  Solana Tracker│
+└──────────────────────┘  │  INFERRED (tentative,    │  │                │
+                          │           markdown)       │  │                │
+                          └──────────────────────────┘  └────────────────┘
+```
+
+---
+
+## Environment Variables
+
+```bash
+# Core (free at helius.dev)
+HELIUS_API_KEY=               # RPC, DAS, enhanced txs, webhooks
+HELIUS_RPC_URL=               # Helius mainnet RPC
+
+# xAI Grok (one key unlocks everything)
+XAI_API_KEY=                  # Grok: chat, voice, vision, search, multi-agent
+
+# OpenRouter (optional)
+OPENROUTER_API_KEY=           # Multi-model LLM routing
+
+# Telegram
+TELEGRAM_BOT_TOKEN=           # From @BotFather
+
+# Wallet (optional)
+SOLANA_PRIVATE_KEY=           # Base58 keypair for live trades
+SOLANA_PUBLIC_KEY=           # Default wallet
+```
+
+---
 
 ## License
 
-Apache 2.0. See [LICENSE](LICENSE).
+Licensed under [Apache 2.0](LICENSE).
+
+**$CLAWD** `8cHzQHUS2s2h8TzCmfqPKYiM4dSt4roa3n7MyRLApump`
+
+Powered by **xAI Grok** from **xAI** | Built on **Solana**

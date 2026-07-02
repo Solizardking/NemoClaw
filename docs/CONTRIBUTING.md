@@ -1,11 +1,16 @@
-<!--
-  SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
-  SPDX-License-Identifier: Apache-2.0
--->
+# Contributing to Nemo Clawd Documentation
 
-# Contributing to NemoClaw Documentation
+This guide covers how to write, edit, and review documentation for Nemo Clawd. If you change code that affects user-facing behavior, update the relevant docs in the same PR.
 
-This guide covers how to write, edit, and review documentation for NemoClaw. If you change code that affects user-facing behavior, update the relevant docs in the same PR.
+## Use the Agent Skills
+
+If you use an AI coding agent (Cursor, Claude Code, Codex, etc.), the repo includes skills that automate doc work. Use them before writing from scratch.
+
+| Skill | What it does | When to use |
+|---|---|---|
+| `update-docs-from-commits` | Scans recent commits for user-facing changes and drafts doc updates. | After landing features, before a release, or to find doc gaps. |
+
+The skills live in `.agents/skills/` and follow the style guide below automatically. To use one, ask your agent to run it. For example, ask it to "catch up the docs for everything merged since v0.2.0".
 
 ## When to Update Docs
 
@@ -17,147 +22,61 @@ Update documentation when your change:
 - Fixes a bug that the docs describe incorrectly.
 - Changes an API, protocol, or policy schema.
 
-## Update Docs with Contributor Skills
-
-If you use an AI coding agent (Cursor, Claude Code, Codex, etc.), the repo includes the `nemoclaw-contributor-update-docs` skill that automates doc work.
-Use it before writing from scratch.
-
-The skill scans recent commits for user-facing changes and drafts doc updates.
-Run it after landing features, before a release, or to find doc gaps.
-For example, ask your agent to "catch up the docs for the changes I made in this PR".
-During release prep, run the skill first, make any doc version bumps, then open the docs refresh PR.
-
-The skill lives in `.agents/skills/nemoclaw-contributor-update-docs/` and follows the style guide below automatically.
-
-## Markdown Docs for AI Agents
-
-The `docs/` directory is the source of truth for user-facing documentation.
-NemoClaw publishes Markdown versions of Fern pages plus `llms.txt`, so AI agents can fetch canonical documentation directly.
-
-The hand-written `nemoclaw-user-guide` skill only routes agents to the right Markdown docs.
-It must stay small and must not copy page content from `docs/`.
-
-Always make user-facing doc updates in `docs/`.
-Update `docs/resources/agent-skills.mdx` and `.agents/skills/nemoclaw-user-guide/SKILL.md` only when the AI-agent routing guidance changes.
-
 ## Building Docs Locally
 
 Verify the docs are built correctly by building them and checking the output.
 
-The public site is built with Fern.
-The repo pins the Fern CLI version in `fern/fern.config.json`.
-Use the npm scripts so every docs command uses that pinned version.
-
-To print the pinned Fern CLI version, run:
+To build the docs, run:
 
 ```bash
-npm run docs:deps
-```
-
-To validate the Fern configuration and migrated MDX pages, run:
-
-```bash
-npm run docs
+make docs
 ```
 
 To serve the docs locally and automatically rebuild on changes, run:
 
 ```bash
-npm run docs:live
+make docs-live
 ```
-
-To publish a branch-based Fern preview whenever docs files change, run:
-
-```bash
-npm run docs:preview:watch
-```
-
-The preview watcher uses the current Git branch name as the Fern preview ID and watches the `docs/` and `fern/` directories.
-
-Fern `.mdx` pages are the canonical docs source.
-Fern publishes Markdown routes for AI agents from the same source pages.
-
-## Agent Variant Generation
-
-Some Fern pages appear in both the OpenClaw and Hermes guide variants.
-The `scripts/sync-agent-variant-docs.ts` script reads `docs/index.yml` and renders variant-specific copies for every page that appears in both guide variants before Fern validates or publishes the site.
-The source pages stay in their normal `docs/` locations, and generated pages are written under `docs/_build/agent-variants/`, which is ignored by Git.
-Navigation in `docs/index.yml` points Fern at generated pages for shared entries so Fern still renders normal fenced code blocks with copy buttons and syntax highlighting.
-OpenClaw-only or Hermes-only pages stay as source pages in navigation.
-
-When shared page content is the same except for the host CLI binary, write one source page and use `$$nemoclaw` as a build-time placeholder.
-Do not duplicate fenced code blocks or inline command examples only to switch between `nemoclaw` and `nemohermes`.
-Use literal command names on those single-variant pages rather than `$$nemoclaw`, because no generated page will rewrite the placeholder.
-
-Run `npm run docs:sync-agent-variants` after editing shared variant source pages or navigation.
-Run `npm run docs` before opening a PR to verify the generated pages, rewritten relative links, and Fern navigation.
-If content differs by behavior, setup flow, state layout, or agent-specific wording, keep using `<AgentOnly>` blocks for that content.
-
-## Route-Style Links
-
-Fern links between docs pages should use route-style paths, not filesystem paths.
-Route-style paths omit the `.mdx` extension and follow the page slugs declared in `docs/index.yml`.
-For example, a source page under `docs/get-started/` should link to the OpenClaw quickstart as `../quickstart`, not `quickstart.mdx`.
-The published route comes from the navigation hierarchy and page `slug`, not directly from the file path.
-
-This matters for generated agent variants because shared source pages may not appear directly in `docs/index.yml`.
-The navigation can point Fern at generated pages under `docs/_build/agent-variants/`, while the source MDX remains in its normal folder.
-The link checker maps those generated nav entries back to their source paths when validating route-style links.
-Do not convert route-style links to `.mdx` file links just to satisfy a local filesystem check.
-
-## Doc-Only PR Verification
-
-Doc-only pull requests do not need the full test suite by default.
-Commit and push normally so the Git hooks run, then run:
-
-```bash
-npm run docs
-```
-
-Leave `npm test` unchecked in the PR verification checklist unless you actually ran it.
-If hooks were skipped or unavailable, run `npx prek run --from-ref main --to-ref HEAD` before opening the PR.
-Run targeted tests only when the change also touches code, generated behavior, or runtime behavior.
 
 ## Writing Conventions
 
 ### Format
 
-- Fern pages use MDX with YAML frontmatter. Use a flat `title`, `description`, optional `sidebar-title`, `description-agent`, `keywords`, and `position`.
-- Do not duplicate the page title as a body H1 in MDX pages because Fern renders the title from frontmatter.
-- Use `description-agent` as a concise routing summary for AI documentation clients and search indexes.
-- Include the SPDX license header in MDX frontmatter as comments:
-
-  ```yaml
-  ---
-  # SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
-  # SPDX-License-Identifier: Apache-2.0
-  title: "NemoClaw Page Title"
-  description: "One-sentence summary for readers, SEO, and doc search snippets."
-  description-agent: "Third-person verb summary for agent routing. Add 'Use when...' with trigger phrases."
-  ---
+- Docs use [MyST Markdown](https://myst-parser.readthedocs.io/), a Sphinx-compatible superset of CommonMark.
+- Every page starts with YAML frontmatter (title, description, topics, tags, content type).
+- Include the SPDX license header after frontmatter:
+  ```
+  <!--
+    SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+    SPDX-License-Identifier: Apache-2.0
+  -->
   ```
 
-### MDX Frontmatter Template
+### Frontmatter Template
 
 ```yaml
 ---
-# SPDX-FileCopyrightText: Copyright (c) 2025-2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
-# SPDX-License-Identifier: Apache-2.0
-title: "NemoClaw Page Title: Subtitle with Context"
-sidebar-title: "Short Nav Title"
-description: "One-sentence summary for readers, SEO, and doc search snippets."
-description-agent: "Third-person verb summary for agent routing. Add 'Use when...' with trigger phrases."
-keywords: "primary keyword, secondary keyword phrase"
-position: 1
+title:
+  page: "Nemo Clawd Page Title — Subtitle with Context"
+  nav: "Short Nav Title"
+description: "One-sentence summary of the page."
+keywords: ["primary keyword", "secondary keyword phrase"]
+topics: ["generative_ai", "ai_agents"]
+tags: ["nemoclawd", "openshell", "relevant", "tags"]
+content:
+  type: concept | how_to | get_started | tutorial | reference
+  difficulty: technical_beginner | technical_intermediate | technical_advanced
+  audience: ["developer", "engineer"]
+status: published
 ---
 ```
 
 ### Page Structure
 
-1. Start MDX pages with a one- or two-sentence introduction stating what the page covers.
-2. Organize sections by task or concept, using H2 and H3. Start each section with an introductory sentence that orients the reader.
-3. Use Fern components like `<Note>`, `<Tip>`, `<Warning>`, `<Cards>`, and `<Card>` for callouts and landing-page navigation.
-4. Add a "Next Steps" or "Related Topics" section at the bottom when it helps users continue.
+1. H1 heading matching the `title.page` value.
+2. A one- or two-sentence introduction stating what the page covers.
+3. Sections organized by task or concept, using H2 and H3. Start each section with an introductory sentence that orients the reader.
+4. A "Next Steps" section at the bottom linking to related pages.
 
 ## Style Guide
 
@@ -172,13 +91,12 @@ Write like you are explaining something to a colleague. Be direct, specific, and
 
 ### Things to Avoid
 
-The following patterns are common in LLM-generated text and erode trust with technical readers.
-Remove them during review.
+These patterns are common in LLM-generated text and erode trust with technical readers. Remove them during review.
 
 | Pattern | Problem | Fix |
 |---|---|---|
 | Unnecessary bold | "This is a **critical** step" on routine instructions. | Reserve bold for UI labels, parameter names, and genuine warnings. |
-| Em dashes | "The gateway, which runs in Docker, creates sandboxes." | Do not use em dashes. Prefer commas, colons, or separate sentences. |
+| Em dashes everywhere | "The gateway — which runs in Docker — creates sandboxes." | Use commas or split into two sentences. Em dashes are fine sparingly but should not appear multiple times per paragraph. |
 | Superlatives | "OpenShell provides a powerful, robust, seamless experience." | Say what it does, not how great it is. |
 | Hedge words | "Simply run the command" or "You can easily configure..." | Drop the adverb. "Run the command." |
 | Emoji in prose | "Let's get started!" | No emoji in documentation prose. |
@@ -189,31 +107,12 @@ Remove them during review.
 - End every sentence with a period.
 - One sentence per line in the source file (makes diffs readable).
 - Use `code` formatting for CLI commands, file paths, flags, parameter names, and values.
-- Use language-specific code blocks for commands that readers should copy.
-  Put only the command text in copyable blocks:
-
-  ```bash
-  $$nemoclaw onboard
+- Use code blocks with the `console` language for CLI examples. Prefix commands with `$`:
+  ```console
+  $ nemoclawd onboard
   ```
-
-- Use `$$nemoclaw` as a build-time placeholder for NemoClaw host CLI command examples in shared variant pages.
-  The docs build resolves it to `nemoclaw` for OpenClaw pages and `nemohermes` for Hermes pages before Fern renders code blocks.
-  This preserves Fern's native fenced-code UI while keeping one source sample.
-- Do not write duplicate `<AgentOnly>` fenced code blocks when the only difference is `nemoclaw` versus `nemohermes`.
-  Use `<AgentOnly>` blocks only when the surrounding content differs between the OpenClaw and Hermes variants.
-
-- Use `powershell` for Windows PowerShell commands.
-  Use `bash` or `sh` for Linux, macOS, and WSL shell commands.
-  Use `bash` for generic copyable shell commands when a single tag is needed.
-  Do not use prompt markers such as `$` in copyable command blocks.
-  Keep command and output in separate fenced code blocks.
-  Introduce output blocks with `Expected output:`.
-  For output blocks, use `json` when the output is valid JSON, otherwise use `text`.
-  Reserve `console` for rare transcript-style examples that intentionally mix command and output, including prompts or interactive sessions, and label the section as transcript-only so readers do not treat it as copy/paste input.
-
 - Use tables for structured comparisons. Keep tables simple (no nested formatting).
-- Use Fern callout components (`<Note>`, `<Tip>`, `<Warning>`) for callouts in MDX pages, not bold text.
-- Use MyST admonitions (`:::{tip}`, `:::{note}`, `:::{warning}`) only in legacy `.md` pages that have not migrated yet.
+- Use MyST admonitions (`:::{tip}`, `:::{note}`, `:::{warning}`) for callouts, not bold text.
 - Avoid nested admonitions.
 - Do not number section titles. Write "Deploy a Gateway" not "Section 1: Deploy a Gateway" or "Step 3: Verify."
 - Do not use colons in titles. Write "Deploy and Manage Gateways" not "Gateways: Deploy and Manage."
@@ -230,8 +129,7 @@ Use these consistently:
 | CLI | cli, Cli |
 | API key | api key, API Key |
 | NVIDIA | Nvidia, nvidia |
-| NemoClaw | nemoclaw (in prose), Nemoclaw |
-| OpenClaw | openclaw (in prose), Openclaw |
+| Nemo Clawd | nemo clawd (in prose), nemoclawd (CLI/package), Nemo Clawd (Title) |
 | OpenShell | Open Shell, openShell, Openshell, openshell |
 | mTLS | MTLS, mtls |
 | YAML | yaml, Yaml |
@@ -240,16 +138,16 @@ Use these consistently:
 
 1. Create a branch following the project convention.
 2. Make your changes.
-3. Build locally with `npm run docs` and verify the output.
+3. Build locally with `make docs` and verify the output.
 4. Open a PR with `docs:` as the conventional commit type.
 
-```text
+```
 docs: update quickstart for new onboard wizard
 ```
 
 If your doc change accompanies a code change, include both in the same PR and use the code change's commit type:
 
-```text
+```
 feat(cli): add policy-add command
 ```
 

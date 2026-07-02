@@ -2,24 +2,24 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 #
-# Start NemoClaw auxiliary services: cloudflared tunnel for public access.
-#
-# Messaging channels (Telegram, Discord, Slack) are now handled natively
-# by OpenClaw inside the sandbox — no host-side bridges needed.
-# See: nemoclaw-start.sh configure_messaging_channels()
+# Start Nemo Clawd auxiliary services: Telegram bridge
+# and cloudflared tunnel for public access.
 #
 # Usage:
-#   ./scripts/start-services.sh                     # start all
-#   ./scripts/start-services.sh --status             # check status
-#   ./scripts/start-services.sh --stop               # stop all
-#   ./scripts/start-services.sh --sandbox mybox      # start for specific sandbox
+#   TELEGRAM_BOT_TOKEN=... ./scripts/start-services.sh         # start all
+#   ./scripts/start-services.sh --status                       # check status
+#   ./scripts/start-services.sh --stop                         # stop all
+#   ./scripts/start-services.sh --sandbox mybox                # start for specific sandbox
+#   ./scripts/start-services.sh --sandbox mybox --stop         # stop for specific sandbox
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 DASHBOARD_PORT="${DASHBOARD_PORT:-18789}"
 
 # ── Parse flags ──────────────────────────────────────────────────
-SANDBOX_NAME="${NEMOCLAW_SANDBOX:-${SANDBOX_NAME:-default}}"
+SANDBOX_NAME="${NEMOCLAW_SANDBOX:-default}"
 ACTION="start"
 
 while [ $# -gt 0 ]; do
@@ -42,19 +42,16 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-PIDDIR="/tmp/nemoclaw-services-${SANDBOX_NAME}"
+PIDDIR="/tmp/nemoclawd-services-${SANDBOX_NAME}"
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-info() { echo -e "${GREEN}[services]${NC} $1"; }
-warn() { echo -e "${YELLOW}[services]${NC} $1"; }
-fail() {
-  echo -e "${RED}[services]${NC} $1"
-  exit 1
-}
+info()  { echo -e "${GREEN}[services]${NC} $1"; }
+warn()  { echo -e "${YELLOW}[services]${NC} $1"; }
+fail()  { echo -e "${RED}[services]${NC} $1"; exit 1; }
 
 is_running() {
   local pidfile="$PIDDIR/$1.pid"
@@ -71,8 +68,8 @@ start_service() {
     info "$name already running (PID $(cat "$PIDDIR/$name.pid"))"
     return 0
   fi
-  nohup "$@" >"$PIDDIR/$name.log" 2>&1 &
-  echo $! >"$PIDDIR/$name.pid"
+  nohup "$@" > "$PIDDIR/$name.log" 2>&1 &
+  echo $! > "$PIDDIR/$name.pid"
   info "$name started (PID $!)"
 }
 
@@ -94,71 +91,16 @@ stop_service() {
   fi
 }
 
-render_box() {
-  local columns="${COLUMNS:-100}"
-  if ! [[ "$columns" =~ ^[0-9]+$ ]] || [ "$columns" -le 0 ]; then
-    columns=100
-  fi
-
-  local min_inner=53
-  local max_inner=$((columns - 4))
-  if [ "$max_inner" -lt 0 ]; then
-    max_inner=0
-  fi
-
-  local inner="$min_inner"
-  local line needed visible pad_len pad hbar blank padded
-  for line in "$@"; do
-    needed=$((${#line} + 2))
-    if [ "$needed" -gt "$inner" ]; then
-      inner="$needed"
-    fi
-  done
-  if [ "$inner" -gt "$max_inner" ]; then
-    inner="$max_inner"
-  fi
-
-  printf -v hbar '%*s' "$inner" ''
-  hbar=${hbar// /─}
-  printf -v blank '%*s' "$inner" ''
-
-  printf '  ┌%s┐
-' "$hbar"
-  for line in "$@"; do
-    if [ -z "$line" ]; then
-      printf '  │%s│
-' "$blank"
-      continue
-    fi
-    if [ "${#line}" -gt "$inner" ]; then
-      visible=$((inner - 2))
-      if [ "$visible" -lt 0 ]; then
-        visible=0
-      fi
-      pad_len=$((inner - visible))
-      if [ "$pad_len" -lt 0 ]; then
-        pad_len=0
-      fi
-      printf -v pad '%*s' "$pad_len" ''
-      padded="${line:0:$visible}${pad}"
-    else
-      printf -v padded '%-*s' "$inner" "$line"
-    fi
-    printf '  │%s│
-' "$padded"
-  done
-  printf '  └%s┘
-' "$hbar"
-}
-
 show_status() {
   mkdir -p "$PIDDIR"
   echo ""
-  if is_running cloudflared; then
-    echo -e "  ${GREEN}●${NC} cloudflared  (PID $(cat "$PIDDIR/cloudflared.pid"))"
-  else
-    echo -e "  ${RED}●${NC} cloudflared  (stopped)"
-  fi
+  for svc in telegram-bridge cloudflared; do
+    if is_running "$svc"; then
+      echo -e "  ${GREEN}●${NC} $svc  (PID $(cat "$PIDDIR/$svc.pid"))"
+    else
+      echo -e "  ${RED}●${NC} $svc  (stopped)"
+    fi
+  done
   echo ""
 
   if [ -f "$PIDDIR/cloudflared.log" ]; then
@@ -173,18 +115,41 @@ show_status() {
 do_stop() {
   mkdir -p "$PIDDIR"
   stop_service cloudflared
+  stop_service telegram-bridge
   info "All services stopped."
 }
 
 do_start() {
+  [ -n "${NVIDIA_API_KEY:-}" ] || fail "NVIDIA_API_KEY required"
+
+  if [ -z "${TELEGRAM_BOT_TOKEN:-}" ]; then
+    warn "TELEGRAM_BOT_TOKEN not set — Telegram bridge will not start."
+    warn "Create a bot via @BotFather on Telegram and set the token."
+  fi
+
+  command -v node > /dev/null || fail "node not found. Install Node.js first."
+
+  # Verify sandbox is running
+  if command -v openshell > /dev/null 2>&1; then
+    if ! openshell sandbox list 2>&1 | grep -q "Ready"; then
+      warn "No sandbox in Ready state. Telegram bridge may not work until sandbox is running."
+    fi
+  fi
+
   mkdir -p "$PIDDIR"
 
-  # cloudflared tunnel
-  if command -v cloudflared >/dev/null 2>&1; then
+  # Telegram bridge (only if token provided)
+  if [ -n "${TELEGRAM_BOT_TOKEN:-}" ]; then
+    start_service telegram-bridge \
+      node "$REPO_DIR/scripts/telegram-bridge.js"
+  fi
+
+  # 3. cloudflared tunnel
+  if command -v cloudflared > /dev/null 2>&1; then
     start_service cloudflared \
       cloudflared tunnel --url "http://localhost:$DASHBOARD_PORT"
   else
-    warn "cloudflared not found — no public URL. Install it separately if you need a public tunnel."
+    warn "cloudflared not found — no public URL. Install: brev-setup.sh or manually."
   fi
 
   # Wait for cloudflared to publish URL
@@ -200,32 +165,36 @@ do_start() {
     done
   fi
 
+  # Print banner
+  echo ""
+  echo "  ┌─────────────────────────────────────────────────────┐"
+  echo "  │  Nemo Clawd Services                                  │"
+  echo "  │                                                     │"
+
   local tunnel_url=""
   if [ -f "$PIDDIR/cloudflared.log" ]; then
     tunnel_url="$(grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' "$PIDDIR/cloudflared.log" 2>/dev/null | head -1 || true)"
   fi
 
-  local banner_lines=(
-    "  NemoClaw Services"
-    ""
-  )
   if [ -n "$tunnel_url" ]; then
-    banner_lines+=("  Public URL:  $tunnel_url")
+    printf "  │  Public URL:  %-40s│\n" "$tunnel_url"
   fi
-  banner_lines+=(
-    "  Messaging:   via OpenClaw native channels (if configured)"
-    ""
-    "  Run 'openshell term' to monitor egress approvals"
-  )
 
-  echo ""
-  render_box "${banner_lines[@]}"
+  if is_running telegram-bridge; then
+    echo "  │  Telegram:    bridge running                        │"
+  else
+    echo "  │  Telegram:    not started (no token)                │"
+  fi
+
+  echo "  │                                                     │"
+  echo "  │  Run 'openshell term' to monitor egress approvals   │"
+  echo "  └─────────────────────────────────────────────────────┘"
   echo ""
 }
 
 # Dispatch
 case "$ACTION" in
-  stop) do_stop ;;
+  stop)   do_stop ;;
   status) show_status ;;
-  start) do_start ;;
+  start)  do_start ;;
 esac

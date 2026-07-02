@@ -23,11 +23,15 @@ class SearchEngine {
      * Initialize the search engine with documents
      */
     async initialize(documents) {
-        await this.loadLunr();
-        this.documents = documents;
-        this.collectMetadata();
-        this.buildIndex();
-        this.isInitialized = true;
+        try {
+            await this.loadLunr();
+            this.documents = documents;
+            this.collectMetadata();
+            this.buildIndex();
+            this.isInitialized = true;
+        } catch (error) {
+            throw error;
+        }
     }
 
     /**
@@ -188,8 +192,7 @@ class SearchEngine {
 
             // Primary fields - highest relevance
             this.field('title', { boost: 10 });           // Title matches most important
-            this.field('description', { boost: 8 });      // Frontmatter description.main (hand-crafted)
-            this.field('description_agent', { boost: 6 }); // description.agent for agent-oriented phrasing
+            this.field('description', { boost: 8 });      // Frontmatter description (hand-crafted)
 
             // Secondary fields - structural relevance
             this.field('keywords', { boost: 7 });         // Explicit keywords
@@ -216,10 +219,7 @@ class SearchEngine {
                     this.add({
                         id: doc.id,
                         title: doc.title || '',
-                        description: doc.description || '',
-                        description_agent: doc.description_agent && doc.description_agent !== doc.description
-                            ? doc.description_agent
-                            : '',
+                        description: doc.description || '',  // NEW: separate indexed field
                         content: (doc.content || '').substring(0, 5000), // Limit content length
                         summary: doc.summary || '',
                         headings: self.extractHeadingsText(doc.headings),
@@ -236,7 +236,7 @@ class SearchEngine {
                         section_path: self.arrayToString(doc.section_path),
                         author: doc.author || ''
                     });
-                } catch (_docError) {
+                } catch (docError) {
                     // Skip documents that fail to index
                 }
             }, this);
@@ -288,7 +288,7 @@ class SearchEngine {
 
             return groupedResults.slice(0, maxResults);
 
-        } catch (_error) {
+        } catch (error) {
             return [];
         }
     }
@@ -496,32 +496,18 @@ class SearchEngine {
     }
 
     /**
-     * Extract safe Lunr query terms from user input.
-     */
-    getSafeSearchTerms(query) {
-        const matches = String(query || '').toLowerCase().match(/[a-z0-9][a-z0-9._-]{0,63}/g);
-        return matches ? matches.slice(0, 10) : [];
-    }
-
-    /**
      * Perform search with multiple strategies
      */
     performMultiStrategySearch(query) {
-        const terms = this.getSafeSearchTerms(query);
-        if (terms.length === 0) return [];
-
-        const phrase = terms.join(' ');
-        const wildcardTerms = terms.map(term => `${term}*`).join(' ');
-        const fuzzyTerms = terms.map(term => `${term}~2`).join(' ');
         const strategies = [
             // Exact phrase search with wildcards
-            `"${phrase}" ${wildcardTerms}`,
+            `"${query}" ${query}*`,
             // Fuzzy search with wildcards
-            `${wildcardTerms} ${fuzzyTerms}`,
+            `${query}* ${query}~2`,
             // Individual terms with boost
-            wildcardTerms,
-            // Fallback: sanitized terms only
-            phrase
+            query.split(/\s+/).map(term => `${term}*`).join(' '),
+            // Fallback: just the query
+            query
         ];
 
         let allResults = [];
@@ -659,21 +645,19 @@ class SearchEngine {
      * Calculate boost for description matches
      */
     calculateDescriptionBoost(doc, queryTerms) {
-        const texts = [...new Set(
-            [doc.description, doc.description_agent].filter(Boolean)
-        )];
-        if (texts.length === 0) return 0;
+        if (!doc.description) return 0;
 
+        const descLower = doc.description.toLowerCase();
         let boost = 0;
-        for (const text of texts) {
-            const descLower = text.toLowerCase();
-            queryTerms.forEach(term => {
-                const pos = descLower.indexOf(term);
-                if (pos !== -1) {
-                    boost += pos < 50 ? 1 : 0.5;
-                }
-            });
-        }
+
+        // Check if query terms appear early in description
+        queryTerms.forEach(term => {
+            const pos = descLower.indexOf(term);
+            if (pos !== -1) {
+                // Boost more if term appears early
+                boost += pos < 50 ? 1 : 0.5;
+            }
+        });
 
         return boost;
     }

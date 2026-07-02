@@ -129,7 +129,7 @@ class ResultRenderer {
      */
     bindResultEvents(container, results) {
         container.querySelectorAll('.search-result-item').forEach((item, index) => {
-            const _result = results[index];
+            const result = results[index];
 
             // Main item click - go to document
             item.addEventListener('click', (e) => {
