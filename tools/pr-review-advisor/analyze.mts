@@ -35,6 +35,7 @@ import {
   runReadOnlyAdvisor,
 } from "../advisors/session.mts";
 import { classifySolanaChangedFiles } from "../advisors/solana.mts";
+import { SOLANA_KEYCHAIN_COMMAND } from "../advisors/solana-keychain.mts";
 import { SOLANA_PAYMENTS_COMMAND } from "../advisors/solana-payments.mts";
 
 const root = process.cwd();
@@ -731,6 +732,7 @@ export function classifyTestDepth(
       "Add or identify targeted runtime/integration validation for the changed behavior; do not report external E2E job pass/fail here.",
     ];
     if (changedFiles.some(isSolanaPaymentFile)) suggestedTests.push(SOLANA_PAYMENTS_COMMAND);
+    if (changedFiles.some(isSolanaKeychainFile)) suggestedTests.push(SOLANA_KEYCHAIN_COMMAND);
     return {
       verdict: "runtime_validation_recommended",
       rationale: `Runtime/sandbox/infrastructure paths need behavioral runtime validation: ${e2eSignals.slice(0, 8).join(", ")}.`,
@@ -758,6 +760,10 @@ export function classifyTestDepth(
 
 function isSolanaPaymentFile(file: string): boolean {
   return /(^|\/)(solana-payments|x402|kora|openusd|usdc|payment|payments)/i.test(file);
+}
+
+function isSolanaKeychainFile(file: string): boolean {
+  return /(^|\/)(solana-keychain|keychain|signer|signing|wallet)/i.test(file);
 }
 
 function isTestFile(file: string): boolean {

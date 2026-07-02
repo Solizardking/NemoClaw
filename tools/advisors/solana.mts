@@ -364,7 +364,7 @@ export function classifySolanaChangedFiles(changedFiles: readonly string[]): {
 
 export function isSolanaRelatedFile(file: string): boolean {
   return (
-    /(^|\/)(solana|wallet|privy|helius|pumpfun|pump-fun|jupiter|birdeye|telegram|x402|kora|openusd|usdc|clawd|payment|payments)/i.test(
+    /(^|\/)(solana|wallet|privy|helius|pumpfun|pump-fun|jupiter|birdeye|telegram|x402|kora|keychain|signer|signing|openusd|usdc|clawd|payment|payments)/i.test(
       file,
     ) ||
     /^docs\/solana\//.test(file) ||
@@ -377,10 +377,10 @@ export function isSolanaRuntimeFile(file: string): boolean {
     /^bin\/lib\/(?:solana|financial-harness)\.js$/.test(file) ||
     /^scripts\/nemoclawd-(?:solana|telegram|payment|swarm|websocket)/.test(file) ||
     /^tools\/(?:advisors|e2e|e2e-advisor|pr-review-advisor)\/.*solana/i.test(file) ||
-    /^agents\/clawd-operator\/.*(?:solana|wallet|privy|helius|pump|telegram|x402|kora|openusd|usdc|payment)/i.test(
+    /^agents\/clawd-operator\/.*(?:solana|wallet|privy|helius|pump|telegram|x402|kora|keychain|signer|signing|openusd|usdc|payment)/i.test(
       file,
     ) ||
-    /^nemo-clawd-mcp\/src\/.*(?:solana|wallet|privy|helius|pump|telegram|x402|kora|openusd|usdc|payment)/i.test(
+    /^nemo-clawd-mcp\/src\/.*(?:solana|wallet|privy|helius|pump|telegram|x402|kora|keychain|signer|signing|openusd|usdc|payment)/i.test(
       file,
     )
   );

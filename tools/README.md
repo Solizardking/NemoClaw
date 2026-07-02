@@ -45,3 +45,28 @@ the x402 exact payment requirements, a Cloudflare Worker middleware snippet,
 and a Kora TOML policy fragment with the selected SPL mints in
 `allowed_spl_paid_tokens`. OpenUSD is intentionally configurable because the
 tool should not guess a mint address.
+
+## Solana Keychain
+
+Validate a Solana Keychain signing backend without signing or printing secrets:
+
+```bash
+npm run tools:solana:keychain
+```
+
+Production checks should set a non-memory backend and provide backend secrets
+through the deployment secret manager or environment variables:
+
+```bash
+node --experimental-strip-types tools/e2e/solana-keychain.mts \
+  --backend vault \
+  --environment production \
+  --cluster mainnet \
+  --role fee-payer \
+  --public-key "$SOLANA_SIGNER_PUBLIC_KEY" \
+  --json
+```
+
+The report redacts backend credentials, blocks memory signing in production or
+on mainnet, requires HTTPS for remote signer URLs, and points to the smallest
+Keychain backend package to install for the selected custody model.

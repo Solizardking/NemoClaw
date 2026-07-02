@@ -24,6 +24,13 @@ Solana payment, x402, Kora, USDC, OpenUSD, and CLAWD payment changes also receiv
 node --experimental-strip-types tools/e2e/solana-payments.mts --network devnet --recipient "$SOLANA_PAYMENT_RECIPIENT" --tokens usdc,openusd,clawd --openusd-mint "$OPENUSD_MINT" --json
 ```
 
+Solana Keychain or signing changes also add the `solana-keychain` dry-run
+script:
+
+```bash
+node --experimental-strip-types tools/e2e/solana-keychain.mts --backend memory --environment development --cluster local-validator --private-key-path ~/.config/solana/id.json --json
+```
+
 ## Workflow
 
 `.github/workflows/e2e-advisor.yaml`:
@@ -101,6 +108,7 @@ secret. Run `npm install` first so the Pi SDK dependency is available.
 `tools/e2e-advisor/targets-schema.json` defines the normalized target recommendation shape used by the `targets` and `jobs` dispatch commands.
 `tools/e2e/solana-readiness.mts` defines the local dry-run Solana readiness script used by deterministic Solana recommendations.
 `tools/e2e/solana-payments.mts` defines the local dry-run Solana payment artifact generator used by deterministic Solana payment recommendations.
+`tools/e2e/solana-keychain.mts` defines the local dry-run Solana Keychain signing posture check used by deterministic Solana signing recommendations.
 
 Future enforcement should be implemented as a single dynamic required check that verifies the
 recommended E2E jobs passed for the same PR head SHA.

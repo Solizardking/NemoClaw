@@ -57,3 +57,27 @@ node --experimental-strip-types tools/e2e/solana-payments.mts \
   --openusd-mint "$OPENUSD_MINT" \
   --json
 ```
+
+## Solana Keychain helper
+
+`tools/advisors/solana-keychain.mts` builds deterministic signing backend
+posture reports for Solana Keychain-compatible signers:
+
+- backend metadata for Memory, Vault, AWS KMS, GCP KMS, Privy, Turnkey,
+  Fireblocks, CDP, Crossmint, Dfns, Openfort, Para, and Utila;
+- environment-to-config mapping with secret redaction;
+- production blockers for memory signers and non-HTTPS remote signer URLs;
+- a lazy signer factory that imports only the selected `@solana/keychain-*`
+  package when code explicitly passes `allowSigning: true`.
+
+The runnable wrapper is:
+
+```bash
+node --experimental-strip-types tools/e2e/solana-keychain.mts \
+  --backend vault \
+  --environment production \
+  --cluster mainnet \
+  --role fee-payer \
+  --public-key "$SOLANA_SIGNER_PUBLIC_KEY" \
+  --json
+```

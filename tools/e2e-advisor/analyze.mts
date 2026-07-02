@@ -34,6 +34,7 @@ import {
   SOLANA_READINESS_COMMAND,
   classifySolanaChangedFiles,
 } from "../advisors/solana.mts";
+import { SOLANA_KEYCHAIN_COMMAND } from "../advisors/solana-keychain.mts";
 import { SOLANA_PAYMENTS_COMMAND } from "../advisors/solana-payments.mts";
 
 const root = process.cwd();
@@ -451,6 +452,8 @@ function withDeterministicSolanaRecommendations(
   const requiredExists = result.requiredTests.some((item) => item.id === "solana-readiness");
   const paymentRequired = hasSolanaPaymentChange(changedFiles);
   const paymentRequiredExists = result.requiredTests.some((item) => item.id === "solana-payments");
+  const keychainRequired = hasSolanaKeychainChange(changedFiles);
+  const keychainRequiredExists = result.requiredTests.some((item) => item.id === "solana-keychain");
   const requiredTests = requiredExists
     ? result.requiredTests
     : [
@@ -465,6 +468,36 @@ function withDeterministicSolanaRecommendations(
           runner: "ubuntu-latest",
         },
       ];
+  const paymentTests =
+    paymentRequired && !paymentRequiredExists
+      ? [
+          ...requiredTests,
+          {
+            id: "solana-payments",
+            domain: "solana",
+            reason:
+              "Dry-run Solana payment artifacts must validate x402 exact requirements, Cloudflare headers, Kora token allowlists, and disabled signing guardrails.",
+            script: SOLANA_PAYMENTS_COMMAND,
+            cost: "low",
+            runner: "ubuntu-latest",
+          },
+        ]
+      : requiredTests;
+  const solanaRequiredTests =
+    keychainRequired && !keychainRequiredExists
+      ? [
+          ...paymentTests,
+          {
+            id: "solana-keychain",
+            domain: "solana",
+            reason:
+              "Dry-run Solana Keychain checks must validate signer backend posture, secret redaction, HTTPS endpoints, and production signing guardrails.",
+            script: SOLANA_KEYCHAIN_COMMAND,
+            cost: "low",
+            runner: "ubuntu-latest",
+          },
+        ]
+      : paymentTests;
   return {
     ...result,
     classifiedDomains: domainExists
@@ -479,21 +512,7 @@ function withDeterministicSolanaRecommendations(
             matchedFiles: solana.matchedFiles,
           },
         ],
-    requiredTests:
-      paymentRequired && !paymentRequiredExists
-        ? [
-            ...requiredTests,
-            {
-              id: "solana-payments",
-              domain: "solana",
-              reason:
-                "Dry-run Solana payment artifacts must validate x402 exact requirements, Cloudflare headers, Kora token allowlists, and disabled signing guardrails.",
-              script: SOLANA_PAYMENTS_COMMAND,
-              cost: "low",
-              runner: "ubuntu-latest",
-            },
-          ]
-        : requiredTests,
+    requiredTests: solanaRequiredTests,
     noE2eReason: null,
     confidence: result.confidence === "low" ? "medium" : result.confidence,
   };
@@ -505,6 +524,10 @@ function hasSolanaPaymentChange(changedFiles: string[]): boolean {
       /(^|\/)(solana-payments|x402|kora|openusd|usdc|payment|payments)/i.test(file) ||
       /(^|\/)(clawd|clawd-operator).*payment/i.test(file),
   );
+}
+
+function hasSolanaKeychainChange(changedFiles: string[]): boolean {
+  return changedFiles.some((file) => /(^|\/)(solana-keychain|keychain|signer|signing|wallet)/i.test(file));
 }
 
 function unavailableResult(
