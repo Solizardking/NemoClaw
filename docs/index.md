@@ -174,6 +174,16 @@ Task-oriented guides for inference, deployment, and policy management.
 {bdg-secondary}`How-To`
 :::
 
+:::{grid-item-card} Financial Harness
+:link: solana/financial-harness
+:link-type: doc
+
+Dry-run Solana wallet, RPC, policy, and trading guardrail preflight.
+
++++
+{bdg-secondary}`How-To`
+:::
+
 ::::
 
 ```{toctree}
@@ -211,6 +221,13 @@ Switch Inference Providers <inference/switch-inference-providers>
 
 Approve or Deny Network Requests <network-policy/approve-network-requests>
 Customize the Network Policy <network-policy/customize-network-policy>
+```
+
+```{toctree}
+:caption: Solana
+:hidden:
+
+Financial Harness <solana/financial-harness>
 ```
 
 ```{toctree}

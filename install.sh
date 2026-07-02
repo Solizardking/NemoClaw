@@ -13,6 +13,7 @@ NEMOCLAWD_HOME="${NEMOCLAWD_HOME:-${HOME}/.nemoclawd}"
 NPM_PACKAGE="@mawdbotsonsolana/nemoclawd"
 MIN_NODE_MAJOR=20
 MIN_NPM_MAJOR=10
+RUNTIME_REQUIREMENT_MSG="Nemo Clawd requires Node.js >=${MIN_NODE_MAJOR} and npm >=${MIN_NPM_MAJOR}."
 
 info() { printf '[INFO] %s\n' "$*"; }
 warn() { printf '[WARN] %s\n' "$*" >&2; }
@@ -30,8 +31,8 @@ version_major() {
 }
 
 ensure_node_runtime() {
-  command_exists node || fail "Node.js >= ${MIN_NODE_MAJOR} is required."
-  command_exists npm || fail "npm >= ${MIN_NPM_MAJOR} is required."
+  command_exists node || fail "${RUNTIME_REQUIREMENT_MSG} Node.js was not found on PATH."
+  command_exists npm || fail "${RUNTIME_REQUIREMENT_MSG} npm was not found on PATH."
 
   local node_version npm_version node_major npm_major
   node_version="$(node --version 2>/dev/null || true)"
@@ -42,11 +43,8 @@ ensure_node_runtime() {
   [[ "$node_major" =~ ^[0-9]+$ ]] || fail "Could not parse Node.js version: ${node_version}"
   [[ "$npm_major" =~ ^[0-9]+$ ]] || fail "Could not parse npm version: ${npm_version}"
 
-  if ((node_major < MIN_NODE_MAJOR)); then
-    fail "Node.js ${node_version} is too old. Install Node.js >= ${MIN_NODE_MAJOR} and rerun."
-  fi
-  if ((npm_major < MIN_NPM_MAJOR)); then
-    fail "npm ${npm_version} is too old. Install npm >= ${MIN_NPM_MAJOR} and rerun."
+  if ((node_major < MIN_NODE_MAJOR || npm_major < MIN_NPM_MAJOR)); then
+    fail "Unsupported runtime detected: Node.js ${node_version:-unknown}, npm ${npm_version:-unknown}. ${RUNTIME_REQUIREMENT_MSG} Upgrade Node.js and rerun the installer."
   fi
 
   info "Runtime OK: Node.js ${node_version}, npm ${npm_version}"

@@ -18,12 +18,14 @@ const registry = require("./lib/registry");
 const nim = require("./lib/nim");
 const policies = require("./lib/policies");
 const solana = require("./lib/solana");
+const financialHarness = require("./lib/financial-harness");
 
 // ── Global commands ──────────────────────────────────────────────
 
 const GLOBAL_COMMANDS = new Set([
   "onboard", "launch", "list", "deploy", "setup", "setup-spark",
   "start", "stop", "status", "solana", "wallet",
+  "financial-harness",
   "doctor", "version", "--version", "-v",
   "help", "--help", "-h",
 ]);
@@ -473,6 +475,100 @@ function listSandboxes() {
   console.log("");
 }
 
+// ── Financial harness ────────────────────────────────────────────
+
+function resolveHarnessSandboxName(actionArgs = []) {
+  const sandboxArg = actionArgs.find((value) => !String(value).startsWith("--"));
+  if (sandboxArg) {
+    if (!registry.getSandbox(sandboxArg)) {
+      console.error(`  Unknown sandbox: ${sandboxArg}`);
+      process.exit(1);
+    }
+    return sandboxArg;
+  }
+
+  const { sandboxes } = registry.listSandboxes();
+  if (sandboxes.length === 0) {
+    return null;
+  }
+
+  return resolveSandboxName();
+}
+
+function printFinancialHarnessReport(report) {
+  console.log("");
+  console.log("  Nemo Clawd Financial Harness");
+  console.log("  ============================");
+  console.log("");
+  console.log(`  Mode:    ${report.mode} (signing and transaction submission disabled)`);
+  console.log(`  Sandbox: ${report.sandbox || "not selected"}`);
+  console.log(`  RPC:     ${report.rpc.url || "not configured"} (${report.rpc.network})`);
+  console.log(
+    `  Wallet:  ${
+      report.wallet.configured
+        ? `${report.wallet.address} (${report.wallet.provider})`
+        : "not configured"
+    }`,
+  );
+  console.log("");
+  console.log("  Policy presets:");
+  console.log(`    Applied:  ${report.policy.appliedPresets.join(", ") || "none"}`);
+  console.log(`    Required: ${report.policy.requiredPresets.join(", ") || "none"}`);
+  console.log(`    Missing:  ${report.policy.missingPresets.join(", ") || "none"}`);
+  console.log("");
+  console.log("  Guardrails:");
+  console.log(`    Signing enabled:            ${report.guardrails.signingEnabled ? "yes" : "no"}`);
+  console.log(
+    `    Transaction submission:     ${
+      report.guardrails.transactionSubmissionEnabled ? "yes" : "no"
+    }`,
+  );
+  console.log(`    Live trading env gate:      ${report.guardrails.liveTradingGate}=1`);
+  console.log(`    Default spend limit:        ${report.guardrails.defaultSpendLimitLamports} lamports`);
+  console.log(`    Private key storage:        ${report.guardrails.privateKeyStorage}`);
+  console.log("");
+  console.log("  Mechanism:");
+  for (const step of report.mechanism) {
+    console.log(`    - ${step}`);
+  }
+  console.log("");
+  console.log("  Blockers before live execution:");
+  for (const blocker of report.blockers) {
+    console.log(`    - ${blocker}`);
+  }
+  console.log("");
+  console.log("  Next steps:");
+  if (!report.wallet.configured) {
+    console.log("    - Run `nemoclawd wallet create` or configure DEVELOPER_WALLET.");
+  }
+  if (report.policy.missingPresets.length > 0 && report.sandbox) {
+    console.log(`    - Run \`nemoclawd ${report.sandbox} policy-add\` and apply missing presets.`);
+  }
+  console.log("    - Treat this as the operator-reviewed preflight before adding any live signing adapter.");
+  console.log("");
+}
+
+function financialHarnessCommand(actionArgs = [], explicitSandboxName = null) {
+  const json = actionArgs.includes("--json");
+  const sandboxName = explicitSandboxName || resolveHarnessSandboxName(actionArgs);
+  const sandbox = sandboxName ? registry.getSandbox(sandboxName) : null;
+  const report = financialHarness.buildFinancialHarnessReport({
+    sandboxName,
+    solanaConfig: solana.loadSolanaConfig() || {},
+    wallet: solana.getDefaultWallet(),
+    privyConfigured: Boolean(solana.loadPrivyConfig()),
+    policies: sandbox && Array.isArray(sandbox.policies) ? sandbox.policies : [],
+    env: process.env,
+  });
+
+  if (json) {
+    console.log(JSON.stringify(report, null, 2));
+    return;
+  }
+
+  printFinancialHarnessReport(report);
+}
+
 // ── Sandbox-scoped actions ───────────────────────────────────────
 
 function sandboxConnect(sandboxName) {
@@ -806,7 +902,9 @@ async function quickStartSolana(actionArgs = []) {
   console.log("");
   console.log("  Available actions:");
   console.log(`    nemoclawd solana start ${sb.name}   One-shot startup (bridge + bot + relay)`);
+  console.log(`    nemoclawd financial-harness ${sb.name}  Dry-run wallet, RPC, policy, and trade guardrails`);
   console.log(`    nemoclawd ${sb.name} connect          Open sandbox shell`);
+  console.log(`    nemoclawd ${sb.name} financial-harness Dry-run financial harness`);
   console.log(`    nemoclawd ${sb.name} solana-stack     One-shot startup inside sandbox`);
   console.log(`    nemoclawd ${sb.name} solana-agent     Start Pump-Fun tracker bot`);
   console.log(`    nemoclawd ${sb.name} telegram-bot     Start Telegram monitor`);
@@ -1086,6 +1184,7 @@ function help() {
     nemoclawd launch                  Doctor + onboard + start the best available stack
     nemoclawd solana                  Solana status + available commands
     nemoclawd solana start            One-shot startup (bridge + bot + relay)
+    nemoclawd financial-harness       Dry-run wallet, RPC, policy, and trade guardrails
     nemoclawd wallet create           Create an encrypted Privy agentic wallet
     nemoclawd wallet list             List all wallets
     nemoclawd onboard                 Full interactive setup wizard
@@ -1093,6 +1192,7 @@ function help() {
   Sandbox Management:
     nemoclawd list                    List all sandboxes
     nemoclawd <name> connect          Open sandbox shell
+    nemoclawd <name> financial-harness Dry-run financial harness
     nemoclawd <name> solana-stack     Start bridge + bot + relay together
     nemoclawd <name> solana-agent     Pump-Fun tracker bot
     nemoclawd <name> solana-bridge    Natural-language Telegram wallet narration
@@ -1152,6 +1252,7 @@ const [cmd, ...args] = process.argv.slice(2);
       case "doctor":      doctor(); break;
       case "solana":      await quickStartSolana(args); break;
       case "wallet":      await walletCommand(args); break;
+      case "financial-harness": financialHarnessCommand(args); break;
       case "version":
       case "--version":
       case "-v":          showVersion(); break;
@@ -1168,6 +1269,7 @@ const [cmd, ...args] = process.argv.slice(2);
 
     switch (action) {
       case "connect":     sandboxConnect(cmd); break;
+      case "financial-harness": financialHarnessCommand(actionArgs, cmd); break;
       case "solana-stack": sandboxSolanaStack(cmd); break;
       case "solana-agent": sandboxSolanaAgent(cmd); break;
       case "solana-bridge": sandboxSolanaBridge(cmd); break;
@@ -1182,7 +1284,7 @@ const [cmd, ...args] = process.argv.slice(2);
       case "destroy":     sandboxDestroy(cmd); break;
       default:
         console.error(`  Unknown action: ${action}`);
-        console.error(`  Valid actions: connect, solana-stack, solana-agent, solana-bridge, telegram-bot, payment-app, swarm-bot, websocket-server, status, logs, policy-add, policy-list, destroy`);
+        console.error(`  Valid actions: connect, financial-harness, solana-stack, solana-agent, solana-bridge, telegram-bot, payment-app, swarm-bot, websocket-server, status, logs, policy-add, policy-list, destroy`);
         process.exit(1);
     }
     return;

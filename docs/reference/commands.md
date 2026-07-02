@@ -51,6 +51,18 @@ If no sandbox exists, it runs the full onboard wizard automatically.
 $ nemoclawd solana
 ```
 
+### `nemoclawd financial-harness`
+
+Dry-run preflight for the Solana financial path.
+The command reports the active RPC, inferred cluster, wallet metadata, applied and missing policy presets, and the guardrails that keep signing and transaction submission disabled.
+
+```console
+$ nemoclawd financial-harness
+$ nemoclawd financial-harness my-assistant --json
+```
+
+Use this before `nemoclawd solana start` when validating wallet, policy, and operator-review posture.
+
 ### `nemoclawd doctor `
 
 Run a host-side diagnostic pass before onboarding or going live.
@@ -141,6 +153,18 @@ $ nemoclawd solana
 
 This prints the active RPC, wallet, and the recommended Solana runtime commands.
 
+#### `nemoclawd financial-harness [sandbox] [--json]`
+
+Show the dry-run financial harness for the default or named sandbox.
+
+```console
+$ nemoclawd financial-harness my-assistant
+$ nemoclawd financial-harness my-assistant --json
+```
+
+The harness does not create wallets, sign transactions, submit orders, or provide trading advice.
+It is an auditable readiness report for RPC, wallet, policy, and future trading-control guardrails.
+
 #### `nemoclawd solana start [sandbox]`
 
 Run the one-shot Solana startup flow.
@@ -182,6 +206,17 @@ Pump-Fun SDK, `helius`, and the Privy agentic wallet skill.
 ```console
 $ nemoclawd my-assistant connect
 ```
+
+#### `nemoclawd <name> financial-harness [--json]`
+
+Show the same dry-run financial harness scoped to a registered sandbox.
+
+```console
+$ nemoclawd my-assistant financial-harness
+$ nemoclawd my-assistant financial-harness --json
+```
+
+Use the sandbox-scoped form when you want the report to include policy presets recorded for that sandbox.
 
 #### `nemoclawd <name> status`
 

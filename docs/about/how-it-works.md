@@ -131,6 +131,9 @@ Once the sandbox is online and a wallet is configured, Nemo Clawd behaves like a
 
 This is continuous operation, not magic or sentience. Nemo Clawd does not claim independent consciousness. The practical goal is durable, observable agent behavior inside a sandbox with a funded wallet and controlled execution path.
 
+Before starting the Solana stack, run `nemoclawd financial-harness <sandbox>`.
+The harness is a dry-run checkpoint that reports RPC, wallet, policy, and trading guardrails while keeping signing and transaction submission disabled.
+
 ## Wallet, Funding, and Protection Mode
 
 Nemo Clawd uses a Privy-backed wallet so private keys do not live in the sandbox filesystem.
@@ -196,6 +199,7 @@ Together these services give Nemo Clawd a live operating loop from funded wallet
 ## Next Steps
 
 - Follow the [Quickstart](../get-started/quickstart.md) to launch your first sandbox.
+- Run the [Financial Harness](../solana/financial-harness.md) before enabling Solana runtime services.
 - Refer to the [Command Reference](../reference/commands.md) for `nemoclawd wallet`, `nemoclawd solana start`, and service commands.
 - Refer to the [Architecture](../reference/architecture.md) for the full technical structure, including file layouts and the blueprint lifecycle.
 - Refer to [Inference Profiles](../reference/inference-profiles.md) for detailed provider configuration.

@@ -31,6 +31,7 @@ describe("CLI dispatch", () => {
     assert.ok(r.out.includes("Policy Presets"), "missing Policy Presets section");
     assert.ok(r.out.includes("doctor"), "missing doctor command");
     assert.ok(r.out.includes("launch"), "missing launch command");
+    assert.ok(r.out.includes("financial-harness"), "missing financial harness command");
     assert.ok(r.out.includes("solana-agent"), "missing Solana agent action");
     assert.ok(r.out.includes("solana-bridge"), "missing Solana bridge action");
     assert.ok(r.out.includes("solana start"), "missing Solana one-shot action");
@@ -70,6 +71,16 @@ describe("CLI dispatch", () => {
     const r = run("version");
     assert.equal(r.code, 0);
     assert.ok(r.out.includes(pkg.version), "missing CLI version");
+  });
+
+  it("financial-harness --json exits 0 and stays dry-run", () => {
+    const r = run("financial-harness --json");
+    assert.equal(r.code, 0);
+    const report = JSON.parse(r.out);
+    assert.equal(report.name, "nemoclawd-financial-harness");
+    assert.equal(report.mode, "dry-run");
+    assert.equal(report.guardrails.signingEnabled, false);
+    assert.equal(report.guardrails.transactionSubmissionEnabled, false);
   });
 
   it("solana overview prefers active gateway last sandbox over first registry entry", () => {
