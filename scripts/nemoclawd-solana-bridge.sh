@@ -11,14 +11,14 @@ SOLANA_RPC_URL="${SOLANA_RPC_URL:-https://rpc.solanatracker.io/public}"
 SOLANA_WS_URL="${SOLANA_WS_URL:-$SOLANA_RPC_URL}"
 BRIDGE_MODE="${BRIDGE_MODE:-natural-language}"
 POLL_MS="${POLL_MS:-15000}"
-NEMOCLAW_HOME="${HOME:-/sandbox}/.nemoclawd"
-NEMOCLAW_VAULT_DIR="${NEMOCLAW_VAULT_DIR:-${NEMOCLAW_HOME}/vault}"
+NEMOCLAWD_HOME="${HOME:-/sandbox}/.nemoclawd"
+NEMOCLAWD_VAULT_DIR="${NEMOCLAWD_VAULT_DIR:-${NEMOCLAWD_HOME}/vault}"
 HEARTBEAT_SECONDS="${HEARTBEAT_SECONDS:-60}"
 MIN_WALLET_SOL="${MIN_WALLET_SOL:-0.01}"
 STOP_BALANCE_SOL="${STOP_BALANCE_SOL:-0.002}"
 
-mkdir -p "${NEMOCLAW_VAULT_DIR}"
-export NEMOCLAW_VAULT_DIR HEARTBEAT_SECONDS MIN_WALLET_SOL STOP_BALANCE_SOL
+mkdir -p "${NEMOCLAWD_VAULT_DIR}"
+export NEMOCLAWD_VAULT_DIR HEARTBEAT_SECONDS MIN_WALLET_SOL STOP_BALANCE_SOL
 
 require_env() {
   local key="$1"
@@ -35,7 +35,7 @@ echo "[solana-bridge] Nemo Clawd Solana ↔ Telegram Bridge"
 echo "[solana-bridge] Mode: ${BRIDGE_MODE}"
 echo "[solana-bridge] RPC:  ${SOLANA_RPC_URL:0:70}"
 echo "[solana-bridge] WS:   ${SOLANA_WS_URL:0:70}"
-echo "[solana-bridge] Vault: ${NEMOCLAW_VAULT_DIR}"
+echo "[solana-bridge] Vault: ${NEMOCLAWD_VAULT_DIR}"
 echo "[solana-bridge] Heartbeat: every ${HEARTBEAT_SECONDS}s"
 if [ -n "${HELIUS_API_KEY:-}" ]; then
   echo "[solana-bridge] Helius: configured"
@@ -71,7 +71,7 @@ const HEARTBEAT_SECONDS = Number.parseInt(process.env.HEARTBEAT_SECONDS || "60",
 const MIN_WALLET_SOL = Number.parseFloat(process.env.MIN_WALLET_SOL || "0.01");
 const STOP_BALANCE_SOL = Number.parseFloat(process.env.STOP_BALANCE_SOL || "0.002");
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || "";
-const VAULT_DIR = process.env.NEMOCLAW_VAULT_DIR || path.join(process.env.HOME || "/sandbox", ".nemoclawd", "vault");
+const VAULT_DIR = process.env.NEMOCLAWD_VAULT_DIR || path.join(process.env.HOME || "/sandbox", ".nemoclawd", "vault");
 const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN);
 const conn = new Connection(RPC, "confirmed");
 const RUN_ID = `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;

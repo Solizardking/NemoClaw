@@ -11,7 +11,7 @@
 
 set -euo pipefail
 
-NEMOCLAW_CMD=("$@")
+NEMOCLAWD_CMD=("$@")
 CHAT_UI_URL="${CHAT_UI_URL:-http://127.0.0.1:18789}"
 PUBLIC_PORT=18789
 WORKSPACE_ROOT="${HOME:-/sandbox}/.nemoclawd/workspace"
@@ -343,8 +343,8 @@ fi
 
  nemoclawd plugins install /opt/nemoclawd > /dev/null 2>&1 || true
 
-if [ ${#NEMOCLAW_CMD[@]} -gt 0 ]; then
-  exec "${NEMOCLAW_CMD[@]}"
+if [ ${#NEMOCLAWD_CMD[@]} -gt 0 ]; then
+  exec "${NEMOCLAWD_CMD[@]}"
 fi
 
 nohup nemoclawd gateway run > /tmp/gateway.log 2>&1 &

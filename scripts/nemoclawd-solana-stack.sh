@@ -11,7 +11,7 @@ set -euo pipefail
 SERVICES_DIR="${HOME:-/sandbox}/.nemoclawd/services"
 LOG_DIR="${SERVICES_DIR}/logs"
 PID_DIR="${SERVICES_DIR}/pids"
-VAULT_DIR="${NEMOCLAW_VAULT_DIR:-${HOME:-/sandbox}/.nemoclawd/vault}"
+VAULT_DIR="${NEMOCLAWD_VAULT_DIR:-${HOME:-/sandbox}/.nemoclawd/vault}"
 STACK_DAY="$(date -u +%F)"
 STACK_LOG="${VAULT_DIR}/stack-${STACK_DAY}.log"
 
