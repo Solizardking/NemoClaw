@@ -20,7 +20,7 @@ status: published
 
 # Architecture
 
-Nemo Clawd has three main components: a TypeScript plugin that integrates with the Nemo Clawd CLI, a Hermes-derived agent image with bundled MCP tooling, and a Python blueprint that orchestrates OpenShell resources.
+Nemo Clawd has three main components: a TypeScript plugin that integrates with the Nemo Clawd CLI, a Nemo Clawd agent image with bundled MCP and Solana operator tooling, and a Python blueprint that orchestrates OpenShell resources.
 
 ## Nemo Clawd Plugin
 
@@ -31,7 +31,7 @@ Root `npm run build` writes local plugin artifacts under `dist/nemoclawd-plugin`
 ```text
 nemoclawd/
 ├── src/
-│   ├── index.ts                    Plugin entry — registers all commands
+│   ├── index.ts                    Plugin entry, registers all commands
 │   ├── cli.ts                      Commander.js subcommand wiring
 │   ├── commands/
 │   │   ├── launch.ts               Fresh install into OpenShell
@@ -51,12 +51,11 @@ nemoclawd/
 
 ## Nemo Clawd Agent Image
 
-The first-class `nemo-clawd` agent image derives from the Hermes sandbox image.
-It keeps the Hermes runtime contract while layering the Nemo Clawd MCP server, the Python blueprint, and the agent manifest used by OpenShell.
+The first-class `nemo-clawd` agent image keeps the OpenShell sandbox runtime contract while layering the Nemo Clawd MCP server, Solana operator services, the Python blueprint, and the agent manifest used by OpenShell.
 
 ```text
 agents/nemo-clawd/
-├── Dockerfile                    Hermes-derived image definition
+├── Dockerfile                    Nemo Clawd image definition
 ├── manifest.yaml                 Agent contract, ports, MCP server, state paths
 ├── policy-additions.yaml         MCP-specific egress additions
 └── start-mcp.sh                  Stdio MCP launcher
@@ -111,7 +110,7 @@ The blueprint creates the sandbox with the Docker-safe name `nemoclawd` and forw
 
 Inside the sandbox:
 
-- Hermes runs at `/usr/local/bin/hermes`.
+- The runtime shim runs at `/usr/local/bin/hermes` for sandbox compatibility.
 - The bundled Nemo Clawd MCP server runs at `/usr/local/bin/nemo-clawd-mcp`.
 - The bundled clawd operator runs at `/usr/local/bin/clawd-operator`.
 - The Python blueprint is available under `/opt/nemo-clawd-python`.

@@ -3,12 +3,19 @@
 
 # E2E Advisor
 
-The E2E Advisor is an SDK-powered PR reviewer for NemoClaw E2E coverage. It runs on internal
+The E2E Advisor is an SDK-powered PR reviewer for Nemo Clawd E2E coverage. It runs on internal
 `NVIDIA/NemoClaw` pull requests, asks the advisor model to inspect the PR diff and repository, and posts a sticky
 PR comment with required/optional E2E recommendations.
 
 The advisor recommends E2E coverage from the PR diff and repository context rather than a fixed path-rule table. The advisor model is expected to inspect existing E2E workflows, target definitions, source files, and nearby tests before recommending coverage.
 The target advisor also emits canonical `gh workflow run e2e.yaml` commands that use the workflow's `targets` or `jobs` inputs.
+
+Solana runtime, wallet, RPC, financial-harness, network-policy, Telegram wallet narration, and Solana E2E tooling changes receive deterministic backup coverage.
+When those files change and the patch is not docs-only, `tools/e2e-advisor/analyze.mts` adds the `solana-readiness` required script:
+
+```bash
+node --experimental-strip-types tools/e2e/solana-readiness.mts --no-network --json
+```
 
 ## Workflow
 
@@ -85,6 +92,7 @@ secret. Run `npm install` first so the Pi SDK dependency is available.
 
 `tools/e2e-advisor/schema.json` defines the normalized coverage recommendation shape.
 `tools/e2e-advisor/targets-schema.json` defines the normalized target recommendation shape used by the `targets` and `jobs` dispatch commands.
+`tools/e2e/solana-readiness.mts` defines the local dry-run Solana readiness script used by deterministic Solana recommendations.
 
 Future enforcement should be implemented as a single dynamic required check that verifies the
 recommended E2E jobs passed for the same PR head SHA.

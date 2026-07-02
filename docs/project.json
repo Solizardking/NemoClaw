@@ -1,1 +1,7 @@
-{ "name": "nemoclawd", "version": "latest" }
+{
+  "name": "nemoclawd",
+  "version": "latest",
+  "title": "Nemo Clawd",
+  "description": "Solana-aware blockchain AI onboarding, sandbox operations, wallet guardrails, and network-policy documentation for Nemo Clawd.",
+  "topics": ["solana", "blockchain-ai", "openshell", "wallets", "network-policy"]
+}

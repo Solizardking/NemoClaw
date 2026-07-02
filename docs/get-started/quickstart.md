@@ -30,14 +30,14 @@ The financial harness does not sign transactions, submit orders, or provide trad
 
 ## What You Set Up
 
-The quickstart creates a host-side `nemoclawd` CLI, an OpenShell sandbox, a Hermes-derived Nemo Clawd agent image, and a policy-bounded Solana operator stack.
+The quickstart creates a host-side `nemoclawd` CLI, an OpenShell sandbox, a Nemo Clawd agent image, and a policy-bounded Solana operator stack.
 The sandbox includes the Nemo Clawd MCP server, clawd operator, Solana tooling, inference routing, and network policies for approved blockchain endpoints.
 
 | Layer | Purpose |
 |---|---|
 | `nemoclawd` CLI | Runs setup, diagnostics, sandbox lifecycle commands, wallet commands, and Solana service commands. |
 | OpenShell sandbox | Isolates the agent from the host filesystem and blocks network destinations that are not policy-approved. |
-| Nemo Clawd agent | Runs the Hermes-derived runtime, bundled MCP tools, and blockchain AI operator services. |
+| Nemo Clawd agent | Runs the bundled runtime, MCP tools, and blockchain AI operator services. |
 | Solana path | Checks RPC, wallet metadata, network policy, and transaction guardrails before live services start. |
 
 ## Prerequisites

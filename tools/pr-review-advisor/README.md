@@ -3,14 +3,15 @@
 
 # PR Review Advisor
 
-The PR Review Advisor is an SDK-powered, NemoClaw-specific pull request reviewer. It runs as a
+The PR Review Advisor is an SDK-powered, Nemo Clawd-specific pull request reviewer. It runs as a
 trusted GitHub Actions job, inspects PRs as read-only data, and posts a sticky advisory comment with
 required-before-merge findings, resolve-or-justify warnings, in-scope improvement suggestions,
 acceptance coverage, security notes, and code-review follow-up guidance.
 
-It complements the existing PR surfaces by keeping a NemoClaw maintainer code-review lens focused on the patch itself:
+It complements the existing PR surfaces by keeping a Nemo Clawd maintainer code-review lens focused on the patch itself:
 
 - sandbox and workflow security review;
+- Solana RPC, wallet, private-key, signing guardrail, and policy review;
 - acceptance-clause coverage against linked issues;
 - previous PR Review Advisor follow-up for code findings, using hidden sticky-comment metadata when available;
 - codebase drift, monolith growth, and architecture guardrails;
@@ -56,6 +57,7 @@ Authors and coding agents should follow the shared [PR CI and Automated Review F
 - Previous-review follow-up treats GitHub issue comments as mutable and replayable. A prior advisor comment is accepted only when hidden metadata binds it to the actual comment ID and to a matching PR Review / Advisor workflow run, attempt, head SHA, event, and update-time window. This accepts the residual same-run boundary: another trusted repository workflow would need to post a marker-bearing `github-actions[bot]` comment during the same PR Review / Advisor run window while knowing the run metadata. Fully preventing that requires a durable GitHub comment-to-workflow ownership signal that the REST API does not expose. Replace this local provenance check only if that stronger signal becomes available.
 - During rollout, non-default advisor lanes may see an older trusted `main` checkout that has the workflow matrix but not the matching model/configurable-comment support. The workflow treats that as trusted-main rollout skew, writes low-confidence skip artifacts in the lane-specific artifact directory, and suppresses that lane's sticky PR comment. Do not run PR-controlled advisor code to bypass this gate; remove the gate only after the trusted `main` implementation always supports the parallel advisor lane and configurable sticky markers.
 - Before model analysis, the workflow deterministically waits for required status checks from repository rulesets. If rulesets cannot be read, it falls back to the configured `PR_REVIEW_ADVISOR_REQUIRED_CHECK_FALLBACK_CONTEXTS` list.
+- Solana-related changed files are classified deterministically before model analysis so RPC, wallet, financial-harness, policy preset, Telegram bridge, and Solana E2E tooling changes are reviewed as high-risk surfaces even when the PR text downplays them.
 
 ## Required secret
 

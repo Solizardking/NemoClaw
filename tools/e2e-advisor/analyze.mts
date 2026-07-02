@@ -30,6 +30,10 @@ import {
   type RunAdvisorResult,
   runReadOnlyAdvisor,
 } from "../advisors/session.mts";
+import {
+  SOLANA_READINESS_COMMAND,
+  classifySolanaChangedFiles,
+} from "../advisors/solana.mts";
 
 const root = process.cwd();
 const ADVISOR_PROVIDER = DEFAULT_ADVISOR_PROVIDER;
@@ -224,18 +228,20 @@ function logProgress(message: string): void {
 
 export function buildSystemPrompt(): string {
   return [
-    "You are the NemoClaw E2E recommendation advisor for CI.",
+    "You are the Nemo Clawd E2E recommendation advisor for CI.",
     "",
-    "NemoClaw is NVIDIA's reference stack for running OpenClaw always-on assistants inside NVIDIA OpenShell sandboxes. It includes:",
-    "- a Node/TypeScript CLI for install, onboarding, credentials, policy, inference, and sandbox lifecycle;",
-    "- an OpenClaw plugin and TypeScript blueprint runner;",
+    "Nemo Clawd is a Solana-aware blockchain AI runtime for NVIDIA OpenShell sandboxes. It includes:",
+    "- a Node/TypeScript CLI for install, onboarding, credentials, Solana RPC, wallets, policy, inference, and sandbox lifecycle;",
+    "- a Nemo Clawd plugin and TypeScript blueprint runner;",
     "- YAML blueprint/network-policy assets;",
+    "- Solana wallet/RPC readiness tools, dry-run financial harness checks, and wallet-aware runtime services;",
     "- live and workflow-dispatched E2E tests for real user flows.",
     "",
     "Recommend which existing E2E jobs should run for a PR. Use the synthetic advisor-context tool results and inspect nearby repository files as needed, especially .github/workflows, test/e2e, touched source files, and related tests.",
     "",
     "Decision policy:",
     "- Required E2E: changes that can affect installer/onboarding, sandbox lifecycle, credentials, security boundaries, network policy, inference routing, deployment, or real assistant user flows.",
+    `- Required Solana tool check: changes to Solana RPC, wallet, financial harness, policy presets, Telegram wallet narration, or tools/e2e Solana code should include the dry-run script \`${SOLANA_READINESS_COMMAND}\` unless they are docs-only.`,
     "- Onboarding resume rule: changes to src/lib/onboard/machine live slice orchestration, resume state handling, resume repair policy, session bootstrap, or onboarding state transitions MUST require both `onboard-resume` and `onboard-repair` unless the PR is tests-only. If the change can also affect full hosted onboarding, require `cloud-onboard`. Do not rely only on unit/runtime-boundary tests for these state-machine resume paths.",
     "- Optional E2E: useful confidence checks for adjacent behavior, but not merge-blocking.",
     "- No E2E: safe docs, tests-only, comments, refactors, or tooling changes that cannot affect runtime/user flows; explain in noE2eReason.",
@@ -334,7 +340,7 @@ function normalizeAdvisorResult(result: unknown, metadata: AdvisorMetadata): Adv
     normalized.dispatchHint = dispatchHint;
   }
 
-  return normalized;
+  return withDeterministicSolanaRecommendations(normalized, metadata.changedFiles);
 }
 
 function sanitizeDomains(value: unknown): AdvisorDomain[] {
@@ -430,6 +436,48 @@ function renderSummary(result: AdvisorResult): string {
     lines.push("");
   }
   return `${lines.join("\n")}\n`;
+}
+
+function withDeterministicSolanaRecommendations(
+  result: AdvisorResult,
+  changedFiles: string[],
+): AdvisorResult {
+  const solana = classifySolanaChangedFiles(changedFiles);
+  if (solana.matchedFiles.length === 0 || solana.docsOnly) return result;
+
+  const domainExists = result.classifiedDomains.some((item) => item.domain === "solana");
+  const requiredExists = result.requiredTests.some((item) => item.id === "solana-readiness");
+  return {
+    ...result,
+    classifiedDomains: domainExists
+      ? result.classifiedDomains
+      : [
+          ...result.classifiedDomains,
+          {
+            domain: "solana",
+            reason:
+              "Solana RPC, wallet, policy, runtime, or Solana E2E tooling files changed.",
+            confidence: "high",
+            matchedFiles: solana.matchedFiles,
+          },
+        ],
+    requiredTests: requiredExists
+      ? result.requiredTests
+      : [
+          ...result.requiredTests,
+          {
+            id: "solana-readiness",
+            domain: "solana",
+            reason:
+              "Dry-run Solana readiness must validate RPC cluster inference, wallet address posture, policy hints, and disabled signing guardrails.",
+            script: SOLANA_READINESS_COMMAND,
+            cost: "low",
+            runner: "ubuntu-latest",
+          },
+        ],
+    noE2eReason: null,
+    confidence: result.confidence === "low" ? "medium" : result.confidence,
+  };
 }
 
 function unavailableResult(

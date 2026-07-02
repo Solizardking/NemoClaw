@@ -8,7 +8,8 @@ If you use an AI coding agent (Cursor, Claude Code, Codex, etc.), the repo inclu
 
 | Skill | What it does | When to use |
 |---|---|---|
-| `update-docs-from-commits` | Scans recent commits for user-facing changes and drafts doc updates. | After landing features, before a release, or to find doc gaps. |
+| `nemoclaw-user-guide` | Routes AI assistants to the canonical Nemo Clawd Markdown docs, with Solana onboarding, financial harness, wallet, policy, and command-reference guidance. | When changing the new-user path, AI-agent docs routing, Solana onboarding, wallet setup, policy flow, or troubleshooting guidance. |
+| `nemoclaw-contributor-update-docs` | Scans recent changes for user-facing behavior and drafts doc updates. | After landing features, before a release, or to find doc gaps. |
 
 The skills live in `.agents/skills/` and follow the style guide below automatically. To use one, ask your agent to run it. For example, ask it to "catch up the docs for everything merged since v0.2.0".
 
@@ -21,6 +22,7 @@ Update documentation when your change:
 - Adds a new feature that users interact with.
 - Fixes a bug that the docs describe incorrectly.
 - Changes an API, protocol, or policy schema.
+- Changes the Solana onboarding path, financial harness output, wallet posture, Telegram bridge behavior, or network policy presets.
 
 ## Building Docs Locally
 
@@ -77,6 +79,19 @@ status: published
 2. A one- or two-sentence introduction stating what the page covers.
 3. Sections organized by task or concept, using H2 and H3. Start each section with an introductory sentence that orients the reader.
 4. A "Next Steps" section at the bottom linking to related pages.
+
+### Solana Onboarding Coverage
+
+For changes that affect blockchain AI onboarding, check these pages together:
+
+- `docs/get-started/quickstart.md` for the first command path.
+- `docs/solana/onboarding.md` for cluster, RPC, wallet, and operator-loop concepts.
+- `docs/solana/financial-harness.md` for dry-run wallet, policy, and signing guardrails.
+- `docs/reference/commands.md` for CLI syntax.
+- `docs/reference/network-policies.md` and `docs/network-policy/` for allowed endpoints and approvals.
+
+Keep the docs clear that the financial harness is dry-run only.
+Do not document a flow that asks users to paste secrets, seed phrases, private keys, bot tokens, or private RPC URLs into chat.
 
 ## Style Guide
 

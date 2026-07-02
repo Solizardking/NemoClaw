@@ -26,12 +26,12 @@ status: published
 ```
 
 Nemo Clawd is a Solana-aware blockchain AI runtime for [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell).
-It runs Nemo Clawd inside a sandboxed environment with routed inference, a Hermes-derived agent image, the Nemo Clawd MCP server, clawd operator services, Solana tooling, and strict network policies.
+It runs the Nemo Clawd agent stack inside a sandboxed environment with routed inference, the Nemo Clawd MCP server, clawd operator services, Solana tooling, wallet-aware dry-run checks, and strict network policies.
 The docs start with new-user onboarding and then move into reference material for operators who need deeper control.
 
 ## Get Started
 
-Install the CLI, create a sandboxed agent, and run dry-run Solana checks before wallet-aware services start.
+Install the CLI, create a sandboxed agent, inspect the Solana configuration, and run the financial harness before wallet-aware services start.
 
 ```{raw} html
 <style>
