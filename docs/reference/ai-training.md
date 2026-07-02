@@ -38,6 +38,8 @@ $ nemoclawd ai-training
 $ nemoclawd ai-training check --json
 ```
 
+Use `nemoclawd ai-training` for a status report.
+Use `nemoclawd ai-training check` for the CI and build gate; it exits nonzero when required paths are missing or forbidden generated, oversized, or secret-like files are present.
 The check validates required source paths under `ai-training/`, rejects generated lanes such as `data/`, `outputs/`, `target/`, `.hf/`, `.venv/`, and `ollama/build/`, and scans for secret-like filenames or credential patterns.
 
 ## Included Lanes
@@ -49,10 +51,13 @@ The build packages source and configuration lanes that can reproduce or operate 
 | `ai-training/programs/` | Anchor programs for Clawd core, registry, and treasury contracts. |
 | `ai-training/model-kit/` | Terminal model-kit CLI, static frontend, backend handoff, onboarding docs, and static-site verifier. |
 | `ai-training/nvidia/` | NVIDIA blueprint adapters, NIM bridge, transaction-foundation model scaffolding, RAG and signal-discovery blueprints, and config validation scripts. |
+| `ai-training/dao/` | DAO design, model registration scripts, and attestation helpers. |
 | `ai-training/memory/` | Local memory integration helper code. |
 | `ai-training/docs/` | Model, dataset, onchain, and design notes for the training workspace. |
+| `ai-training/ollama/` | Modelfile templates and build handoff script. |
 | `ai-training/perps/` | Model-facing perps tool schemas, prompt helpers, and NVIDIA perps handoff generator. |
 | `ai-training/schemas/` | JSON schema contracts for layout and generated artifacts. |
+| `ai-training/space/` | Hugging Face Space demo app and requirements. |
 | `ai-training/studio/` | Static local studio entrypoint. |
 | `ai-training/trading_factory/` | Trading-factory strategy code, cuFOLIO adapters, and Solana factory integrations. |
 | `ai-training/configs/` | LoRA, realtime research, Core AI, and trading-factory training configs. |
@@ -65,6 +70,7 @@ Create them on the operator machine when running training jobs.
 
 ```console
 $ ai-training/model-kit/bin/clawd-model-kit init
+$ npm run ai-training:local:plan
 $ python3 ai-training/scripts/run_local_clawd_stack.py --best-effort
 ```
 
