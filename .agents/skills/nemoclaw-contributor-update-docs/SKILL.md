@@ -210,7 +210,7 @@ If the user invoked this skill for release prep, finish the release-specific doc
 1. Determine the documented release version `n` from the user's request. If the user did not provide a release version, ask for it before opening the release-prep PR.
 2. For the default pre-tag path, label the PR with the release being prepared. Release labels use `vX.Y.Z` format. For example, release-note docs for release `0.0.63` use label `v0.0.63`.
 3. Use the next patch release label only as a post-release recovery fallback when the release tag or announcement already exists and maintainers missed the pre-tag docs step. For example, a catch-up docs PR after release `0.0.63` uses label `v0.0.64`. Increment only the patch component; if the version is nonstandard or pre-release, ask before choosing a label.
-4. Update `.agents/skills/nemoclaw-user-guide/SKILL.md` only if the release changes the AI-agent documentation entry points or routing guidance.
+4. Update `.agents/skills/nemoclawd-user-guide/SKILL.md` only if the release changes the AI-agent documentation entry points or routing guidance.
 
 ## Step 8: Build and Verify
 
@@ -261,7 +261,7 @@ User says: "Catch up the docs for everything merged since v0.1.0."
 6. Draft doc updates reflecting the source code changes in the commits following the style guide.
 7. **Release prep only:** Determine the release label from the user-requested documented release version. For the default pre-tag path, use the release being prepared, such as `v0.0.63` for release `0.0.63`.
 8. **Post-release recovery only:** If maintainers missed the pre-tag docs step and the release already shipped, use the next patch release label. For a post-release docs refresh for `0.0.63`, use label `v0.0.64`.
-9. **Release prep only:** Update `.agents/skills/nemoclaw-user-guide/SKILL.md` only if the AI-agent documentation entry points or routing guidance changed.
+9. **Release prep only:** Update `.agents/skills/nemoclawd-user-guide/SKILL.md` only if the AI-agent documentation entry points or routing guidance changed.
 10. Present the summary.
 11. Build with `npm run docs` to verify.
 12. **Release prep only:** Commit changes and open a pull request with the `area: docs` label and the selected release label. Use the current release label for pre-tag release-note docs, and use the next patch label only for post-release recovery. Include `area: skills` only if the PR changes `.agents/skills/`. Include a concise summary of the doc updates and a source summary that links each identified merged PR to its matching doc page. Include the PR number, affected doc page, links, and description of the doc change in this shape:
