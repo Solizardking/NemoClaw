@@ -8,14 +8,14 @@ digest: ""  # Computed at release time
 
 profiles:
   - default
+  - solana
   - ncp
   - nim-local
   - vllm
 
 description: |
-  Nemo Clawd blueprint: orchestrates a Hermes-derived Nemo Clawd sandbox,
-  bundled MCP tooling, migration, and NIM/vLLM inference routing inside
-  OpenShell.
+  Nemo Clawd blueprint: orchestrates a Solana-native Nemo Clawd sandbox,
+  bundled MCP tooling, migration, and routed inference inside OpenShell.
 
 components:
   agent:
@@ -24,7 +24,7 @@ components:
     manifest: "agents/nemo-clawd/manifest.yaml"
 
   sandbox:
-    image: "ghcr.io/nvidia/nemoclaw/nemo-clawd:latest"
+    image: "nemoclawd:latest"
     name: "nemoclawd"
     forward_ports:
       - 18789
@@ -54,6 +54,13 @@ components:
         provider_name: "nvidia-inference"
         endpoint: "https://integrate.api.nvidia.com/v1"
         model: "nvidia/nemotron-3-super-120b-a12b"
+
+      solana:
+        provider_type: "openai"
+        provider_name: "xai-grok"
+        endpoint: "https://api.x.ai/v1"
+        model: "grok-4.20-reasoning"
+        credential_env: "XAI_API_KEY"
 
       ncp:
         provider_type: "nvidia"

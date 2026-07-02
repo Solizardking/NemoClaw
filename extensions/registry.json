@@ -1,0 +1,1203 @@
+{
+  "$schema": "./registry.schema.json",
+  "formatVersion": 1,
+  "status": "manifest-only",
+  "updatedAt": "2026-07-02",
+  "summary": "Compact NemoClaw extension catalog. Source-heavy Clawdbot extension drops are represented as declarative capability manifests without vendored runtime code, tests, generated output, lockfiles, or local credentials.",
+  "conventions": {
+    "execution": "Manifest-only entries describe extension capabilities and configuration boundaries; runtime adapters should live in first-party NemoClaw packages or be fetched from trusted upstreams at install time.",
+    "credentialBoundary": "Do not place .env files, private keys, API key JSON files, lockfiles, nohup output, node_modules, or copied vendor SDK trees under extensions/.",
+    "perps": "Perpetual futures capabilities are normalized under the trading.perps capability and the perps object."
+  },
+  "extensions": [
+    {
+      "id": "aster-dex",
+      "path": "aster-dex",
+      "name": "Aster DEX",
+      "kind": "dex",
+      "description": "Aster DEX market data, spot trading, price alerts, and perpetual futures actions.",
+      "status": "manifest-only",
+      "capabilities": [
+        "trading.perps",
+        "trading.spot",
+        "market-data",
+        "alerts"
+      ],
+      "tools": [
+        "aster_open_long",
+        "aster_open_short",
+        "aster_close_position",
+        "aster_spot_buy",
+        "aster_spot_sell",
+        "aster_cancel_order",
+        "aster_cancel_all_orders",
+        "aster_get_positions",
+        "aster_get_open_orders",
+        "aster_get_price",
+        "aster_get_24hr_stats",
+        "aster_get_chart",
+        "aster_get_balance",
+        "aster_analyze_market",
+        "aster_create_alert",
+        "aster_remove_alert",
+        "aster_list_alerts"
+      ],
+      "config": {
+        "namespace": "extensions.asterDex",
+        "env": [
+          "ASTER_API_KEY",
+          "ASTER_API_SECRET",
+          "ASTER_API_WALLET_ADDRESS",
+          "ASTER_API_WALLET_PRIVATE_KEY",
+          "ASTER_API_BASE_URL"
+        ],
+        "secrets": [
+          "ASTER_API_SECRET",
+          "ASTER_API_WALLET_PRIVATE_KEY"
+        ],
+        "required": []
+      },
+      "perps": {
+        "supported": true,
+        "venue": "aster",
+        "quote": "USDT",
+        "actions": [
+          "open-long",
+          "open-short",
+          "close-position",
+          "set-leverage",
+          "list-positions"
+        ],
+        "orderTypes": [
+          "market",
+          "limit"
+        ],
+        "marginModes": [
+          "cross",
+          "isolated"
+        ]
+      }
+    },
+    {
+      "id": "bluebubbles",
+      "path": "bluebubbles",
+      "name": "BlueBubbles",
+      "kind": "channel",
+      "description": "BlueBubbles iMessage bridge channel for chats, groups, attachments, reactions, typing, and read status.",
+      "status": "manifest-only",
+      "capabilities": [
+        "messaging.channel",
+        "messaging.attachments",
+        "messaging.reactions",
+        "onboarding"
+      ],
+      "channels": [
+        "bluebubbles"
+      ],
+      "config": {
+        "namespace": "channels.bluebubbles",
+        "env": [
+          "BLUEBUBBLES_SERVER_URL",
+          "BLUEBUBBLES_PASSWORD"
+        ],
+        "secrets": [
+          "BLUEBUBBLES_PASSWORD"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "coinbase-cdp",
+      "path": "coinbase-cdp",
+      "name": "Coinbase CDP",
+      "kind": "wallet",
+      "description": "Coinbase Developer Platform server wallet integration for EVM and Solana account operations.",
+      "status": "manifest-only",
+      "capabilities": [
+        "wallet.evm",
+        "wallet.solana",
+        "trading.settlement"
+      ],
+      "tools": [
+        "cdp_create_wallet",
+        "cdp_get_wallet",
+        "cdp_get_balance",
+        "cdp_transfer",
+        "cdp_sign_transaction"
+      ],
+      "config": {
+        "namespace": "extensions.coinbaseCdp",
+        "env": [
+          "CDP_API_KEY_NAME",
+          "CDP_API_KEY_PRIVATE_KEY",
+          "CDP_WALLET_SECRET"
+        ],
+        "secrets": [
+          "CDP_API_KEY_PRIVATE_KEY",
+          "CDP_WALLET_SECRET"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "coingecko",
+      "path": "coingecko",
+      "name": "CoinGecko",
+      "kind": "market-data",
+      "description": "CoinGecko crypto market data, token prices, trending pools, and compact chart summaries.",
+      "status": "manifest-only",
+      "capabilities": [
+        "market-data.crypto",
+        "charts"
+      ],
+      "tools": [
+        "coingecko_price",
+        "coingecko_chart",
+        "coingecko_trending"
+      ],
+      "config": {
+        "namespace": "extensions.coingecko",
+        "env": [
+          "COINGECKO_API_KEY",
+          "COINGECKO_DEFAULT_CURRENCY"
+        ],
+        "secrets": [
+          "COINGECKO_API_KEY"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "copilot-proxy",
+      "path": "copilot-proxy",
+      "name": "Copilot Proxy",
+      "kind": "provider-auth",
+      "description": "Provider shim for routing Copilot-compatible model requests through a configured proxy.",
+      "status": "manifest-only",
+      "capabilities": [
+        "ai.provider",
+        "auth.proxy"
+      ],
+      "config": {
+        "namespace": "providers.copilotProxy",
+        "env": [
+          "COPILOT_PROXY_URL",
+          "COPILOT_PROXY_TOKEN"
+        ],
+        "secrets": [
+          "COPILOT_PROXY_TOKEN"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "diagnostics-otel",
+      "path": "diagnostics-otel",
+      "name": "Diagnostics OpenTelemetry",
+      "kind": "observability",
+      "description": "OpenTelemetry traces, metrics, and logs exporter metadata for diagnostics.",
+      "status": "manifest-only",
+      "capabilities": [
+        "observability.traces",
+        "observability.metrics",
+        "observability.logs"
+      ],
+      "config": {
+        "namespace": "diagnostics.otel",
+        "env": [
+          "OTEL_EXPORTER_OTLP_ENDPOINT",
+          "OTEL_EXPORTER_OTLP_HEADERS"
+        ],
+        "secrets": [
+          "OTEL_EXPORTER_OTLP_HEADERS"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "discord",
+      "path": "discord",
+      "name": "Discord",
+      "kind": "channel",
+      "description": "Discord bot channel for DMs, guild channels, mentions, attachments, and allowlisted groups.",
+      "status": "manifest-only",
+      "capabilities": [
+        "messaging.channel",
+        "messaging.attachments",
+        "onboarding"
+      ],
+      "channels": [
+        "discord"
+      ],
+      "config": {
+        "namespace": "channels.discord",
+        "env": [
+          "DISCORD_BOT_TOKEN",
+          "DISCORD_CLIENT_ID"
+        ],
+        "secrets": [
+          "DISCORD_BOT_TOKEN"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "email-worker",
+      "path": "email-worker",
+      "name": "Email Worker",
+      "kind": "worker",
+      "description": "Cloudflare Email Worker command bridge for email-triggered assistant workflows.",
+      "status": "manifest-only",
+      "capabilities": [
+        "messaging.email",
+        "worker.cloudflare",
+        "commands.email"
+      ],
+      "commands": [
+        "art",
+        "search",
+        "web",
+        "ask",
+        "help"
+      ],
+      "config": {
+        "namespace": "workers.email",
+        "env": [
+          "OPENAI_API_KEY",
+          "X_API_KEY",
+          "EMAIL_WORKER_SECRET"
+        ],
+        "secrets": [
+          "OPENAI_API_KEY",
+          "X_API_KEY",
+          "EMAIL_WORKER_SECRET"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "fal-ai-video-generation",
+      "path": "fal-ai-video-generation",
+      "name": "FAL.ai Video Generation",
+      "kind": "media-generation",
+      "description": "FAL.ai video generation tool metadata for prompt-to-video workflows.",
+      "status": "manifest-only",
+      "capabilities": [
+        "media.video-generation"
+      ],
+      "tools": [
+        "fal_generate_video"
+      ],
+      "config": {
+        "namespace": "extensions.falAiVideo",
+        "env": [
+          "FAL_KEY"
+        ],
+        "secrets": [
+          "FAL_KEY"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "financial-datasets",
+      "path": "financial-datasets",
+      "name": "Financial Datasets",
+      "kind": "market-data",
+      "description": "Financial Datasets API coverage for equities, crypto, filings, statements, macro, and news.",
+      "status": "manifest-only",
+      "capabilities": [
+        "market-data.equities",
+        "market-data.crypto",
+        "filings.sec",
+        "news.financial"
+      ],
+      "tools": [
+        "financial_prices",
+        "financial_statements",
+        "financial_sec_filings",
+        "financial_news"
+      ],
+      "config": {
+        "namespace": "extensions.financialDatasets",
+        "env": [
+          "FINANCIAL_DATASETS_API_KEY"
+        ],
+        "secrets": [
+          "FINANCIAL_DATASETS_API_KEY"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "google-antigravity-auth",
+      "path": "google-antigravity-auth",
+      "name": "Google Antigravity Auth",
+      "kind": "provider-auth",
+      "description": "OAuth credential bridge metadata for Google Antigravity access.",
+      "status": "manifest-only",
+      "capabilities": [
+        "auth.oauth",
+        "ai.provider"
+      ],
+      "config": {
+        "namespace": "providers.googleAntigravity",
+        "env": [
+          "GOOGLE_ANTIGRAVITY_CLIENT_ID",
+          "GOOGLE_ANTIGRAVITY_CLIENT_SECRET"
+        ],
+        "secrets": [
+          "GOOGLE_ANTIGRAVITY_CLIENT_SECRET"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "google-gemini-cli-auth",
+      "path": "google-gemini-cli-auth",
+      "name": "Google Gemini CLI Auth",
+      "kind": "provider-auth",
+      "description": "OAuth credential bridge metadata for Gemini CLI authentication.",
+      "status": "manifest-only",
+      "capabilities": [
+        "auth.oauth",
+        "ai.provider"
+      ],
+      "config": {
+        "namespace": "providers.googleGeminiCli",
+        "env": [
+          "GOOGLE_GEMINI_CLIENT_ID",
+          "GOOGLE_GEMINI_CLIENT_SECRET"
+        ],
+        "secrets": [
+          "GOOGLE_GEMINI_CLIENT_SECRET"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "hyperliquid-dex",
+      "path": "hyperliquid-dex",
+      "name": "Hyperliquid DEX",
+      "kind": "dex",
+      "description": "Hyperliquid market data, spot balances, alerts, and perpetual futures trading actions.",
+      "status": "manifest-only",
+      "capabilities": [
+        "trading.perps",
+        "trading.spot",
+        "market-data",
+        "alerts"
+      ],
+      "tools": [
+        "hyperliquid_open_long",
+        "hyperliquid_open_short",
+        "hyperliquid_close_position",
+        "hyperliquid_limit_order",
+        "hyperliquid_cancel_order",
+        "hyperliquid_cancel_all_orders",
+        "hyperliquid_get_positions",
+        "hyperliquid_get_open_orders",
+        "hyperliquid_set_leverage",
+        "hyperliquid_get_price",
+        "hyperliquid_get_market_data",
+        "hyperliquid_get_orderbook",
+        "hyperliquid_get_chart",
+        "hyperliquid_get_balance",
+        "hyperliquid_get_spot_balance",
+        "hyperliquid_get_fills",
+        "hyperliquid_get_assets",
+        "hyperliquid_analyze_market"
+      ],
+      "config": {
+        "namespace": "extensions.hyperliquidDex",
+        "env": [
+          "HYPERLIQUID_WALLET",
+          "HYPERLIQUID_PRIVATE_KEY",
+          "HYPERLIQUID_TESTNET",
+          "HYPERLIQUID_ENABLE_WS"
+        ],
+        "secrets": [
+          "HYPERLIQUID_PRIVATE_KEY"
+        ],
+        "required": []
+      },
+      "perps": {
+        "supported": true,
+        "venue": "hyperliquid",
+        "quote": "USDC",
+        "actions": [
+          "open-long",
+          "open-short",
+          "close-position",
+          "set-leverage",
+          "list-positions"
+        ],
+        "orderTypes": [
+          "market",
+          "limit"
+        ],
+        "marginModes": [
+          "cross",
+          "isolated"
+        ]
+      }
+    },
+    {
+      "id": "imessage",
+      "path": "imessage",
+      "name": "iMessage",
+      "kind": "channel",
+      "description": "macOS iMessage channel bridge for direct and group messaging.",
+      "status": "manifest-only",
+      "capabilities": [
+        "messaging.channel",
+        "messaging.attachments",
+        "onboarding"
+      ],
+      "channels": [
+        "imessage"
+      ],
+      "config": {
+        "namespace": "channels.imessage",
+        "env": [
+          "IMESSAGE_ACCOUNT_ID"
+        ],
+        "secrets": [],
+        "required": []
+      }
+    },
+    {
+      "id": "jupiter-ultra",
+      "path": "jupiter-ultra",
+      "name": "Jupiter Ultra",
+      "kind": "dex",
+      "description": "Jupiter Ultra Solana swap quote and execution endpoint metadata.",
+      "status": "manifest-only",
+      "capabilities": [
+        "trading.spot",
+        "swap.solana",
+        "market-data"
+      ],
+      "tools": [
+        "jupiter_ultra_order",
+        "jupiter_ultra_execute"
+      ],
+      "config": {
+        "namespace": "extensions.jupiterUltra",
+        "env": [
+          "JUPITER_API_KEY",
+          "SOLANA_PRIVATE_KEY"
+        ],
+        "secrets": [
+          "JUPITER_API_KEY",
+          "SOLANA_PRIVATE_KEY"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "kalshi",
+      "path": "kalshi",
+      "name": "Kalshi Prediction Markets",
+      "kind": "prediction-market",
+      "description": "Kalshi account, market browsing, order placement, cancellation, and positions metadata.",
+      "status": "manifest-only",
+      "capabilities": [
+        "prediction-markets",
+        "market-data",
+        "trading.orders"
+      ],
+      "tools": [
+        "kalshi_get_balance",
+        "kalshi_get_positions",
+        "kalshi_get_orders",
+        "kalshi_create_order",
+        "kalshi_cancel_order",
+        "kalshi_get_markets"
+      ],
+      "config": {
+        "namespace": "extensions.kalshi",
+        "env": [
+          "KALSHI_API_KEY",
+          "KALSHI_API_SECRET",
+          "KALSHI_ENV"
+        ],
+        "secrets": [
+          "KALSHI_API_SECRET"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "lobster",
+      "path": "lobster",
+      "name": "Lobster",
+      "kind": "workflow",
+      "description": "Typed workflow tool metadata for resumable approvals and structured pipelines.",
+      "status": "manifest-only",
+      "capabilities": [
+        "workflow.typed",
+        "approvals.resumable"
+      ],
+      "tools": [
+        "lobster_run"
+      ],
+      "config": {
+        "namespace": "extensions.lobster",
+        "env": [],
+        "secrets": [],
+        "required": []
+      }
+    },
+    {
+      "id": "matrix",
+      "path": "matrix",
+      "name": "Matrix",
+      "kind": "channel",
+      "description": "Matrix channel for encrypted DMs, rooms, mentions, actions, reactions, and media.",
+      "status": "manifest-only",
+      "capabilities": [
+        "messaging.channel",
+        "messaging.encrypted",
+        "messaging.attachments",
+        "messaging.reactions",
+        "onboarding"
+      ],
+      "channels": [
+        "matrix"
+      ],
+      "config": {
+        "namespace": "channels.matrix",
+        "env": [
+          "MATRIX_HOMESERVER_URL",
+          "MATRIX_ACCESS_TOKEN",
+          "MATRIX_USER_ID"
+        ],
+        "secrets": [
+          "MATRIX_ACCESS_TOKEN"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "mattermost",
+      "path": "mattermost",
+      "name": "Mattermost",
+      "kind": "channel",
+      "description": "Mattermost bot channel for DMs, team channels, mentions, and media.",
+      "status": "manifest-only",
+      "capabilities": [
+        "messaging.channel",
+        "messaging.attachments",
+        "onboarding"
+      ],
+      "channels": [
+        "mattermost"
+      ],
+      "config": {
+        "namespace": "channels.mattermost",
+        "env": [
+          "MATTERMOST_URL",
+          "MATTERMOST_BOT_TOKEN"
+        ],
+        "secrets": [
+          "MATTERMOST_BOT_TOKEN"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "memory-core",
+      "path": "memory-core",
+      "name": "Memory Core",
+      "kind": "memory",
+      "description": "File-backed memory search and retrieval tool metadata.",
+      "status": "manifest-only",
+      "capabilities": [
+        "memory.search",
+        "memory.retrieve"
+      ],
+      "tools": [
+        "memory_search",
+        "memory_get"
+      ],
+      "commands": [
+        "memory"
+      ],
+      "config": {
+        "namespace": "memory.core",
+        "env": [
+          "NEMOCLAW_MEMORY_DIR"
+        ],
+        "secrets": [],
+        "required": []
+      }
+    },
+    {
+      "id": "memory-lancedb",
+      "path": "memory-lancedb",
+      "name": "Memory LanceDB",
+      "kind": "memory",
+      "description": "LanceDB-backed long-term memory metadata with auto-capture and auto-recall.",
+      "status": "manifest-only",
+      "capabilities": [
+        "memory.vector",
+        "memory.auto-capture",
+        "memory.auto-recall"
+      ],
+      "tools": [
+        "ltm_search",
+        "ltm_save",
+        "ltm_forget"
+      ],
+      "commands": [
+        "ltm"
+      ],
+      "config": {
+        "namespace": "memory.lancedb",
+        "env": [
+          "LANCEDB_PATH",
+          "OPENAI_API_KEY"
+        ],
+        "secrets": [
+          "OPENAI_API_KEY"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "msteams",
+      "path": "msteams",
+      "name": "Microsoft Teams",
+      "kind": "channel",
+      "description": "Microsoft Teams channel metadata for chats, channels, replies, file consent, polls, and Graph upload.",
+      "status": "manifest-only",
+      "capabilities": [
+        "messaging.channel",
+        "messaging.attachments",
+        "polls",
+        "onboarding"
+      ],
+      "channels": [
+        "msteams"
+      ],
+      "config": {
+        "namespace": "channels.msteams",
+        "env": [
+          "MSTEAMS_APP_ID",
+          "MSTEAMS_APP_PASSWORD",
+          "MSTEAMS_TENANT_ID"
+        ],
+        "secrets": [
+          "MSTEAMS_APP_PASSWORD"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "nextcloud-talk",
+      "path": "nextcloud-talk",
+      "name": "Nextcloud Talk",
+      "kind": "channel",
+      "description": "Nextcloud Talk channel metadata for rooms, mentions, webhooks, and media.",
+      "status": "manifest-only",
+      "capabilities": [
+        "messaging.channel",
+        "messaging.attachments",
+        "webhooks",
+        "onboarding"
+      ],
+      "channels": [
+        "nextcloud-talk"
+      ],
+      "config": {
+        "namespace": "channels.nextcloud-talk",
+        "env": [
+          "NEXTCLOUD_URL",
+          "NEXTCLOUD_USERNAME",
+          "NEXTCLOUD_APP_PASSWORD"
+        ],
+        "secrets": [
+          "NEXTCLOUD_APP_PASSWORD"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "nostr",
+      "path": "nostr",
+      "name": "Nostr",
+      "kind": "channel",
+      "description": "Nostr encrypted DM channel metadata with profile import, relays, and state tracking.",
+      "status": "manifest-only",
+      "capabilities": [
+        "messaging.channel",
+        "messaging.encrypted",
+        "nostr.nip04",
+        "onboarding"
+      ],
+      "channels": [
+        "nostr"
+      ],
+      "config": {
+        "namespace": "channels.nostr",
+        "env": [
+          "NOSTR_PRIVATE_KEY",
+          "NOSTR_RELAYS"
+        ],
+        "secrets": [
+          "NOSTR_PRIVATE_KEY"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "open-prose",
+      "path": "open-prose",
+      "name": "OpenProse",
+      "kind": "skill-pack",
+      "description": "OpenProse VM skill-pack manifest for compact slash-command routing without bundled examples.",
+      "status": "manifest-only",
+      "capabilities": [
+        "skill-pack",
+        "workflow.vm"
+      ],
+      "commands": [
+        "prose"
+      ],
+      "config": {
+        "namespace": "extensions.openProse",
+        "env": [],
+        "secrets": [],
+        "required": []
+      }
+    },
+    {
+      "id": "qwen-portal-auth",
+      "path": "qwen-portal-auth",
+      "name": "Qwen Portal Auth",
+      "kind": "provider-auth",
+      "description": "OAuth credential bridge metadata for Qwen portal access.",
+      "status": "manifest-only",
+      "capabilities": [
+        "auth.oauth",
+        "ai.provider"
+      ],
+      "config": {
+        "namespace": "providers.qwenPortal",
+        "env": [
+          "QWEN_CLIENT_ID",
+          "QWEN_CLIENT_SECRET"
+        ],
+        "secrets": [
+          "QWEN_CLIENT_SECRET"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "signal",
+      "path": "signal",
+      "name": "Signal",
+      "kind": "channel",
+      "description": "Signal channel metadata for direct and group messages through a Signal bridge.",
+      "status": "manifest-only",
+      "capabilities": [
+        "messaging.channel",
+        "messaging.attachments",
+        "onboarding"
+      ],
+      "channels": [
+        "signal"
+      ],
+      "config": {
+        "namespace": "channels.signal",
+        "env": [
+          "SIGNAL_CLI_REST_API_URL",
+          "SIGNAL_PHONE_NUMBER"
+        ],
+        "secrets": [],
+        "required": []
+      }
+    },
+    {
+      "id": "slack",
+      "path": "slack",
+      "name": "Slack",
+      "kind": "channel",
+      "description": "Slack bot channel metadata for DMs, channels, mentions, files, and app events.",
+      "status": "manifest-only",
+      "capabilities": [
+        "messaging.channel",
+        "messaging.attachments",
+        "onboarding"
+      ],
+      "channels": [
+        "slack"
+      ],
+      "config": {
+        "namespace": "channels.slack",
+        "env": [
+          "SLACK_BOT_TOKEN",
+          "SLACK_APP_TOKEN",
+          "SLACK_SIGNING_SECRET"
+        ],
+        "secrets": [
+          "SLACK_BOT_TOKEN",
+          "SLACK_APP_TOKEN",
+          "SLACK_SIGNING_SECRET"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "solana-agent",
+      "path": "solana-agent",
+      "name": "Solana Agent",
+      "kind": "chain-agent",
+      "description": "Solana Agent Kit capability manifest for token, DeFi, NFT, misc actions, wallet, price, and swap routing.",
+      "status": "manifest-only",
+      "capabilities": [
+        "wallet.solana",
+        "trading.spot",
+        "swap.solana",
+        "nft",
+        "defi.solana"
+      ],
+      "tools": [
+        "solana_address",
+        "solana_balance",
+        "solana_actions",
+        "solana_execute",
+        "solana_price",
+        "solana_swap"
+      ],
+      "commands": [
+        "solana"
+      ],
+      "config": {
+        "namespace": "extensions.solanaAgent",
+        "env": [
+          "SOLANA_RPC_URL",
+          "SOLANA_NETWORK",
+          "SOLANA_PRIVATE_KEY"
+        ],
+        "secrets": [
+          "SOLANA_PRIVATE_KEY"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "solana-agent-copy",
+      "path": "solana-agent copy",
+      "name": "Solana Agent Copy",
+      "kind": "alias",
+      "description": "Compatibility alias for the duplicated solana-agent copy directory; use solana-agent as the canonical entry.",
+      "status": "alias",
+      "aliasOf": "solana-agent",
+      "capabilities": [
+        "alias"
+      ],
+      "config": {
+        "namespace": "extensions.solanaAgent",
+        "env": [],
+        "secrets": [],
+        "required": []
+      }
+    },
+    {
+      "id": "solana-trading",
+      "path": "solana-trading",
+      "name": "Solana Trading",
+      "kind": "trading-bot",
+      "description": "Solana trading automation manifest for Jupiter swaps, Bags launches, sniper, copy, volume, wallet tracking, and Birdeye analytics.",
+      "status": "manifest-only",
+      "capabilities": [
+        "trading.spot",
+        "swap.solana",
+        "token-launch",
+        "wallet-tracking",
+        "alerts",
+        "copy-trading"
+      ],
+      "tools": [
+        "jupiter_swap",
+        "jupiter_create_limit_order",
+        "trading_launch_token",
+        "trading_get_quote",
+        "trading_sniper_configure",
+        "trading_copy_configure",
+        "trading_volume_configure",
+        "trading_track_wallet",
+        "birdeye_wallet_portfolio",
+        "birdeye_create_price_alert"
+      ],
+      "config": {
+        "namespace": "extensions.solanaTrading",
+        "env": [
+          "DATABASE_URL",
+          "HELIUS_API_KEY",
+          "BAGS_API_KEY",
+          "BAGS_PARTNER_CONFIG_KEY",
+          "SOLANA_RPC_URL",
+          "BIRDEYE_API_KEY"
+        ],
+        "secrets": [
+          "DATABASE_URL",
+          "HELIUS_API_KEY",
+          "BAGS_API_KEY",
+          "BAGS_PARTNER_CONFIG_KEY",
+          "BIRDEYE_API_KEY"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "solana-trading-bot",
+      "path": "solana-trading-bot",
+      "name": "Solana Trading Bot",
+      "kind": "trading-bot",
+      "description": "Advanced Solana bot manifest for buy/sell, launches, fee claims, sniper, copy trading, volume bot, and wallet tracking.",
+      "status": "manifest-only",
+      "capabilities": [
+        "trading.spot",
+        "token-launch",
+        "wallet-tracking",
+        "copy-trading",
+        "volume-bot"
+      ],
+      "tools": [
+        "solana_buy_token",
+        "solana_sell_token",
+        "solana_get_trade_quote",
+        "solana_launch_token",
+        "solana_claim_fees",
+        "solana_sniper_start",
+        "solana_copy_start",
+        "solana_volume_start"
+      ],
+      "config": {
+        "namespace": "extensions.solanaTradingBot",
+        "env": [
+          "BAGS_API_KEY",
+          "BAGS_PARTNER_CONFIG_KEY",
+          "PRIVY_APP_ID",
+          "PRIVY_APP_SECRET",
+          "UPSTASH_REDIS_URL",
+          "UPSTASH_REDIS_TOKEN",
+          "SOLANA_RPC_URL"
+        ],
+        "secrets": [
+          "BAGS_API_KEY",
+          "BAGS_PARTNER_CONFIG_KEY",
+          "PRIVY_APP_SECRET",
+          "UPSTASH_REDIS_TOKEN"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "telegram",
+      "path": "telegram",
+      "name": "Telegram",
+      "kind": "channel",
+      "description": "Telegram bot channel metadata for DMs, groups, and commands.",
+      "status": "manifest-only",
+      "capabilities": [
+        "messaging.channel",
+        "onboarding"
+      ],
+      "channels": [
+        "telegram"
+      ],
+      "config": {
+        "namespace": "channels.telegram",
+        "env": [
+          "TELEGRAM_BOT_TOKEN"
+        ],
+        "secrets": [
+          "TELEGRAM_BOT_TOKEN"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "voice-call",
+      "path": "voice-call",
+      "name": "Voice Call",
+      "kind": "voice",
+      "description": "Voice-call metadata for Telnyx, Twilio, Plivo, mock calls, webhook serving, TTS, STT, transcripts, and streaming.",
+      "status": "manifest-only",
+      "capabilities": [
+        "voice.calls",
+        "voice.tts",
+        "voice.stt",
+        "webhooks"
+      ],
+      "tools": [
+        "voice_call_start",
+        "voice_call_hangup",
+        "voice_call_status"
+      ],
+      "commands": [
+        "voicecall"
+      ],
+      "config": {
+        "namespace": "extensions.voiceCall",
+        "env": [
+          "TWILIO_ACCOUNT_SID",
+          "TWILIO_AUTH_TOKEN",
+          "TELNYX_API_KEY",
+          "TELNYX_PUBLIC_KEY",
+          "PLIVO_AUTH_ID",
+          "PLIVO_AUTH_TOKEN",
+          "OPENAI_API_KEY"
+        ],
+        "secrets": [
+          "TWILIO_AUTH_TOKEN",
+          "TELNYX_API_KEY",
+          "TELNYX_PUBLIC_KEY",
+          "PLIVO_AUTH_TOKEN",
+          "OPENAI_API_KEY"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "whatsapp",
+      "path": "whatsapp",
+      "name": "WhatsApp",
+      "kind": "channel",
+      "description": "WhatsApp channel metadata for direct chats, groups, JIDs, mentions, and media.",
+      "status": "manifest-only",
+      "capabilities": [
+        "messaging.channel",
+        "messaging.attachments",
+        "onboarding"
+      ],
+      "channels": [
+        "whatsapp"
+      ],
+      "config": {
+        "namespace": "channels.whatsapp",
+        "env": [
+          "WHATSAPP_SESSION_DIR"
+        ],
+        "secrets": [],
+        "required": []
+      }
+    },
+    {
+      "id": "zalo",
+      "path": "zalo",
+      "name": "Zalo Official Account",
+      "kind": "channel",
+      "description": "Zalo Official Account channel metadata for webhook monitor, token refresh, actions, and send APIs.",
+      "status": "manifest-only",
+      "capabilities": [
+        "messaging.channel",
+        "webhooks",
+        "onboarding"
+      ],
+      "channels": [
+        "zalo"
+      ],
+      "config": {
+        "namespace": "channels.zalo",
+        "env": [
+          "ZALO_APP_ID",
+          "ZALO_APP_SECRET",
+          "ZALO_OA_ACCESS_TOKEN",
+          "ZALO_REFRESH_TOKEN"
+        ],
+        "secrets": [
+          "ZALO_APP_SECRET",
+          "ZALO_OA_ACCESS_TOKEN",
+          "ZALO_REFRESH_TOKEN"
+        ],
+        "required": []
+      }
+    },
+    {
+      "id": "zalouser",
+      "path": "zalouser",
+      "name": "Zalo User",
+      "kind": "channel",
+      "description": "Zalo personal account channel metadata using zca-cli for DMs, groups, monitors, and sends.",
+      "status": "manifest-only",
+      "capabilities": [
+        "messaging.channel",
+        "onboarding"
+      ],
+      "channels": [
+        "zalouser"
+      ],
+      "config": {
+        "namespace": "channels.zalouser",
+        "env": [
+          "ZALOUSER_SESSION_DIR",
+          "ZALOUSER_ACCOUNT_ID"
+        ],
+        "secrets": [],
+        "required": []
+      }
+    },
+    {
+      "id": "perps",
+      "path": "perps",
+      "name": "Perps Router",
+      "kind": "trading-router",
+      "description": "Compact perpetual futures router manifest spanning Aster and Hyperliquid providers.",
+      "status": "manifest-only",
+      "capabilities": [
+        "trading.perps",
+        "market-data",
+        "alerts",
+        "risk-controls"
+      ],
+      "tools": [
+        "perps_open_long",
+        "perps_open_short",
+        "perps_close_position",
+        "perps_set_leverage",
+        "perps_get_positions",
+        "perps_get_market_data"
+      ],
+      "config": {
+        "namespace": "extensions.perps",
+        "env": [
+          "PERPS_DEFAULT_PROVIDER",
+          "PERPS_MAX_LEVERAGE",
+          "PERPS_REQUIRE_CONFIRMATION"
+        ],
+        "secrets": [],
+        "required": []
+      },
+      "perps": {
+        "supported": true,
+        "providers": [
+          "aster-dex",
+          "hyperliquid-dex"
+        ],
+        "actions": [
+          "open-long",
+          "open-short",
+          "close-position",
+          "set-leverage",
+          "list-positions",
+          "market-data"
+        ],
+        "orderTypes": [
+          "market",
+          "limit"
+        ],
+        "riskControls": [
+          "require-confirmation",
+          "max-leverage",
+          "reduce-only-close"
+        ]
+      }
+    }
+  ]
+}

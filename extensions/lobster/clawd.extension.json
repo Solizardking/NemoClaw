@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "lobster",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/lobster",
+  "status": "manifest-only"
+}

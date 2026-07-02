@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-Migration snapshot/restore logic for moving host Nemo Clawd into OpenShell sandbox.
+Migration snapshot/restore logic for moving host Nemo Clawd into an OpenShell sandbox.
 
 Handles:
   - Snapshot: capture ~/.nemoclawd config, workspace, extensions, skills
@@ -20,14 +20,13 @@ from pathlib import Path
 from typing import Any
 
 HOME = Path.home()
-NEMOCLAW_DIR = HOME / ".nemoclawd"
-NEMOCLAW_DIR = HOME / ".nemoclawd"
-SNAPSHOTS_DIR = NEMOCLAW_DIR / "snapshots"
+NEMOCLAWD_DIR = HOME / ".nemoclawd"
+SNAPSHOTS_DIR = NEMOCLAWD_DIR / "snapshots"
 
 
 def create_snapshot() -> Path | None:
     """Snapshot the current host Nemo Clawd configuration."""
-    if not NEMOCLAW_DIR.exists():
+    if not NEMOCLAWD_DIR.exists():
         return None
 
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
@@ -36,13 +35,13 @@ def create_snapshot() -> Path | None:
 
     # Copy the entire ~/.nemoclawd directory
     dest = snapshot_dir / "nemoclawd"
-    shutil.copytree(NEMOCLAW_DIR, dest, dirs_exist_ok=True)
+    shutil.copytree(NEMOCLAWD_DIR, dest, dirs_exist_ok=True)
 
     # Write manifest
     contents = [str(p.relative_to(dest)) for p in dest.rglob("*") if p.is_file()]
     manifest: dict[str, Any] = {
         "timestamp": timestamp,
-        "source": str(NEMOCLAW_DIR),
+        "source": str(NEMOCLAWD_DIR),
         "file_count": len(contents),
         "contents": contents,
     }
@@ -69,14 +68,14 @@ def restore_into_sandbox(snapshot_dir: Path, sandbox_name: str = "nemoclawd") ->
 
 def cutover_host(snapshot_dir: Path) -> bool:
     """Archive host ~/.nemoclawd and mark migration as complete."""
-    if not NEMOCLAW_DIR.exists():
+    if not NEMOCLAWD_DIR.exists():
         return True  # Nothing to archive
 
     timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    archive_path = NEMOCLAW_DIR.parent / f".nemoclawd.pre-nemoclawd.{timestamp}"
+    archive_path = NEMOCLAWD_DIR.parent / f".nemoclawd.pre-nemoclawd.{timestamp}"
 
     try:
-        shutil.move(str(NEMOCLAW_DIR), str(archive_path))
+        shutil.move(str(NEMOCLAWD_DIR), str(archive_path))
     except OSError:
         return False
     else:
@@ -90,12 +89,12 @@ def rollback_from_snapshot(snapshot_dir: Path) -> bool:
         return False
 
     # Archive current config if it exists
-    if NEMOCLAW_DIR.exists():
+    if NEMOCLAWD_DIR.exists():
         timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-        archive_path = NEMOCLAW_DIR.parent / f".nemoclawd.nemoclawd-archived.{timestamp}"
-        shutil.move(str(NEMOCLAW_DIR), str(archive_path))
+        archive_path = NEMOCLAWD_DIR.parent / f".nemoclawd.nemoclawd-archived.{timestamp}"
+        shutil.move(str(NEMOCLAWD_DIR), str(archive_path))
 
-    shutil.copytree(source, NEMOCLAW_DIR)
+    shutil.copytree(source, NEMOCLAWD_DIR)
     return True
 
 

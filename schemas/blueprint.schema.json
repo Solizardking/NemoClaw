@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/NVIDIA/NemoClaw/schemas/blueprint.schema.json",
+  "$id": "https://github.com/NVIDIA/NemoClawd/schemas/blueprint.schema.json",
   "title": "Nemo Clawd Blueprint",
   "description": "Schema for the Nemo Clawd blueprint. Defines sandbox orchestration, inference profiles, and policy configuration.",
   "type": "object",

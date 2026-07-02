@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "imessage",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/imessage",
+  "status": "manifest-only"
+}

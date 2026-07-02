@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "fal-ai-video-generation",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/fal-ai-video-generation",
+  "status": "manifest-only"
+}

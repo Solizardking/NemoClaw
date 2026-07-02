@@ -35,6 +35,7 @@ import {
   runReadOnlyAdvisor,
 } from "../advisors/session.mts";
 import { classifySolanaChangedFiles } from "../advisors/solana.mts";
+import { SOLANA_PAYMENTS_COMMAND } from "../advisors/solana-payments.mts";
 
 const root = process.cwd();
 export const DEFAULT_ADVISOR_COMMENT_MARKER = "<!-- nemoclaw-pr-review-advisor -->";
@@ -676,6 +677,7 @@ function detectRiskyAreas(changedFiles: string[]): string[] {
   const solana = classifySolanaChangedFiles(changedFiles);
   if (solana.runtimeFiles.length > 0) areas.add("Solana RPC/wallet/runtime");
   if (solana.policyFiles.length > 0) areas.add("Solana network policy presets");
+  if (changedFiles.some(isSolanaPaymentFile)) areas.add("Solana x402/Kora payment tooling");
   for (const file of changedFiles) {
     if (/^(install|setup|brev-setup)\.sh$/.test(file) || /^scripts\/.*\.sh$/.test(file))
       areas.add("installer/bootstrap shell");
@@ -714,6 +716,7 @@ export function classifyTestDepth(
       /(^|\/)(install|setup|brev-setup|nemoclaw-start)\.sh$/.test(file) ||
       classifySolanaChangedFiles([file]).runtimeFiles.length > 0 ||
       classifySolanaChangedFiles([file]).policyFiles.length > 0 ||
+      isSolanaPaymentFile(file) ||
       file.startsWith("nemoclaw-blueprint/policies/") ||
       file.startsWith("nemoclaw/src/blueprint/") ||
       file.startsWith("test/e2e/") ||
@@ -724,12 +727,14 @@ export function classifyTestDepth(
       /\b(execFileSync|execSync|spawnSync|run\(|docker|openshell)\b/.test(diff),
   );
   if (e2eSignals.length > 0) {
+    const suggestedTests = [
+      "Add or identify targeted runtime/integration validation for the changed behavior; do not report external E2E job pass/fail here.",
+    ];
+    if (changedFiles.some(isSolanaPaymentFile)) suggestedTests.push(SOLANA_PAYMENTS_COMMAND);
     return {
       verdict: "runtime_validation_recommended",
       rationale: `Runtime/sandbox/infrastructure paths need behavioral runtime validation: ${e2eSignals.slice(0, 8).join(", ")}.`,
-      suggestedTests: [
-        "Add or identify targeted runtime/integration validation for the changed behavior; do not report external E2E job pass/fail here.",
-      ],
+      suggestedTests,
     };
   }
   const mockSignals = sourceFiles.filter((file) =>
@@ -749,6 +754,10 @@ export function classifyTestDepth(
     rationale: "Changed files look like deterministic logic that can be covered with unit tests.",
     suggestedTests: ["Run targeted unit tests for the changed modules."],
   };
+}
+
+function isSolanaPaymentFile(file: string): boolean {
+  return /(^|\/)(solana-payments|x402|kora|openusd|usdc|payment|payments)/i.test(file);
 }
 
 function isTestFile(file: string): boolean {

@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "email-worker",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/email-worker",
+  "status": "manifest-only"
+}

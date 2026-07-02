@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "open-prose",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/open-prose",
+  "status": "manifest-only"
+}

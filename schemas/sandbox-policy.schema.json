@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/NVIDIA/NemoClaw/schemas/sandbox-policy.schema.json",
+  "$id": "https://github.com/NVIDIA/NemoClawd/schemas/sandbox-policy.schema.json",
   "title": "Nemo Clawd Sandbox Policy",
   "description": "Schema for the base Nemo Clawd sandbox policy. Defines filesystem, process, and network egress rules.",
   "type": "object",

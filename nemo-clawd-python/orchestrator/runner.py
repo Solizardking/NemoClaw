@@ -49,7 +49,7 @@ def emit_run_id() -> str:
 
 
 def load_blueprint() -> dict[str, Any]:
-    blueprint_path = Path(os.environ.get("NEMOCLAW_BLUEPRINT_PATH", "."))
+    blueprint_path = Path(os.environ.get("NEMOCLAWD_BLUEPRINT_PATH", "."))
     bp_file = blueprint_path / "blueprint.yaml"
     if not bp_file.exists():
         fail(f"blueprint.yaml not found at {bp_file}")

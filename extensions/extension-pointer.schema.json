@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/NVIDIA/NemoClaw/extensions/extension-pointer.schema.json",
+  "title": "NemoClaw Compact Extension Pointer",
+  "type": "object",
+  "required": [
+    "$schema",
+    "id",
+    "registry",
+    "registryPath",
+    "status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "registry": {
+      "type": "string",
+      "const": "../registry.json"
+    },
+    "registryPath": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "manifest-only",
+        "alias"
+      ]
+    },
+    "aliasOf": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "mattermost",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/mattermost",
+  "status": "manifest-only"
+}

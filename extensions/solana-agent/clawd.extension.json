@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "solana-agent",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/solana-agent",
+  "status": "manifest-only"
+}

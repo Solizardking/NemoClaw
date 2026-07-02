@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "msteams",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/msteams",
+  "status": "manifest-only"
+}

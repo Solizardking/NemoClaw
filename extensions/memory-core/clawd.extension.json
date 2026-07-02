@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "memory-core",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/memory-core",
+  "status": "manifest-only"
+}

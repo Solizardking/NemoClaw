@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "aster-dex",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/aster-dex",
+  "status": "manifest-only"
+}

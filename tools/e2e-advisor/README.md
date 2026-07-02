@@ -17,6 +17,13 @@ When those files change and the patch is not docs-only, `tools/e2e-advisor/analy
 node --experimental-strip-types tools/e2e/solana-readiness.mts --no-network --json
 ```
 
+Solana payment, x402, Kora, USDC, OpenUSD, and CLAWD payment changes also receive the deterministic
+`solana-payments` dry-run script:
+
+```bash
+node --experimental-strip-types tools/e2e/solana-payments.mts --network devnet --recipient "$SOLANA_PAYMENT_RECIPIENT" --tokens usdc,openusd,clawd --openusd-mint "$OPENUSD_MINT" --json
+```
+
 ## Workflow
 
 `.github/workflows/e2e-advisor.yaml`:
@@ -93,6 +100,7 @@ secret. Run `npm install` first so the Pi SDK dependency is available.
 `tools/e2e-advisor/schema.json` defines the normalized coverage recommendation shape.
 `tools/e2e-advisor/targets-schema.json` defines the normalized target recommendation shape used by the `targets` and `jobs` dispatch commands.
 `tools/e2e/solana-readiness.mts` defines the local dry-run Solana readiness script used by deterministic Solana recommendations.
+`tools/e2e/solana-payments.mts` defines the local dry-run Solana payment artifact generator used by deterministic Solana payment recommendations.
 
 Future enforcement should be implemented as a single dynamic required check that verifies the
 recommended E2E jobs passed for the same PR head SHA.

@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "jupiter-ultra",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/jupiter-ultra",
+  "status": "manifest-only"
+}

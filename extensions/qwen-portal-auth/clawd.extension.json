@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "qwen-portal-auth",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/qwen-portal-auth",
+  "status": "manifest-only"
+}

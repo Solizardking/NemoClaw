@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "signal",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/signal",
+  "status": "manifest-only"
+}

@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "nextcloud-talk",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/nextcloud-talk",
+  "status": "manifest-only"
+}

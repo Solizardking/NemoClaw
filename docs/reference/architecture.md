@@ -105,7 +105,7 @@ flowchart LR
 
 ## Sandbox Environment
 
-The sandbox runs the `ghcr.io/nvidia/nemoclaw/nemo-clawd:latest` container image.
+The sandbox runs the `nemoclawd:latest` container image.
 The blueprint creates the sandbox with the Docker-safe name `nemoclawd` and forwards ports `18789` and `8642`.
 
 Inside the sandbox:

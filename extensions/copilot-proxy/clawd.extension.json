@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "copilot-proxy",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/copilot-proxy",
+  "status": "manifest-only"
+}

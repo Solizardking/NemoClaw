@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "slack",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/slack",
+  "status": "manifest-only"
+}

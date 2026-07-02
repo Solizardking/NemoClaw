@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "coinbase-cdp",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/coinbase-cdp",
+  "status": "manifest-only"
+}

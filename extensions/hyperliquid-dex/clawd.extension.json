@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "hyperliquid-dex",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/hyperliquid-dex",
+  "status": "manifest-only"
+}

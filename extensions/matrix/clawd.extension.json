@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "matrix",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/matrix",
+  "status": "manifest-only"
+}

@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "memory-lancedb",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/memory-lancedb",
+  "status": "manifest-only"
+}

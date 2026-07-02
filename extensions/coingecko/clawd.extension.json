@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "coingecko",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/coingecko",
+  "status": "manifest-only"
+}

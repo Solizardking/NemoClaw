@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "telegram",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/telegram",
+  "status": "manifest-only"
+}

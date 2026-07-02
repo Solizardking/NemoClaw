@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/NVIDIA/NemoClaw/schemas/openclaw-plugin.schema.json",
-  "title": "Nemo Clawd Clawd Plugin Manifest",
-  "description": "Compatibility schema for legacy openclaw.plugin.json files. Prefer schemas/clawd-plugin.schema.json and nemoclaw/clawd.plugin.json for Clawd and Nemo Clawd manifests.",
+  "$id": "https://github.com/NVIDIA/NemoClawd/schemas/openclawd-plugin.schema.json",
+  "title": "Nemo Clawd OpenClawd Plugin Manifest",
+  "description": "Compatibility schema for OpenClawd plugin manifest files. Prefer schemas/clawd-plugin.schema.json and nemoclawd.plugin.json for Nemo Clawd manifests.",
   "type": "object",
   "required": [
     "id",

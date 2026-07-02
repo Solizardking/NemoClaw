@@ -53,3 +53,13 @@ service-account*.json
 token.json
 .e2e/
 ClawdBot/
+
+# Extension imports should stay manifest-only.
+extensions/**/.env
+extensions/**/.env.*
+extensions/**/cdp_api_key.json
+extensions/**/nohup.out
+extensions/**/node_modules/
+extensions/**/dist/
+extensions/**/package-lock.json
+extensions/**/pnpm-lock.yaml

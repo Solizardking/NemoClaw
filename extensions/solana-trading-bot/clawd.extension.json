@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "solana-trading-bot",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/solana-trading-bot",
+  "status": "manifest-only"
+}

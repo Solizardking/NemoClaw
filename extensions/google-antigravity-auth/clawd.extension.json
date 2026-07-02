@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "google-antigravity-auth",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/google-antigravity-auth",
+  "status": "manifest-only"
+}

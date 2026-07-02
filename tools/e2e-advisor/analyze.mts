@@ -34,6 +34,7 @@ import {
   SOLANA_READINESS_COMMAND,
   classifySolanaChangedFiles,
 } from "../advisors/solana.mts";
+import { SOLANA_PAYMENTS_COMMAND } from "../advisors/solana-payments.mts";
 
 const root = process.cwd();
 const ADVISOR_PROVIDER = DEFAULT_ADVISOR_PROVIDER;
@@ -242,6 +243,7 @@ export function buildSystemPrompt(): string {
     "Decision policy:",
     "- Required E2E: changes that can affect installer/onboarding, sandbox lifecycle, credentials, security boundaries, network policy, inference routing, deployment, or real assistant user flows.",
     `- Required Solana tool check: changes to Solana RPC, wallet, financial harness, policy presets, Telegram wallet narration, or tools/e2e Solana code should include the dry-run script \`${SOLANA_READINESS_COMMAND}\` unless they are docs-only.`,
+    `- Required Solana payment tool check: changes to x402, Kora, USDC, OpenUSD, CLAWD payment code, or Solana payment tools should include the dry-run script \`${SOLANA_PAYMENTS_COMMAND}\` unless they are docs-only.`,
     "- Onboarding resume rule: changes to src/lib/onboard/machine live slice orchestration, resume state handling, resume repair policy, session bootstrap, or onboarding state transitions MUST require both `onboard-resume` and `onboard-repair` unless the PR is tests-only. If the change can also affect full hosted onboarding, require `cloud-onboard`. Do not rely only on unit/runtime-boundary tests for these state-machine resume paths.",
     "- Optional E2E: useful confidence checks for adjacent behavior, but not merge-blocking.",
     "- No E2E: safe docs, tests-only, comments, refactors, or tooling changes that cannot affect runtime/user flows; explain in noE2eReason.",
@@ -447,6 +449,22 @@ function withDeterministicSolanaRecommendations(
 
   const domainExists = result.classifiedDomains.some((item) => item.domain === "solana");
   const requiredExists = result.requiredTests.some((item) => item.id === "solana-readiness");
+  const paymentRequired = hasSolanaPaymentChange(changedFiles);
+  const paymentRequiredExists = result.requiredTests.some((item) => item.id === "solana-payments");
+  const requiredTests = requiredExists
+    ? result.requiredTests
+    : [
+        ...result.requiredTests,
+        {
+          id: "solana-readiness",
+          domain: "solana",
+          reason:
+            "Dry-run Solana readiness must validate RPC cluster inference, wallet address posture, policy hints, and disabled signing guardrails.",
+          script: SOLANA_READINESS_COMMAND,
+          cost: "low",
+          runner: "ubuntu-latest",
+        },
+      ];
   return {
     ...result,
     classifiedDomains: domainExists
@@ -461,23 +479,32 @@ function withDeterministicSolanaRecommendations(
             matchedFiles: solana.matchedFiles,
           },
         ],
-    requiredTests: requiredExists
-      ? result.requiredTests
-      : [
-          ...result.requiredTests,
-          {
-            id: "solana-readiness",
-            domain: "solana",
-            reason:
-              "Dry-run Solana readiness must validate RPC cluster inference, wallet address posture, policy hints, and disabled signing guardrails.",
-            script: SOLANA_READINESS_COMMAND,
-            cost: "low",
-            runner: "ubuntu-latest",
-          },
-        ],
+    requiredTests:
+      paymentRequired && !paymentRequiredExists
+        ? [
+            ...requiredTests,
+            {
+              id: "solana-payments",
+              domain: "solana",
+              reason:
+                "Dry-run Solana payment artifacts must validate x402 exact requirements, Cloudflare headers, Kora token allowlists, and disabled signing guardrails.",
+              script: SOLANA_PAYMENTS_COMMAND,
+              cost: "low",
+              runner: "ubuntu-latest",
+            },
+          ]
+        : requiredTests,
     noE2eReason: null,
     confidence: result.confidence === "low" ? "medium" : result.confidence,
   };
+}
+
+function hasSolanaPaymentChange(changedFiles: string[]): boolean {
+  return changedFiles.some(
+    (file) =>
+      /(^|\/)(solana-payments|x402|kora|openusd|usdc|payment|payments)/i.test(file) ||
+      /(^|\/)(clawd|clawd-operator).*payment/i.test(file),
+  );
 }
 
 function unavailableResult(

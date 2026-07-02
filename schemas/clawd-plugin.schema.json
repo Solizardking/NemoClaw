@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/NVIDIA/NemoClaw/schemas/clawd-plugin.schema.json",
+  "$id": "https://github.com/NVIDIA/NemoClawd/schemas/clawd-plugin.schema.json",
   "title": "Nemo Clawd Clawd Plugin Manifest",
-  "description": "Schema for nemoclaw/clawd.plugin.json. The Clawd plugin manifest declares the Nemo Clawd plugin identity and configuration schema.",
+  "description": "Schema for nemoclawd.plugin.json. The Clawd plugin manifest declares the Nemo Clawd plugin identity and configuration schema.",
   "type": "object",
   "required": [
     "id",

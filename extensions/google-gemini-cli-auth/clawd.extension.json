@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "google-gemini-cli-auth",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/google-gemini-cli-auth",
+  "status": "manifest-only"
+}

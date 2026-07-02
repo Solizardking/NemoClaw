@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "financial-datasets",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/financial-datasets",
+  "status": "manifest-only"
+}

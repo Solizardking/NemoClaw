@@ -1,0 +1,7 @@
+{
+  "$schema": "../extension-pointer.schema.json",
+  "id": "diagnostics-otel",
+  "registry": "../registry.json",
+  "registryPath": "/extensions/diagnostics-otel",
+  "status": "manifest-only"
+}
