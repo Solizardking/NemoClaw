@@ -14,6 +14,9 @@ NPM_PACKAGE="@mawdbotsonsolana/nemoclawd"
 MIN_NODE_MAJOR=20
 MIN_NPM_MAJOR=10
 RUNTIME_REQUIREMENT_MSG="Nemo Clawd requires Node.js >=${MIN_NODE_MAJOR} and npm >=${MIN_NPM_MAJOR}."
+DEFAULT_MODEL="8bit/DeepSolana"
+DEFAULT_MODEL_PROVIDER="ollama-local"
+DEFAULT_TRADING_MODE="dry-run"
 
 info() { printf '[INFO] %s\n' "$*"; }
 warn() { printf '[WARN] %s\n' "$*" >&2; }
@@ -28,6 +31,29 @@ command_exists() {
 
 version_major() {
   printf '%s\n' "${1#v}" | cut -d. -f1
+}
+
+now_utc() {
+  date -u +"%Y-%m-%dT%H:%M:%SZ"
+}
+
+lobster_banner() {
+  if [[ -t 1 && "${NEMOCLAWD_NO_ANIMATION:-0}" != "1" ]]; then
+    local frames=(
+      "🦞  Nemo Clawd install deck"
+      "🦞> Nemo Clawd install deck"
+      "🦞>> Nemo Clawd install deck"
+      "🦞>>> Nemo Clawd install deck"
+    )
+    local frame
+    for frame in "${frames[@]}"; do
+      printf '\r[INFO] %s' "${frame}"
+      sleep 0.06
+    done
+    printf '\n'
+  else
+    info "Nemo Clawd lobster install deck"
+  fi
 }
 
 ensure_node_runtime() {
@@ -110,24 +136,217 @@ verify_blueprint() {
   fi
 }
 
+seed_private_solana_wallet() {
+  local wallet_dir="${NEMOCLAWD_HOME}/wallets"
+  local keypair_path="${wallet_dir}/nemoclawd-local-private-keypair.json"
+  local wallets_file="${wallet_dir}/wallets.json"
+
+  mkdir -p "${wallet_dir}"
+  chmod 700 "${wallet_dir}"
+
+  if ! command_exists solana-keygen; then
+    local message="Solana CLI not found; skipping local private keypair generation. Use 'nemoclawd wallet create' for a managed wallet or install Solana CLI and rerun."
+    if [[ "${NEMOCLAWD_REQUIRE_LOCAL_WALLET:-0}" == "1" ]]; then
+      fail "${message}"
+    fi
+    warn "${message}"
+    return
+  fi
+
+  if [[ ! -f "${keypair_path}" ]]; then
+    info "Creating local private Solana wallet keypair at ${keypair_path}"
+    (umask 077 && solana-keygen new --no-bip39-passphrase --silent --outfile "${keypair_path}" >/dev/null)
+    chmod 600 "${keypair_path}"
+  else
+    info "Keeping existing local private Solana wallet keypair at ${keypair_path}"
+  fi
+
+  local public_key
+  public_key="$(solana-keygen pubkey "${keypair_path}" 2>/dev/null || true)"
+  if [[ -z "${public_key}" ]]; then
+    warn "Could not read public key for ${keypair_path}; wallet metadata was not updated."
+    return
+  fi
+
+  NEMOCLAWD_WALLETS_FILE="${wallets_file}" \
+  NEMOCLAWD_WALLET_ADDRESS="${public_key}" \
+  NEMOCLAWD_WALLET_KEYPAIR_PATH="${keypair_path}" \
+  NEMOCLAWD_WALLET_CREATED_AT="$(now_utc)" \
+  node <<'NODE'
+const fs = require("node:fs");
+
+const file = process.env.NEMOCLAWD_WALLETS_FILE;
+const record = {
+  walletId: "local-private",
+  address: process.env.NEMOCLAWD_WALLET_ADDRESS,
+  chainType: "solana",
+  provider: "local-keypair",
+  privateKeyPath: process.env.NEMOCLAWD_WALLET_KEYPAIR_PATH,
+  createdAt: process.env.NEMOCLAWD_WALLET_CREATED_AT,
+  funding: "unfunded",
+  liveTradingEnabled: false,
+};
+
+let wallets = [];
+try {
+  const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
+  wallets = Array.isArray(parsed) ? parsed : [];
+} catch {}
+
+const existing = wallets.findIndex(
+  (wallet) => wallet.provider === "local-keypair" && wallet.privateKeyPath === record.privateKeyPath,
+);
+if (existing >= 0) {
+  wallets[existing] = { ...wallets[existing], ...record, createdAt: wallets[existing].createdAt || record.createdAt };
+} else {
+  wallets.unshift(record);
+}
+
+fs.writeFileSync(file, `${JSON.stringify(wallets, null, 2)}\n`, { mode: 0o600 });
+NODE
+  chmod 600 "${wallets_file}"
+  info "Registered local private Solana wallet metadata at ${wallets_file}"
+}
+
+seed_agent_and_trading_box() {
+  local agent_profile="${NEMOCLAWD_HOME}/agent.json"
+  local trading_box="${NEMOCLAWD_HOME}/trading-box.json"
+  local wallets_file="${NEMOCLAWD_HOME}/wallets/wallets.json"
+
+  NEMOCLAWD_AGENT_PROFILE="${agent_profile}" \
+  NEMOCLAWD_TRADING_BOX="${trading_box}" \
+  NEMOCLAWD_WALLETS_FILE="${wallets_file}" \
+  NEMOCLAWD_DEFAULT_MODEL="${DEFAULT_MODEL}" \
+  NEMOCLAWD_DEFAULT_MODEL_PROVIDER="${DEFAULT_MODEL_PROVIDER}" \
+  NEMOCLAWD_TRADING_MODE="${DEFAULT_TRADING_MODE}" \
+  NEMOCLAWD_CREATED_AT="$(now_utc)" \
+  node <<'NODE'
+const fs = require("node:fs");
+
+function readWallet() {
+  try {
+    const wallets = JSON.parse(fs.readFileSync(process.env.NEMOCLAWD_WALLETS_FILE, "utf8"));
+    if (!Array.isArray(wallets)) return null;
+    return wallets.find((wallet) => wallet.provider === "local-keypair") || wallets[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+function publicWalletView(wallet) {
+  if (!wallet) return null;
+  return {
+    walletId: wallet.walletId || null,
+    address: wallet.address || null,
+    chainType: wallet.chainType || "solana",
+    provider: wallet.provider || "unknown",
+    funding: wallet.funding || "unfunded",
+    liveTradingEnabled: wallet.liveTradingEnabled === true,
+  };
+}
+
+const wallet = readWallet();
+const walletView = publicWalletView(wallet);
+const now = process.env.NEMOCLAWD_CREATED_AT;
+const model = {
+  id: process.env.NEMOCLAWD_DEFAULT_MODEL,
+  provider: process.env.NEMOCLAWD_DEFAULT_MODEL_PROVIDER,
+  source: "ai-training/model-kit",
+  ownedBy: "nemoclawd",
+};
+
+const agentProfile = {
+  theme: "lobster",
+  symbol: "🦞",
+  createdAt: now,
+  defaultAgent: "clawd-onboarding-guide",
+  model,
+  wallet: walletView,
+  commands: {
+    doctor: "nemoclawd doctor",
+    birth: "nemoclawd birth",
+    harness: "nemoclawd financial-harness",
+    launch: "nemoclawd launch",
+  },
+};
+
+const tradingBox = {
+  name: "nemoclawd-trading-box",
+  theme: "lobster",
+  mode: process.env.NEMOCLAWD_TRADING_MODE,
+  createdAt: now,
+  model,
+  wallet: walletView,
+  guardrails: {
+    liveTradingEnabled: false,
+    signingEnabledByInstaller: false,
+    transactionSubmissionEnabledByInstaller: false,
+    operatorApprovalRequired: true,
+    financialHarnessRequired: true,
+    privateKeyMaterialAllowedInSandbox: false,
+  },
+  services: [
+    "nemoclawd financial-harness",
+    "nemoclawd solana",
+    "nemoclawd solana start <sandbox>",
+  ],
+  requiredPolicies: ["solana-rpc", "privy"],
+};
+
+fs.writeFileSync(process.env.NEMOCLAWD_AGENT_PROFILE, `${JSON.stringify(agentProfile, null, 2)}\n`, { mode: 0o600 });
+fs.writeFileSync(process.env.NEMOCLAWD_TRADING_BOX, `${JSON.stringify(tradingBox, null, 2)}\n`, { mode: 0o600 });
+NODE
+  chmod 600 "${agent_profile}" "${trading_box}"
+  info "Wrote lobster agent profile to ${agent_profile}"
+  info "Wrote dry-run trading box to ${trading_box}"
+}
+
 seed_runtime_profile() {
   mkdir -p "${NEMOCLAWD_HOME}"
   chmod 700 "${NEMOCLAWD_HOME}"
 
   local solana_config="${NEMOCLAWD_HOME}/solana.json"
-  if [[ ! -f "${solana_config}" ]]; then
-    cat >"${solana_config}" <<'JSON'
-{
-  "cluster": "mainnet-beta",
-  "rpcUrl": "https://rpc.solanatracker.io/public",
-  "wsUrl": "wss://rpc.solanatracker.io/public"
-}
-JSON
-    chmod 600 "${solana_config}"
-    info "Wrote Solana defaults to ${solana_config}"
-  else
-    info "Keeping existing Solana config at ${solana_config}"
-  fi
+  NEMOCLAWD_SOLANA_CONFIG="${solana_config}" \
+  NEMOCLAWD_DEFAULT_MODEL="${DEFAULT_MODEL}" \
+  NEMOCLAWD_DEFAULT_MODEL_PROVIDER="${DEFAULT_MODEL_PROVIDER}" \
+  NEMOCLAWD_TRADING_MODE="${DEFAULT_TRADING_MODE}" \
+  node <<'NODE'
+const fs = require("node:fs");
+const file = process.env.NEMOCLAWD_SOLANA_CONFIG;
+let config = {};
+try {
+  config = JSON.parse(fs.readFileSync(file, "utf8"));
+} catch {}
+
+config = {
+  cluster: config.cluster || "mainnet-beta",
+  rpcUrl: config.rpcUrl || "https://rpc.solanatracker.io/public",
+  wsUrl: config.wsUrl || "wss://rpc.solanatracker.io/public",
+  ...config,
+  model: config.model || process.env.NEMOCLAWD_DEFAULT_MODEL,
+  provider: config.provider || process.env.NEMOCLAWD_DEFAULT_MODEL_PROVIDER,
+  ownModel: {
+    id: process.env.NEMOCLAWD_DEFAULT_MODEL,
+    source: "ai-training/model-kit",
+    runtime: process.env.NEMOCLAWD_DEFAULT_MODEL_PROVIDER,
+    ...(config.ownModel || {}),
+  },
+  trading: {
+    mode: process.env.NEMOCLAWD_TRADING_MODE,
+    liveTradingEnabled: false,
+    financialHarnessRequired: true,
+    operatorApprovalRequired: true,
+    ...(config.trading || {}),
+  },
+};
+
+fs.writeFileSync(file, `${JSON.stringify(config, null, 2)}\n`, { mode: 0o600 });
+NODE
+  chmod 600 "${solana_config}"
+  info "Wrote Solana/model/trading defaults to ${solana_config}"
+
+  seed_private_solana_wallet
+  seed_agent_and_trading_box
 
   cat >"${NEMOCLAWD_HOME}/install.json" <<JSON
 {
@@ -136,6 +355,12 @@ JSON
   "mcp": "${ROOT_DIR}/nemo-clawd-mcp",
   "blueprint": "${ROOT_DIR}/nemoclaw-blueprint",
   "pythonBlueprint": "${ROOT_DIR}/nemo-clawd-python",
+  "modelKit": "${ROOT_DIR}/ai-training/model-kit",
+  "tradingFactory": "${ROOT_DIR}/ai-training/trading_factory",
+  "defaultModel": "${DEFAULT_MODEL}",
+  "defaultModelProvider": "${DEFAULT_MODEL_PROVIDER}",
+  "tradingBox": "${NEMOCLAWD_HOME}/trading-box.json",
+  "agentProfile": "${NEMOCLAWD_HOME}/agent.json",
   "agentCatalog": "${ROOT_DIR}/agents/agents-catalog.json",
   "birthAgents": "${ROOT_DIR}/agents/locales",
   "skills": "${ROOT_DIR}/skills",
@@ -185,9 +410,17 @@ Recommended environment:
   export HELIUS_API_KEY="<HELIUS_API_KEY>"
   export SOLANA_RPC_URL="https://rpc.solanatracker.io/public"
 
+Seeded local runtime:
+  Solana profile: ${NEMOCLAWD_HOME}/solana.json
+  Agent profile:  ${NEMOCLAWD_HOME}/agent.json
+  Trading box:    ${NEMOCLAWD_HOME}/trading-box.json
+  Wallet index:   ${NEMOCLAWD_HOME}/wallets/wallets.json
+  Default model:  ${DEFAULT_MODEL} (${DEFAULT_MODEL_PROVIDER})
+
 Next commands:
   nemoclawd doctor
   nemoclawd birth
+  nemoclawd financial-harness
   nemoclawd solana
   nemoclawd launch
 
@@ -198,8 +431,15 @@ EOF
 }
 
 main() {
-  info "Nemo Clawd installer"
+  lobster_banner
   ensure_node_runtime
+
+  if [[ "${NEMOCLAWD_INSTALL_SEED_ONLY:-0}" == "1" ]]; then
+    seed_runtime_profile
+    post_install
+    return
+  fi
+
   install_cli
   install_mcp
   verify_blueprint

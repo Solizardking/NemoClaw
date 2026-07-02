@@ -63,4 +63,19 @@ describe("financial harness", () => {
     assert.equal(report.rpc.network, "local-validator");
     assert.deepEqual(report.policy.requiredPresets, []);
   });
+
+  it("preserves installer-created local keypair wallet provider labels", () => {
+    const report = buildFinancialHarnessReport({
+      wallet: {
+        walletId: "local-private",
+        address: "So11111111111111111111111111111111111111112",
+        provider: "local-keypair",
+      },
+      policies: ["solana-rpc"],
+      env: {},
+    });
+
+    assert.equal(report.wallet.provider, "local-keypair");
+    assert.equal(report.policy.requiredPresets.includes("privy"), false);
+  });
 });

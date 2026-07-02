@@ -61,4 +61,100 @@ exit 98
     assert.match(output, /v18\.19\.1/);
     assert.match(output, /9\.8\.1/);
   });
+
+  it("seed-only mode creates private wallet, agent, model, and dry-run trading box metadata", () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "nemoclawd-install-seed-"));
+    const fakeBin = path.join(tmp, "bin");
+    const home = path.join(tmp, "home");
+    fs.mkdirSync(fakeBin);
+
+    writeExecutable(
+      path.join(fakeBin, "node"),
+      `#!/usr/bin/env bash
+if [ "$1" = "--version" ]; then
+  echo "v22.16.0"
+  exit 0
+fi
+exec ${JSON.stringify(process.execPath)} "$@"
+`,
+    );
+
+    writeExecutable(
+      path.join(fakeBin, "npm"),
+      `#!/usr/bin/env bash
+if [ "$1" = "--version" ]; then
+  echo "10.9.0"
+  exit 0
+fi
+echo "unexpected npm invocation: $*" >&2
+exit 98
+`,
+    );
+
+    writeExecutable(
+      path.join(fakeBin, "solana-keygen"),
+      `#!/usr/bin/env bash
+if [ "$1" = "new" ]; then
+  out=""
+  while [ "$#" -gt 0 ]; do
+    if [ "$1" = "--outfile" ]; then
+      shift
+      out="$1"
+    fi
+    shift || true
+  done
+  [ -n "$out" ] || exit 97
+  printf '[1,2,3,4]\\n' > "$out"
+  exit 0
+fi
+if [ "$1" = "pubkey" ]; then
+  echo "So11111111111111111111111111111111111111112"
+  exit 0
+fi
+echo "unexpected solana-keygen invocation: $*" >&2
+exit 96
+`,
+    );
+
+    const result = spawnSync("bash", [INSTALLER], {
+      cwd: path.join(__dirname, ".."),
+      encoding: "utf-8",
+      env: {
+        ...process.env,
+        HOME: tmp,
+        NEMOCLAWD_HOME: home,
+        NEMOCLAWD_INSTALL_SEED_ONLY: "1",
+        NEMOCLAWD_NO_ANIMATION: "1",
+        PATH: `${fakeBin}:${process.env.PATH}`,
+      },
+    });
+
+    const output = `${result.stdout}${result.stderr}`;
+    assert.equal(result.status, 0, output);
+
+    const solanaConfig = JSON.parse(fs.readFileSync(path.join(home, "solana.json"), "utf-8"));
+    assert.equal(solanaConfig.model, "8bit/DeepSolana");
+    assert.equal(solanaConfig.provider, "ollama-local");
+    assert.equal(solanaConfig.trading.mode, "dry-run");
+    assert.equal(solanaConfig.trading.liveTradingEnabled, false);
+
+    const wallets = JSON.parse(fs.readFileSync(path.join(home, "wallets", "wallets.json"), "utf-8"));
+    assert.equal(wallets[0].provider, "local-keypair");
+    assert.equal(wallets[0].address, "So11111111111111111111111111111111111111112");
+    assert.equal(wallets[0].liveTradingEnabled, false);
+
+    const keypairPath = path.join(home, "wallets", "nemoclawd-local-private-keypair.json");
+    assert.equal(fs.statSync(keypairPath).mode & 0o777, 0o600);
+
+    const agent = JSON.parse(fs.readFileSync(path.join(home, "agent.json"), "utf-8"));
+    assert.equal(agent.theme, "lobster");
+    assert.equal(agent.model.id, "8bit/DeepSolana");
+    assert.equal(agent.wallet.provider, "local-keypair");
+
+    const tradingBox = JSON.parse(fs.readFileSync(path.join(home, "trading-box.json"), "utf-8"));
+    assert.equal(tradingBox.name, "nemoclawd-trading-box");
+    assert.equal(tradingBox.mode, "dry-run");
+    assert.equal(tradingBox.guardrails.signingEnabledByInstaller, false);
+    assert.equal(tradingBox.guardrails.transactionSubmissionEnabledByInstaller, false);
+  });
 });

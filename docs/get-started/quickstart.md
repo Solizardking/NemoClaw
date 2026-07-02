@@ -67,6 +67,11 @@ Verify that the binary is available:
 $ nemoclawd --help
 ```
 
+When you run the repository `install.sh`, it also seeds local runtime files under `~/.nemoclawd/`.
+Those include `solana.json` with the `8bit/DeepSolana` own-model profile, `agent.json` for the lobster-themed Clawd command deck, and `trading-box.json` for dry-run trading guardrails.
+If `solana-keygen` is available, the installer creates an unfunded local Solana keypair under `~/.nemoclawd/wallets/` with file mode `600`.
+The installer does not enable live signing or transaction submission.
+
 ## Check the Host
 
 Run the doctor before onboarding.

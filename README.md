@@ -72,6 +72,17 @@ nemoclawd demo
 ```
 <!-- end-quickstart-guide -->
 
+### Installer Seeded Runtime
+
+`install.sh` seeds a Nemo Clawd runtime under `~/.nemoclawd/`:
+
+- `solana.json` with the `8bit/DeepSolana` own-model profile and dry-run trading defaults.
+- `wallets/nemoclawd-local-private-keypair.json` when `solana-keygen` is available. The file is mode `600`, unfunded, and never copied into the sandbox.
+- `agent.json` with the lobster-themed Clawd agent command deck.
+- `trading-box.json` with the dry-run trading box, required policy posture, and operator-approval guardrails.
+
+Live signing and transaction submission are off after install. Run `nemoclawd financial-harness` before starting any Solana runtime services.
+
 ### xAI Grok Setup
 
 ```bash

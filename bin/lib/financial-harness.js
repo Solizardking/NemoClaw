@@ -44,7 +44,9 @@ function resolveWallet(input = {}) {
   const solanaConfig = input.solanaConfig || {};
   const address = env.DEVELOPER_WALLET || (wallet && wallet.address) || solanaConfig.developerWallet || null;
   let provider = "none";
-  if (wallet && wallet.walletId) {
+  if (wallet && wallet.provider) {
+    provider = wallet.provider;
+  } else if (wallet && wallet.walletId) {
     provider = "privy";
   } else if (env.DEVELOPER_WALLET) {
     provider = "env";

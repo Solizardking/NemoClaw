@@ -26,6 +26,10 @@ It reports the active RPC endpoint, inferred cluster, wallet metadata, applied p
 The harness is intentionally dry-run only.
 It does not create wallets, store private keys, sign transactions, submit orders, or provide trading advice.
 
+The repository installer seeds a matching runtime profile under `~/.nemoclawd/`.
+When `solana-keygen` is available, it creates an unfunded local keypair in `~/.nemoclawd/wallets/` with file mode `600`, registers that wallet as `local-keypair`, writes `agent.json` for the lobster-themed Clawd deck, and writes `trading-box.json` with dry-run guardrails.
+The private keypair remains on the host and is not copied into the sandbox.
+
 Use it whenever you change RPC configuration, wallet configuration, policy presets, or service mode.
 For new users, run the [Solana and Blockchain AI Onboarding](onboarding.md) path first.
 
@@ -52,7 +56,7 @@ The report covers the areas that determine whether a blockchain AI runtime is st
 | Area | What the harness reports |
 |---|---|
 | RPC | Redacted RPC URL and inferred network, such as `mainnet`, `devnet`, `testnet`, or `local-validator`. |
-| Wallet | Whether a developer wallet is configured through Privy, environment variables, or local config metadata. |
+| Wallet | Whether a developer wallet is configured through Privy, an installer-created `local-keypair`, environment variables, or local config metadata. |
 | Policy | Applied, required, and missing policy presets. Remote RPC use requires `solana-rpc`; Privy wallet use requires `privy`. |
 | Guardrails | Signing disabled, transaction submission disabled, live-trading env gate, default spend limit, and private-key storage policy. |
 | Mechanism | Observe, orient, propose, approve, execute, and settle stages for the future financial loop. |
