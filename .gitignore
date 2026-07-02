@@ -51,3 +51,4 @@ secrets.yaml
 service-account*.json
 token.json
 .e2e/
+ClawdBot/
