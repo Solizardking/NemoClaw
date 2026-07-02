@@ -29,6 +29,7 @@ Both interfaces are installed when you run `npm install -g @mawdbotsonsolana/nem
 
 The standalone binary checks host commands and registered sandbox names before it hands a command to the compiled runtime.
 If the command is not a built-in host command and does not match a sandbox, `nemoclawd` delegates to `dist/entry.js` when the packaged runtime is present.
+The local plugin build output lives under `dist/nemoclawd-plugin`, which keeps the imported runtime available after `npm run build`.
 
 Use `nemoclawd dist <command>` to run the compiled runtime directly.
 This is useful when a runtime command has the same name as a host command.

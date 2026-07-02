@@ -88,23 +88,33 @@ The following endpoint groups are allowed by default:
 
 * - `xai_grok`
   - `api.x.ai:443`
-  - `/usr/local/bin/nemo-clawd-mcp`, `/usr/bin/node`
+  - `/usr/local/bin/nemo-clawd-mcp`, `/usr/local/bin/clawd-operator`, `/usr/bin/node`
   - POST on `/v1/chat/completions` and `/v1/images/generations`
 
 * - `helius_rpc`
   - `mainnet.helius-rpc.com:443`
-  - `/usr/local/bin/nemo-clawd-mcp`, `/usr/bin/node`
+  - `/usr/local/bin/nemo-clawd-mcp`, `/usr/local/bin/clawd-operator`, `/usr/bin/node`
   - GET, POST
 
 * - `birdeye_market_data`
-  - `api.birdeye.so:443`
-  - `/usr/local/bin/nemo-clawd-mcp`, `/usr/bin/node`
-  - GET only
+  - `api.birdeye.so:443`, `public-api.birdeye.so:443`
+  - `/usr/local/bin/nemo-clawd-mcp`, `/usr/local/bin/clawd-operator`, `/usr/bin/node`
+  - GET for `api.birdeye.so`; GET, POST for `public-api.birdeye.so`
 
 * - `coingecko_market_data`
   - `api.coingecko.com:443`
-  - `/usr/local/bin/nemo-clawd-mcp`, `/usr/bin/node`
+  - `/usr/local/bin/nemo-clawd-mcp`, `/usr/local/bin/clawd-operator`, `/usr/bin/node`
   - GET only
+
+* - `jupiter_swap`
+  - `api.jup.ag:443`
+  - `/usr/local/bin/clawd-operator`
+  - GET, POST
+
+* - `clawd_solana_tools`
+  - `api.mainnet-beta.solana.com:443`, `public-api-v2.bags.fm:443`, `pump.fun:443`, `data.solanatracker.io:443`
+  - `/usr/local/bin/clawd-operator`
+  - GET, POST for Solana RPC, Bags, and Pump.fun; GET only for Solana Tracker
 
 * - `telegram`
   - `api.telegram.org:443`
@@ -124,7 +134,7 @@ Local inference egress uses the explicit host alias and port listed in the polic
 ### Inference
 
 The active model route lives in OpenShell inference configuration.
-The baseline policy limits direct sandbox egress by executable path so bundled MCP tools can reach only the listed xAI, Helius, BirdEye, CoinGecko, and Telegram endpoints.
+The baseline policy limits direct sandbox egress by executable path so bundled MCP tools and the clawd operator can reach only the listed xAI, Helius, BirdEye, CoinGecko, Telegram, Jupiter, Solana RPC, Bags, Pump.fun, and Solana Tracker endpoints.
 
 ## Operator Approval Flow
 

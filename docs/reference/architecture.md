@@ -26,6 +26,7 @@ Nemo Clawd has three main components: a TypeScript plugin that integrates with t
 
 The plugin is a thin TypeScript package that registers commands under `nemoclawd`.
 It runs in-process with the Nemo Clawd gateway and handles user-facing CLI interactions.
+Root `npm run build` writes local plugin artifacts under `dist/nemoclawd-plugin` so the imported `dist` runtime remains available for `nemoclawd dist ...` and fallback commands.
 
 ```text
 nemoclawd/
@@ -67,6 +68,10 @@ nemo-clawd-mcp/
 
 The sandbox contract starts the bundled MCP server through `/usr/local/bin/nemo-clawd-mcp` over stdio.
 Remote HTTP MCP deployments use the package HTTP entry point separately.
+The image also bundles `/agents/clawd-operator` at `/opt/clawd-operator`.
+It exposes `/usr/local/bin/clawd-operator`, which starts `ralph_orchestrator` with `/opt/clawd-operator/ralph.yml` or `/opt/clawd-operator/ralph.codex-acp.yml`.
+Operator skills live in `/opt/clawd-operator/skills`, and the clawd agent files live in `/opt/clawd-operator/clawd-agent`.
+The Docker build and npm package include `.env.example` files for configuration shape and intentionally exclude real `.env` and `.env.local` files.
 
 ## Nemo Clawd Blueprint
 
@@ -108,7 +113,9 @@ Inside the sandbox:
 
 - Hermes runs at `/usr/local/bin/hermes`.
 - The bundled Nemo Clawd MCP server runs at `/usr/local/bin/nemo-clawd-mcp`.
+- The bundled clawd operator runs at `/usr/local/bin/clawd-operator`.
 - The Python blueprint is available under `/opt/nemo-clawd-python`.
+- The clawd operator bundle is available under `/opt/clawd-operator`, including its configs, skills, and agent files.
 - Inference calls are routed through OpenShell to the configured provider.
 - Network egress is restricted by the baseline policy in `nemoclawd-sandbox.yaml`.
 - Filesystem access is confined to `/sandbox` and `/tmp` for read-write access, with system paths read-only.
