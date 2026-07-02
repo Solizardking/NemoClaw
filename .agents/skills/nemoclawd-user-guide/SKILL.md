@@ -10,7 +10,7 @@ metadata:
 
 Use this skill when a user wants help operating the Solana-native `nemoclawd`
 stack or routing a coding assistant to the right docs. Treat pre-Clawd product
-and binary names as legacy preview terminology unless the user is asking about
+and binary names as legacy terminology unless the user is asking about
 repository history or compatibility code.
 
 ## Source Order

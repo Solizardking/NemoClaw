@@ -8,8 +8,8 @@ If you use an AI coding agent (Cursor, Claude Code, Codex, etc.), the repo inclu
 
 | Skill | What it does | When to use |
 |---|---|---|
-| `nemoclaw-user-guide` | Routes AI assistants to the canonical Nemo Clawd Markdown docs, with Solana onboarding, financial harness, wallet, policy, and command-reference guidance. | When changing the new-user path, AI-agent docs routing, Solana onboarding, wallet setup, policy flow, or troubleshooting guidance. |
-| `nemoclaw-contributor-update-docs` | Scans recent changes for user-facing behavior and drafts doc updates. | After landing features, before a release, or to find doc gaps. |
+| `nemoclawd-user-guide` | Routes AI assistants to the canonical Nemo Clawd Markdown docs, with Solana onboarding, financial harness, wallet, policy, and command-reference guidance. | When changing the new-user path, AI-agent docs routing, Solana onboarding, wallet setup, policy flow, or troubleshooting guidance. |
+| `nemoclaw-contributor-update-docs` | Legacy compatibility skill that scans recent changes for user-facing behavior and drafts doc updates. | After landing features, before a release, or to find doc gaps. |
 
 The skills live in `.agents/skills/` and follow the style guide below automatically. To use one, ask your agent to run it. For example, ask it to "catch up the docs for everything merged since v0.2.0".
 
