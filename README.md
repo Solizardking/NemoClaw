@@ -3,15 +3,15 @@
 
 <!-- start-badges -->
 <p align="center">
-  <strong>🦀 nemoClawd</strong><br/>
+  <strong>Nemo Clawd</strong><br/>
   <em>Solana x xAI Agentic Trading Engine — Powered by $CLAWD</em>
 </p>
 <p align="center">
   <code>8cHzQHUS2s2h8TzCmfqPKYiM4dSt4roa3n7MyRLApump</code>
 </p>
 <p align="center">
-  <a href="https://www.npmjs.com/package/nemoclawd"><img src="https://img.shields.io/npm/v/nemoclawd.svg?style=flat-square&color=cb3837" alt="npm"></a>
-  <a href="https://github.com/x402agent/Nemo Clawd/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square" alt="License"></a>
+  <a href="https://www.npmjs.com/package/@mawdbotsonsolana/nemoclawd"><img src="https://img.shields.io/npm/v/@mawdbotsonsolana/nemoclawd.svg?style=flat-square&color=cb3837" alt="npm"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square" alt="License"></a>
   <img src="https://img.shields.io/badge/status-alpha-orange?style=flat-square" alt="Status">
   <img src="https://img.shields.io/badge/Solana-Mainnet-9945FF?style=flat-square&logo=solana&logoColor=white" alt="Solana">
   <img src="https://img.shields.io/badge/xAI-Grok%204.20-black?style=flat-square&logo=x" alt="xAI Grok">
@@ -22,9 +22,9 @@
 
 ---
 
-## solana-clawd Integration
+## Solana Clawd Integration
 
-**nemoClawd** now integrates **solana-clawd** — the full xAI Grok-powered agentic framework for Solana trading, research, and autonomous agent operations.
+**Nemo Clawd** includes the Solana Clawd agentic framework for Solana trading, research, and autonomous agent operations.
 
 ### What You Get
 
@@ -139,7 +139,7 @@ LEARN    → write INFERRED signals → Dream agent promotes to LEARNED
 
 ## Blockchain Buddies
 
-Every `nemoClawd` user gets a companion — a procedurally generated Blockchain Buddy with its own wallet, trading personality, stats, and animated ASCII sprite.
+Every Nemo Clawd user gets a companion — a procedurally generated Blockchain Buddy with its own wallet, trading personality, stats, and animated ASCII sprite.
 
 ```bash
 nemoclawd birth   # hatch yours now
@@ -176,7 +176,7 @@ nemoclawd birth   # hatch yours now
 ## Deploy to Fly.io
 
 ```bash
-cd MCP
+cd nemo-clawd-mcp
 fly launch --config fly.toml
 fly secrets set HELIUS_API_KEY=your-key XAI_API_KEY=your-key MCP_API_KEY=optional-bearer-token
 ```
@@ -193,7 +193,7 @@ Then connect via:
 ```
                      ┌─────────────────────────────────────────────────────┐
                      │                  ENTRY POINTS                       │
-                     │  nemoClawd CLI    MCP Server    Telegram Bot        │
+                     │  Nemo Clawd CLI    MCP Server    Telegram Bot       │
                      │  (interactive/   (stdio/HTTP)   60+ commands       │
                      │   one-shot)                                        │
                      └────────┬──────────┬────────────────┬────────────────┘
