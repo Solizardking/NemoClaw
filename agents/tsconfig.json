@@ -3,10 +3,9 @@
     "module": "ESNext",
     "target": "es2017",
     "noEmit": true,
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "types": ["node"]
   },
-  "include": [],
-  "exclude": ["scripts", "node_modules"]
+  "include": ["langchain-deepagents-code/generate-config.ts"],
+  "exclude": ["node_modules"]
 }
-
-

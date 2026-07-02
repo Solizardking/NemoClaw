@@ -18,6 +18,15 @@ describe("AI training integration", () => {
     assert.equal(report.forbidden.length, 0);
     assert.equal(report.secretFindings.length, 0);
     assert.equal(report.oversizedFiles.length, 0);
+    assert.ok(
+      report.required.some((item) => item.path === "ai-training/nvidia/blueprints/signal-discovery/agent.py" && item.ok),
+    );
+    assert.ok(
+      report.required.some(
+        (item) =>
+          item.path === "ai-training/nvidia/blueprints/signal-discovery/quantitative_signal_agent.py" && item.ok,
+      ),
+    );
   });
 
   it("is exposed through the standalone CLI", () => {
