@@ -26,7 +26,7 @@ Any request to an unlisted destination is intercepted by OpenShell, and the oper
 
 ## Baseline Policy
 
-The baseline policy is defined in `nemoclawd-blueprint/policies/nemoclawd-sandbox.yaml`.
+The baseline policy is defined in `nemo-clawd-python/policies/nemoclawd-sandbox.yaml`.
 
 ### Filesystem
 
@@ -58,37 +58,52 @@ The following endpoint groups are allowed by default:
 
 * - `nvidia`
   - `integrate.api.nvidia.com:443`, `inference-api.nvidia.com:443`
-  - `/usr/local/bin/claude`, `/usr/local/bin/nemo clawd`
+  - `/usr/local/bin/claude`, `/usr/local/bin/nemoclawd`, `/usr/local/bin/nemo-clawd-mcp`
   - All methods
 
 * - `github`
-  - `github.com:443`
+  - `github.com:443`, `api.github.com:443`
   - `/usr/bin/gh`, `/usr/bin/git`
   - All methods, all paths
 
-* - `github_rest_api`
-  - `api.github.com:443`
-  - `/usr/bin/gh`
-  - GET, POST, PATCH, PUT, DELETE
-
 * - `clawdhub`
   - `clawdhub.com:443`
-  - `/usr/local/bin/nemo clawd`
+  - `/usr/local/bin/nemoclawd`
   - GET, POST
 
 * - `nemoclawd_api`
   - `nemo-clawd.ai:443`
-  - `/usr/local/bin/nemo clawd`
+  - `/usr/local/bin/nemoclawd`
   - GET, POST
 
 * - `nemoclawd_docs`
   - `docs.nemo-clawd.ai:443`
-  - `/usr/local/bin/nemo clawd`
+  - `/usr/local/bin/nemoclawd`
   - GET only
 
 * - `npm_registry`
   - `registry.npmjs.org:443`
-  - `/usr/local/bin/nemo clawd`, `/usr/local/bin/npm`
+  - `/usr/local/bin/nemoclawd`, `/usr/local/bin/npm`
+  - Registry access
+
+* - `xai_grok`
+  - `api.x.ai:443`
+  - `/usr/local/bin/nemo-clawd-mcp`, `/usr/bin/node`
+  - POST on `/v1/chat/completions` and `/v1/images/generations`
+
+* - `helius_rpc`
+  - `mainnet.helius-rpc.com:443`
+  - `/usr/local/bin/nemo-clawd-mcp`, `/usr/bin/node`
+  - GET, POST
+
+* - `birdeye_market_data`
+  - `api.birdeye.so:443`
+  - `/usr/local/bin/nemo-clawd-mcp`, `/usr/bin/node`
+  - GET only
+
+* - `coingecko_market_data`
+  - `api.coingecko.com:443`
+  - `/usr/local/bin/nemo-clawd-mcp`, `/usr/bin/node`
   - GET only
 
 * - `telegram`
@@ -96,14 +111,20 @@ The following endpoint groups are allowed by default:
   - Any binary
   - GET, POST on `/bot*/**`
 
+* - `ollama`
+  - `host.openshell.internal:11434`
+  - `/usr/local/bin/nemoclawd`, `/usr/local/bin/nemo-clawd-mcp`, `/usr/bin/curl`
+  - All methods
+
 :::
 
-All endpoints use TLS termination and are enforced at port 443.
+Port `443` endpoints use TLS termination.
+Local inference egress uses the explicit host alias and port listed in the policy.
 
 ### Inference
 
-The baseline policy allows only the `local` inference route. External inference
-providers are reached through the OpenShell gateway, not by direct sandbox egress.
+The active model route lives in OpenShell inference configuration.
+The baseline policy limits direct sandbox egress by executable path so bundled MCP tools can reach only the listed xAI, Helius, BirdEye, CoinGecko, and Telegram endpoints.
 
 ## Operator Approval Flow
 
@@ -127,10 +148,10 @@ This opens a split tmux session with the TUI on the left and the agent on the ri
 
 ### Static Changes
 
-Edit `nemoclawd-blueprint/policies/nemoclawd-sandbox.yaml` and re-run the onboard wizard:
+Edit `nemo-clawd-python/policies/nemoclawd-sandbox.yaml` and re-run the setup path that creates or migrates the sandbox:
 
 ```console
-$ nemoclawd onboard
+$ nemoclawd migrate
 ```
 
 ### Dynamic Changes
@@ -138,5 +159,5 @@ $ nemoclawd onboard
 Apply policy updates to a running sandbox without restarting:
 
 ```console
-$ openshell policy set <policy-file>
+$ openshell policy set --policy <policy-file> --wait <sandbox-name>
 ```

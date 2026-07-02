@@ -1,10 +1,14 @@
+// SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 /**
- * nemoClawd MCP Server
- * 
+ * nemo-clawd MCP Server
+ *
  * xAI Grok powered Solana agentic tools with 31 MCP tools.
  * Connects to Helius RPC/DAS and xAI Grok API for autonomous trading.
  */
 
+import { pathToFileURL } from "node:url";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -34,9 +38,11 @@ function getJsonObject(value: unknown, key: string): JsonObject {
 }
 
 // Create server
+export const SERVER_NAME = "nemo-clawd-mcp";
+
 const server = new Server(
   {
-    name: "nemoClawd MCP Server",
+    name: SERVER_NAME,
     version: "0.1.0",
   },
   {
@@ -52,7 +58,7 @@ const server = new Server(
 // TOOL DEFINITIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const TOOLS = [
+export const TOOLS = [
   // Solana Market Data
   {
     name: "solana_price",
@@ -873,9 +879,19 @@ server.setRequestHandler(ListPromptsRequestSchema, async () => {
   return { prompts: [] };
 });
 
-// Start STDIO server (default entry point)
-const transport = new StdioServerTransport();
-await server.connect(transport);
-console.error("nemoClawd MCP Server running (stdio)");
+function isDirectRun(): boolean {
+  const entrypoint = process.argv[1];
+  return Boolean(entrypoint) && import.meta.url === pathToFileURL(entrypoint).href;
+}
+
+export async function startStdioServer(): Promise<void> {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error("nemo-clawd MCP Server running (stdio)");
+}
+
+if (isDirectRun()) {
+  await startStdioServer();
+}
 
 export { server };

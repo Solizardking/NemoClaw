@@ -24,12 +24,18 @@ import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import yaml
 
 
 def log(msg: str) -> None:
     print(msg, flush=True)
+
+
+def fail(msg: str) -> None:
+    log(f"ERROR: {msg}")
+    sys.exit(1)
 
 
 def progress(pct: int, label: str) -> None:
@@ -46,10 +52,101 @@ def load_blueprint() -> dict[str, Any]:
     blueprint_path = Path(os.environ.get("NEMOCLAW_BLUEPRINT_PATH", "."))
     bp_file = blueprint_path / "blueprint.yaml"
     if not bp_file.exists():
-        log(f"ERROR: blueprint.yaml not found at {bp_file}")
-        sys.exit(1)
+        fail(f"blueprint.yaml not found at {bp_file}")
     with bp_file.open() as f:
-        return yaml.safe_load(f)
+        blueprint = yaml.safe_load(f)
+    if not isinstance(blueprint, dict):
+        fail(f"blueprint.yaml at {bp_file} must contain a mapping")
+    return blueprint
+
+
+def load_plan(plan_path: str) -> dict[str, Any]:
+    path = Path(plan_path)
+    if not path.exists():
+        fail(f"plan file not found at {path}")
+    try:
+        plan = json.loads(path.read_text())
+    except json.JSONDecodeError as exc:
+        fail(f"plan file is not valid JSON: {exc}")
+    if not isinstance(plan, dict):
+        fail("plan file must contain a JSON object")
+    return plan
+
+
+def resolve_runs_dir() -> Path:
+    state_root = Path(os.environ.get("NEMOCLAWD_STATE_DIR", Path.home() / ".nemoclawd" / "state"))
+    return state_root / "runs"
+
+
+def mapping(value: Any, label: str) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        fail(f"{label} must be a mapping")
+    return value
+
+
+def resolve_inference_profiles(blueprint: dict[str, Any]) -> dict[str, Any]:
+    components = mapping(blueprint.get("components", {}), "components")
+    inference = mapping(components.get("inference", {}), "components.inference")
+    return mapping(inference.get("profiles", {}), "components.inference.profiles")
+
+
+def resolve_inference_config(
+    profile: str,
+    blueprint: dict[str, Any],
+    endpoint_url: str | None,
+) -> dict[str, Any]:
+    inference_profiles = resolve_inference_profiles(blueprint)
+    if profile not in inference_profiles:
+        available = ", ".join(inference_profiles.keys())
+        fail(f"Profile '{profile}' not found. Available: {available}")
+
+    inference_cfg = mapping(inference_profiles[profile], f"inference profile '{profile}'")
+    if endpoint_url:
+        inference_cfg = {**inference_cfg, "endpoint": validate_endpoint_url(endpoint_url)}
+    return inference_cfg
+
+
+def validate_endpoint_url(endpoint_url: str) -> str:
+    endpoint_url = endpoint_url.strip()
+    parsed = urlparse(endpoint_url)
+    if parsed.scheme not in {"http", "https"}:
+        fail("--endpoint-url must use http:// or https://")
+    if not parsed.hostname:
+        fail("--endpoint-url must include a host")
+    if parsed.username or parsed.password:
+        fail("--endpoint-url must not include credentials")
+    if parsed.fragment:
+        fail("--endpoint-url must not include a URL fragment")
+    return endpoint_url
+
+
+def validate_sandbox_name(name: Any) -> str:
+    if not isinstance(name, str) or not name.strip():
+        fail("sandbox.name must be a non-empty string")
+    if any(char.isspace() for char in name):
+        fail(f"sandbox.name must not contain whitespace: {name!r}")
+    return name
+
+
+def validate_sandbox_image(image: Any) -> str:
+    if not isinstance(image, str) or not image.strip():
+        fail("sandbox.image must be a non-empty string")
+    if any(char.isspace() for char in image):
+        fail(f"sandbox.image must not contain whitespace: {image!r}")
+    return image
+
+
+def validate_forward_ports(ports: Any) -> list[int]:
+    if ports is None:
+        return [18789]
+    if not isinstance(ports, list):
+        fail("sandbox.forward_ports must be a list")
+    validated: list[int] = []
+    for port in ports:
+        if not isinstance(port, int) or port < 1024 or port > 65535:
+            fail(f"sandbox.forward_ports entries must be integers between 1024 and 65535: {port!r}")
+        validated.append(port)
+    return validated
 
 
 def run_cmd(
@@ -88,34 +185,26 @@ def action_plan(
     rid = emit_run_id()
     progress(10, "Validating blueprint")
 
-    inference_profiles: dict[str, Any] = (
-        blueprint.get("components", {}).get("inference", {}).get("profiles", {})
-    )
-    if profile not in inference_profiles:
-        available = ", ".join(inference_profiles.keys())
-        log(f"ERROR: Profile '{profile}' not found. Available: {available}")
-        sys.exit(1)
+    inference_cfg = resolve_inference_config(profile, blueprint, endpoint_url)
 
     progress(20, "Checking prerequisites")
     if not openshell_available():
-        log("ERROR: openshell CLI not found. Install OpenShell first.")
         log("  See: https://github.com/NVIDIA/OpenShell")
-        sys.exit(1)
+        fail("openshell CLI not found. Install OpenShell first.")
 
-    sandbox_cfg: dict[str, Any] = blueprint.get("components", {}).get("sandbox", {})
-    inference_cfg: dict[str, Any] = inference_profiles[profile]
-
-    # Override endpoint if provided (e.g., NCP dynamic endpoint)
-    if endpoint_url:
-        inference_cfg = {**inference_cfg, "endpoint": endpoint_url}
+    components = mapping(blueprint.get("components", {}), "components")
+    sandbox_cfg = mapping(components.get("sandbox", {}), "components.sandbox")
+    sandbox_image = validate_sandbox_image(sandbox_cfg.get("image", "nemoclawd"))
+    sandbox_name = validate_sandbox_name(sandbox_cfg.get("name", "nemoclawd"))
+    forward_ports = validate_forward_ports(sandbox_cfg.get("forward_ports", [18789]))
 
     plan: dict[str, Any] = {
         "run_id": rid,
         "profile": profile,
         "sandbox": {
-            "image": sandbox_cfg.get("image", "nemoclawd"),
-            "name": sandbox_cfg.get("name", "nemoclawd"),
-            "forward_ports": sandbox_cfg.get("forward_ports", [18789]),
+            "image": sandbox_image,
+            "name": sandbox_name,
+            "forward_ports": forward_ports,
         },
         "inference": {
             "provider_type": inference_cfg.get("provider_type"),
@@ -144,25 +233,22 @@ def action_apply(
     """Apply the plan: create sandbox, configure provider, set inference route."""
     rid = emit_run_id()
 
-    # Load plan if provided, otherwise generate one
-    if plan_path:
-        # In a real implementation, load the saved plan
-        pass
+    plan = load_plan(plan_path) if plan_path else None
+    inference_cfg = resolve_inference_config(profile, blueprint, endpoint_url)
+    components = mapping(blueprint.get("components", {}), "components")
+    sandbox_cfg = mapping(components.get("sandbox", {}), "components.sandbox")
 
-    inference_profiles: dict[str, Any] = (
-        blueprint.get("components", {}).get("inference", {}).get("profiles", {})
-    )
-    inference_cfg: dict[str, Any] = inference_profiles.get(profile, {})
-
-    # Override endpoint if provided (e.g., NCP dynamic endpoint)
-    if endpoint_url:
-        inference_cfg = {**inference_cfg, "endpoint": endpoint_url}
-
-    sandbox_cfg: dict[str, Any] = blueprint.get("components", {}).get("sandbox", {})
-
-    sandbox_name: str = sandbox_cfg.get("name", "nemoclawd")
-    sandbox_image: str = sandbox_cfg.get("image", "nemoclawd")
-    forward_ports: list[int] = sandbox_cfg.get("forward_ports", [18789])
+    if plan:
+        planned_sandbox = mapping(plan.get("sandbox", {}), "plan.sandbox")
+        planned_inference = mapping(plan.get("inference", {}), "plan.inference")
+        sandbox_name = validate_sandbox_name(planned_sandbox.get("name", "nemoclawd"))
+        sandbox_image = validate_sandbox_image(planned_sandbox.get("image", "nemoclawd"))
+        forward_ports = validate_forward_ports(planned_sandbox.get("forward_ports", [18789]))
+        inference_cfg = planned_inference or inference_cfg
+    else:
+        sandbox_name = validate_sandbox_name(sandbox_cfg.get("name", "nemoclawd"))
+        sandbox_image = validate_sandbox_image(sandbox_cfg.get("image", "nemoclawd"))
+        forward_ports = validate_forward_ports(sandbox_cfg.get("forward_ports", [18789]))
 
     # Step 1: Create sandbox
     progress(20, "Creating Nemo Clawd sandbox")
@@ -226,7 +312,7 @@ def action_apply(
 
     # Step 4: Save run state
     progress(85, "Saving run state")
-    state_dir = Path.home() / ".nemoclawd" / "state" / "runs" / rid
+    state_dir = resolve_runs_dir() / rid
     state_dir.mkdir(parents=True, exist_ok=True)
     (state_dir / "plan.json").write_text(
         json.dumps(
@@ -249,7 +335,7 @@ def action_apply(
 def action_status(rid: str | None = None) -> None:
     """Report current state of the most recent (or specified) run."""
     emit_run_id()
-    state_dir = Path.home() / ".nemoclawd" / "state" / "runs"
+    state_dir = resolve_runs_dir()
 
     if rid:
         run_dir = state_dir / rid
@@ -274,10 +360,9 @@ def action_rollback(rid: str) -> None:
     """Rollback a specific run: stop sandbox, remove provider config."""
     emit_run_id()
 
-    state_dir = Path.home() / ".nemoclawd" / "state" / "runs" / rid
+    state_dir = resolve_runs_dir() / rid
     if not state_dir.exists():
-        log(f"ERROR: Run {rid} not found.")
-        sys.exit(1)
+        fail(f"Run {rid} not found.")
 
     plan_file = state_dir / "plan.json"
     if plan_file.exists():
@@ -337,8 +422,7 @@ def main() -> None:
         action_status(rid=args.run_id)
     elif args.action == "rollback":
         if not args.run_id:
-            log("ERROR: --run-id is required for rollback")
-            sys.exit(1)
+            fail("--run-id is required for rollback")
         action_rollback(args.run_id)
 
 

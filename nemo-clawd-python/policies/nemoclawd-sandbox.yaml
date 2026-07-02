@@ -10,7 +10,7 @@
 #   strict  — this file. Minimum for onboard + basic agent operation.
 #   relaxed — adds third-party model providers, broader web access.
 #
-# To add endpoints: update this file and re-run `nemo clawd nemoclawd migrate `
+# To add endpoints: update this file and re-run `nemoclawd migrate`.
 # or apply dynamically via `openshell policy set`.
 
 version: 1
@@ -78,7 +78,8 @@ network_policies:
           - allow: { method: "*", path: "/**" }
     binaries:
       - { path: /usr/local/bin/claude }
-      - { path: /usr/local/bin/nemo clawd }
+      - { path: /usr/local/bin/nemoclawd }
+      - { path: /usr/local/bin/nemo-clawd-mcp }
 
   github:
     name: github
@@ -95,7 +96,7 @@ network_policies:
 
   # ── Nemo Clawd "phone home" ────────────────────────────────────────────
   # Minimum viable set for Nemo Clawd to authenticate, discover plugins,
-  # and reach ClawHub. Binary-restricted to nemo clawd only.
+  # and reach ClawHub. Binary-restricted to the nemoclawd CLI only.
   # Docs access is read-only (GET). ClawHub and nemo-clawd.ai are
   # restricted to GET+POST (auth flows, plugin discovery).
 
@@ -111,7 +112,7 @@ network_policies:
           - allow: { method: GET, path: "/**" }
           - allow: { method: POST, path: "/**" }
     binaries:
-      - { path: /usr/local/bin/nemo clawd }
+      - { path: /usr/local/bin/nemoclawd }
 
   nemoclawd_api:
     name: nemoclawd_api
@@ -125,7 +126,7 @@ network_policies:
           - allow: { method: GET, path: "/**" }
           - allow: { method: POST, path: "/**" }
     binaries:
-      - { path: /usr/local/bin/nemo clawd }
+      - { path: /usr/local/bin/nemoclawd }
 
   nemoclawd_docs:
     name: nemoclawd_docs
@@ -138,7 +139,7 @@ network_policies:
         rules:
           - allow: { method: GET, path: "/**" }
     binaries:
-      - { path: /usr/local/bin/nemo clawd }
+      - { path: /usr/local/bin/nemoclawd }
 
   # npm registry — needed for `nemoclawd plugins install` and `npm install`
   npm_registry:
@@ -148,8 +149,67 @@ network_policies:
         port: 443
         access: full
     binaries:
-      - { path: /usr/local/bin/nemo clawd }
+      - { path: /usr/local/bin/nemoclawd }
       - { path: /usr/local/bin/npm }
+
+  # ── Bundled clawd MCP tools ───────────────────────────────────
+  xai_grok:
+    name: xai_grok
+    endpoints:
+      - host: api.x.ai
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: POST, path: "/v1/chat/completions" }
+          - allow: { method: POST, path: "/v1/images/generations" }
+    binaries:
+      - { path: /usr/local/bin/nemo-clawd-mcp }
+      - { path: /usr/bin/node }
+
+  helius_rpc:
+    name: helius_rpc
+    endpoints:
+      - host: mainnet.helius-rpc.com
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: POST, path: "/**" }
+    binaries:
+      - { path: /usr/local/bin/nemo-clawd-mcp }
+      - { path: /usr/bin/node }
+
+  birdeye_market_data:
+    name: birdeye_market_data
+    endpoints:
+      - host: api.birdeye.so
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+    binaries:
+      - { path: /usr/local/bin/nemo-clawd-mcp }
+      - { path: /usr/bin/node }
+
+  coingecko_market_data:
+    name: coingecko_market_data
+    endpoints:
+      - host: api.coingecko.com
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+    binaries:
+      - { path: /usr/local/bin/nemo-clawd-mcp }
+      - { path: /usr/bin/node }
 
   # ── Messaging — pre-allowed for agent notifications ────────────
   # Telegram Bot API is open by default so the agent can send
@@ -179,5 +239,6 @@ network_policies:
         rules:
           - allow: { method: "*", path: "/**" }
     binaries:
-      - { path: /usr/local/bin/nemo clawd }
+      - { path: /usr/local/bin/nemoclawd }
+      - { path: /usr/local/bin/nemo-clawd-mcp }
       - { path: /usr/bin/curl }

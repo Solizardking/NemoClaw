@@ -1,5 +1,8 @@
+// SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 /**
- * nemoClawd MCP Server — HTTP transport entry point
+ * nemo-clawd MCP Server HTTP transport entry point
  *
  * Used by `npm run start:http` and the Fly.io deployment.
  * Exposes the MCP server over Streamable HTTP on PORT (default 3000).
@@ -19,7 +22,7 @@ function unauthorized(res: ServerResponse): void {
 
 function healthCheck(res: ServerResponse): void {
   res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify({ status: "ok", server: "nemoClawd MCP", version: "0.1.0" }));
+  res.end(JSON.stringify({ status: "ok", server: "nemo-clawd MCP", version: "0.1.0" }));
 }
 
 const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
@@ -44,5 +47,5 @@ const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse
 await server.connect(transport);
 
 httpServer.listen(PORT, () => {
-  console.error(`nemoClawd MCP Server running (http) on port ${PORT}`);
+  console.error(`nemo-clawd MCP Server running (http) on port ${PORT}`);
 });

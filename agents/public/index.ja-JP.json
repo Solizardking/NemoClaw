@@ -1,0 +1,1178 @@
+{
+  "schemaVersion": 1,
+  "agents": [
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/alpha-leak-detector",
+      "identifier": "alpha-leak-detector",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "Crypto Alpha & Signal Detector",
+        "description": "DeFi市場におけるトレーディングアルファと早期シグナルを識別します",
+        "avatar": "🎯",
+        "category": "crypto",
+        "tags": [
+          "alpha",
+          "trading",
+          "signals",
+          "research",
+          "opportunities",
+          "clawd",
+          "solana",
+          "helius",
+          "birdeye",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 801
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/vespa-optimizer",
+      "identifier": "vespa-optimizer",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "veSPA ロック最適化ツール",
+        "description": "最適なveSPAロック戦略を通じてリターンを最大化",
+        "avatar": "🐝",
+        "category": "tools",
+        "tags": [
+          "clawd",
+          "vespa",
+          "ステーキング",
+          "最適化",
+          "投票権",
+          "solana",
+          "defi",
+          "ve-model",
+          "governance"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 588
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/impermanent-loss-calculator",
+      "identifier": "impermanent-loss-calculator",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "インパーマネントロス計算機",
+        "description": "LPポジションのインパーマネントロスシナリオを計算・解説します",
+        "avatar": "📉",
+        "category": "tools",
+        "tags": [
+          "defi",
+          "流動性",
+          "インパーマネントロス",
+          "計算機",
+          "amm",
+          "clawd",
+          "solana",
+          "il",
+          "meteora",
+          "orca"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 645
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/clawd-yield-aggregator",
+      "identifier": "clawd-yield-aggregator",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "CLAWD Yield Aggregator",
+        "description": "CLAWDエコシステム内の最高の利回り機会を見つけて最適化します",
+        "avatar": "🌾",
+        "category": "defi",
+        "tags": [
+          "clawd",
+          "yield",
+          "farming",
+          "optimization",
+          "apy",
+          "solana",
+          "kamino",
+          "marginfi",
+          "drift",
+          "meteora",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 617
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/yield-dashboard-builder",
+      "identifier": "yield-dashboard-builder",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "パーソナルDeFiダッシュボードビルダー",
+        "description": "カスタムDeFiポートフォリオダッシュボードの設計と追跡",
+        "avatar": "📊",
+        "category": "trading",
+        "tags": [
+          "ダッシュボード",
+          "追跡",
+          "ポートフォリオ",
+          "分析",
+          "監視",
+          "clawd",
+          "solana",
+          "yield",
+          "dev-tools"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 813
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/clawd-liquidity-strategist",
+      "identifier": "clawd-liquidity-strategist",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "CLAWD流動性プロバイダー戦略家",
+        "description": "CLAWDプール全体の流動性提供戦略を最適化",
+        "avatar": "💧",
+        "category": "defi",
+        "tags": [
+          "clawd",
+          "流動性",
+          "amm",
+          "イールドファーミング",
+          "インパーマネントロス",
+          "solana",
+          "meteora",
+          "orca",
+          "raydium",
+          "dlmm",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 582
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/defi-protocol-comparator",
+      "identifier": "defi-protocol-comparator",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "DeFiプロトコル比較エキスパート",
+        "description": "機能、リスク、収益の観点から類似のDeFiプロトコルを比較します",
+        "avatar": "⚖️",
+        "category": "defi",
+        "tags": [
+          "defi",
+          "比較",
+          "プロトコル",
+          "分析",
+          "リサーチ",
+          "clawd",
+          "solana",
+          "analytics"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 676
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/gas-optimization-expert",
+      "identifier": "gas-optimization-expert",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "ガスコスト最適化の専門家",
+        "description": "ガスコストを最小化し、取引のタイミングを最適化します",
+        "avatar": "⛽",
+        "category": "tools",
+        "tags": [
+          "ethereum",
+          "gas",
+          "optimization",
+          "layer-2",
+          "efficiency",
+          "clawd",
+          "solana",
+          "priority-fees",
+          "compute-units",
+          "jito",
+          "dev-tools"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 658
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/clawd-onboarding-guide",
+      "identifier": "clawd-onboarding-guide",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "CLAWDエコシステムオンボーディングガイド",
+        "description": "初心者がCLAWDプロトコルを理解し、利用を開始できるようサポートします",
+        "avatar": "🎓",
+        "category": "education",
+        "tags": [
+          "clawd",
+          "教育",
+          "オンボーディング",
+          "初心者",
+          "チュートリアル",
+          "solana",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 639
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/defi-onboarding-mentor",
+      "identifier": "defi-onboarding-mentor",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "DeFi初心者オンボーディングメンター",
+        "description": "初心者を完全なDeFi体験に導くガイド",
+        "avatar": "👋",
+        "category": "education",
+        "tags": [
+          "教育",
+          "初心者",
+          "オンボーディング",
+          "チュートリアル",
+          "defi-基礎",
+          "clawd",
+          "solana",
+          "defi"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 792
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/spa-tokenomics-analyst",
+      "identifier": "spa-tokenomics-analyst",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "SPAトークノミクスアナリスト",
+        "description": "SPAトークンの経済性、ステーキング報酬、プロトコル収益の専門家",
+        "avatar": "🔬",
+        "category": "crypto",
+        "tags": [
+          "clawd",
+          "spa",
+          "tokenomics",
+          "staking",
+          "governance",
+          "solana",
+          "analytics"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 589
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/defi-risk-scoring-engine",
+      "identifier": "defi-risk-scoring-engine",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "DeFiプロトコルリスクスコアリングエンジン",
+        "description": "DeFiプロトコルの包括的リスク評価フレームワーク",
+        "avatar": "📊",
+        "category": "security",
+        "tags": [
+          "リスク",
+          "評価",
+          "スコアリング",
+          "分析",
+          "フレームワーク",
+          "clawd",
+          "solana",
+          "defi",
+          "risk-scoring",
+          "security",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 816
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/wallet-security-advisor",
+      "identifier": "wallet-security-advisor",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "暗号通貨ウォレットセキュリティアドバイザー",
+        "description": "暗号通貨ウォレットと資産のセキュリティ向上のためのベストプラクティス",
+        "avatar": "🔐",
+        "category": "security",
+        "tags": [
+          "security",
+          "wallet",
+          "safety",
+          "best-practices",
+          "hardware",
+          "clawd",
+          "solana",
+          "phantom",
+          "solflare",
+          "ledger"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 788
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/defi-yield-farmer",
+      "identifier": "defi-yield-farmer",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "DeFi利回り農業戦略家",
+        "description": "DeFiプロトコル全体の利回り農業の機会を特定し最適化します",
+        "avatar": "🚜",
+        "category": "defi",
+        "tags": [
+          "defi",
+          "利回り農業",
+          "apy",
+          "戦略",
+          "最適化",
+          "clawd",
+          "solana",
+          "kamino",
+          "meteora",
+          "drift",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 624
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/clawd-risk-monitor",
+      "identifier": "clawd-risk-monitor",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "CLAWDプロトコルリスクモニター",
+        "description": "CLAWDスマートコントラクトのセキュリティリスクを追跡・分析します",
+        "avatar": "⚠️",
+        "category": "security",
+        "tags": [
+          "clawd",
+          "セキュリティ",
+          "リスク",
+          "監査",
+          "モニタリング",
+          "solana",
+          "alerts",
+          "kamino",
+          "drift",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 618
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/stablecoin-comparator",
+      "identifier": "stablecoin-comparator",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "ステーブルコイン深層比較ツール",
+        "description": "ステーブルコインの仕組み、リスク、ユースケースを比較します",
+        "avatar": "💵",
+        "category": "defi",
+        "tags": [
+          "stablecoin",
+          "usdc",
+          "dai",
+          "usdt",
+          "比較",
+          "clawd",
+          "solana",
+          "stablecoins",
+          "pyusd",
+          "susd"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 642
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/portfolio-rebalancing-advisor",
+      "identifier": "portfolio-rebalancing-advisor",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "DeFiポートフォリオリバランスアドバイザー",
+        "description": "ポートフォリオ配分とリバランス戦略の最適化",
+        "avatar": "♻️",
+        "category": "trading",
+        "tags": [
+          "ポートフォリオ",
+          "リバランス",
+          "配分",
+          "戦略",
+          "最適化",
+          "clawd",
+          "solana",
+          "rebalance",
+          "analytics",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 731
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/clawd-bridge-assistant",
+      "identifier": "clawd-bridge-assistant",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "CLAWD Bridge Assistant",
+        "description": "最適なルートとコストでユーザーのクロスチェーンブリッジを案内します",
+        "avatar": "🌉",
+        "category": "programming",
+        "tags": [
+          "clawd",
+          "bridge",
+          "cross-chain",
+          "arbitrum",
+          "layer-2",
+          "solana",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 612
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/airdrop-hunter",
+      "identifier": "airdrop-hunter",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "DeFiエアドロップハンター",
+        "description": "潜在的なプロトコルのエアドロップを識別し、戦略を立てる",
+        "avatar": "🪂",
+        "category": "trading",
+        "tags": [
+          "airdrop",
+          "報酬",
+          "戦略",
+          "ファーミング",
+          "配分",
+          "clawd",
+          "solana",
+          "jupiter",
+          "lfg",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 736
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/yield-sustainability-analyst",
+      "identifier": "yield-sustainability-analyst",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "DeFi利回り持続性アナリスト",
+        "description": "高い利回りが持続可能か一時的かを分析します",
+        "avatar": "📉",
+        "category": "defi",
+        "tags": [
+          "defi",
+          "利回り",
+          "持続性",
+          "分析",
+          "トークノミクス",
+          "clawd",
+          "solana",
+          "emission-decay",
+          "analytics"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 751
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/apy-vs-apr-educator",
+      "identifier": "apy-vs-apr-educator",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "APYとAPRの教育者",
+        "description": "DeFiにおけるAPYとAPRの違いを説明し、計算します",
+        "avatar": "📈",
+        "category": "tools",
+        "tags": [
+          "defi",
+          "教育",
+          "apy",
+          "apr",
+          "利回り",
+          "clawd",
+          "solana",
+          "kamino",
+          "marginfi"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 676
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/crypto-tax-strategist",
+      "identifier": "crypto-tax-strategist",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "暗号通貨税戦略アドバイザー",
+        "description": "暗号通貨の税金を最適化し、税効率の良いDeFi戦略を提供します",
+        "avatar": "🧾",
+        "category": "trading",
+        "tags": [
+          "tax",
+          "strategy",
+          "accounting",
+          "optimization",
+          "compliance",
+          "clawd",
+          "solana"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 773
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/bridge-security-analyst",
+      "identifier": "bridge-security-analyst",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "クロスチェーンブリッジセキュリティアナリスト",
+        "description": "ブリッジのセキュリティを評価し、安全なクロスチェーンルートを推奨します",
+        "avatar": "🌉",
+        "category": "security",
+        "tags": [
+          "bridge",
+          "security",
+          "cross-chain",
+          "risk",
+          "multichain",
+          "clawd",
+          "solana",
+          "wormhole",
+          "debridge",
+          "allbridge"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 817
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/narrative-trend-analyst",
+      "identifier": "narrative-trend-analyst",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "暗号ナarrative＆トレンドアナリスト",
+        "description": "暗号市場の支配的なナarrativeとトレンドを追跡・分析します",
+        "avatar": "📡",
+        "category": "crypto",
+        "tags": [
+          "ナarrative",
+          "トレンド",
+          "分析",
+          "センチメント",
+          "市場サイクル",
+          "clawd",
+          "solana",
+          "analytics"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 839
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/governance-proposal-analyst",
+      "identifier": "governance-proposal-analyst",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "DAOガバナンス提案分析者",
+        "description": "DAOガバナンス提案とその影響を分析・解説します",
+        "avatar": "📜",
+        "category": "governance",
+        "tags": [
+          "ガバナンス",
+          "DAO",
+          "投票",
+          "提案",
+          "分析",
+          "clawd",
+          "solana",
+          "realms",
+          "spl-governance"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 752
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/staking-rewards-calculator",
+      "identifier": "staking-rewards-calculator",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "ステーキング報酬計算機",
+        "description": "プロトコル間でのステーキング報酬を計算・最適化します",
+        "avatar": "🪙",
+        "category": "tools",
+        "tags": [
+          "staking",
+          "rewards",
+          "calculator",
+          "pos",
+          "yields",
+          "clawd",
+          "solana",
+          "validator",
+          "lst",
+          "education"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 710
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/dex-aggregator-optimizer",
+      "identifier": "dex-aggregator-optimizer",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "DEXアグリゲータールート最適化ツール",
+        "description": "DEXアグリゲーター間の最適なスワップルートを見つける",
+        "avatar": "🔀",
+        "category": "defi",
+        "tags": [
+          "dex",
+          "swap",
+          "routing",
+          "aggregator",
+          "optimization",
+          "clawd",
+          "solana",
+          "jupiter",
+          "router",
+          "trading",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 692
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/layer-2-comparison-guide",
+      "identifier": "layer-2-comparison-guide",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "Layer 2比較ガイド",
+        "description": "EthereumのLayer 2ソリューションを比較：Arbitrum、Optimism、Base、zkSync",
+        "avatar": "⚡",
+        "category": "defi",
+        "tags": [
+          "layer-2",
+          "スケーリング",
+          "arbitrum",
+          "optimism",
+          "ethereum",
+          "clawd",
+          "solana"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 691
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/liquidation-risk-manager",
+      "identifier": "liquidation-risk-manager",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "清算リスクマネージャー",
+        "description": "貸付プロトコルにおける清算リスクの監視と管理",
+        "avatar": "🚨",
+        "category": "tools",
+        "tags": [
+          "貸付",
+          "清算",
+          "リスク",
+          "担保",
+          "DeFi",
+          "clawd",
+          "solana",
+          "kamino",
+          "drift",
+          "marginfi",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 775
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/nft-liquidity-advisor",
+      "identifier": "nft-liquidity-advisor",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "NFT流動性＆貸付アドバイザー",
+        "description": "NFT担保の貸付と流動性ソリューションをナビゲート",
+        "avatar": "🖼️",
+        "category": "defi",
+        "tags": [
+          "nft",
+          "liquidity",
+          "lending",
+          "collateral",
+          "defi",
+          "clawd",
+          "solana",
+          "tensor",
+          "magic-eden"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 734
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/liquidity-pool-analyzer",
+      "identifier": "liquidity-pool-analyzer",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "流動性プール深層分析ツール",
+        "description": "LPプールの健全性、リスク、最適なエントリー/エグジットタイミングを分析します",
+        "avatar": "🧪",
+        "category": "defi",
+        "tags": [
+          "defi",
+          "liquidity-pools",
+          "amm",
+          "analysis",
+          "risk",
+          "clawd",
+          "solana",
+          "liquidity",
+          "meteora",
+          "orca",
+          "raydium",
+          "analytics"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 662
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/protocol-revenue-analyst",
+      "identifier": "protocol-revenue-analyst",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "プロトコル収益とファンダメンタルズ分析者",
+        "description": "DeFiプロトコルのビジネスモデルと収益生成を分析します",
+        "avatar": "💹",
+        "category": "defi",
+        "tags": [
+          "defi",
+          "revenue",
+          "analysis",
+          "fundamentals",
+          "tokenomics",
+          "clawd",
+          "solana",
+          "analytics",
+          "defillama"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 747
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/protocol-treasury-analyst",
+      "identifier": "protocol-treasury-analyst",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "DAO Treasury & Resource Analyst",
+        "description": "DAOの財務状況、運用期間、資本配分を分析します",
+        "avatar": "🏛️",
+        "category": "governance",
+        "tags": [
+          "treasury",
+          "dao",
+          "capital",
+          "runway",
+          "allocation",
+          "clawd",
+          "solana",
+          "governance",
+          "analytics"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 799
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/clawd-governance-guide",
+      "identifier": "clawd-governance-guide",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "CLAWD ガバナンスガイド",
+        "description": "CLAWD DAOの提案、投票、プロトコルのアップグレードをナビゲート",
+        "avatar": "🗳️",
+        "category": "governance",
+        "tags": [
+          "clawd",
+          "ガバナンス",
+          "dao",
+          "投票",
+          "提案",
+          "solana",
+          "realms",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 596
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/usds-stablecoin-expert",
+      "identifier": "usds-stablecoin-expert",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "USDsステーブルコインの専門家",
+        "description": "CLAWD USDsのメカニズム、担保化、利回り戦略の専門家",
+        "avatar": "🪙",
+        "category": "defi",
+        "tags": [
+          "clawd",
+          "ステーブルコイン",
+          "usds",
+          "defi",
+          "利回り",
+          "solana",
+          "stablecoins",
+          "sky"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 560
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/defi-insurance-advisor",
+      "identifier": "defi-insurance-advisor",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "DeFi保険＆リスクカバレッジアドバイザー",
+        "description": "DeFiの保険オプションをナビゲートし、スマートコントラクトの保護を支援します",
+        "avatar": "🛡️",
+        "category": "defi",
+        "tags": [
+          "保険",
+          "保護",
+          "リスク",
+          "カバレッジ",
+          "安全",
+          "clawd",
+          "solana",
+          "defi"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 812
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/token-unlock-tracker",
+      "identifier": "token-unlock-tracker",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "トークンアンロックスケジュールトラッカー",
+        "description": "トークンのアンロックイベントとその市場への影響を監視・分析します",
+        "avatar": "🔓",
+        "category": "crypto",
+        "tags": [
+          "トークノミクス",
+          "アンロック",
+          "ベスティング",
+          "供給",
+          "分析",
+          "clawd",
+          "solana",
+          "analytics"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 709
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/clawd-portfolio-tracker",
+      "identifier": "clawd-portfolio-tracker",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "CLAWD ポートフォリオトラッカー",
+        "description": "あなたの CLAWD エコシステムの保有資産を追跡・分析します",
+        "avatar": "💼",
+        "category": "trading",
+        "tags": [
+          "clawd",
+          "ポートフォリオ",
+          "追跡",
+          "分析",
+          "ダッシュボード",
+          "solana",
+          "helius",
+          "das",
+          "one-shot"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 651
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/whale-watcher",
+      "identifier": "whale-watcher",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "暗号ホエールウォッチャー",
+        "description": "大口ウォレットの動きとホエールの行動を追跡・分析",
+        "avatar": "🐋",
+        "category": "crypto",
+        "tags": [
+          "オンチェーン",
+          "ホエール",
+          "分析",
+          "取引",
+          "監視",
+          "clawd",
+          "solana",
+          "whales",
+          "helius",
+          "das"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 690
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/smart-contract-auditor",
+      "identifier": "smart-contract-auditor",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "スマートコントラクトセキュリティ監査員",
+        "description": "DeFiプロトコルのスマートコントラクトのセキュリティをレビューおよび評価します",
+        "avatar": "🔍",
+        "category": "security",
+        "tags": [
+          "security",
+          "smart-contracts",
+          "audit",
+          "solidity",
+          "risk",
+          "clawd",
+          "solana",
+          "anchor",
+          "dev-tools"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 707
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-04-16",
+      "homepage": "https://solanaclawd.com/agents/mev-protection-advisor",
+      "identifier": "mev-protection-advisor",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "MEV保護アドバイザー",
+        "description": "フロントランニング、サンドイッチ攻撃、MEVの悪用からユーザーを保護します",
+        "avatar": "🥷",
+        "category": "security",
+        "tags": [
+          "mev",
+          "セキュリティ",
+          "フロントランニング",
+          "flashbots",
+          "保護",
+          "clawd",
+          "solana",
+          "jito",
+          "bundles"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 722
+    },
+    {
+      "author": "openclawd",
+      "createdAt": "2026-01-03",
+      "homepage": "https://solanaclawd.com/agents/crypto-news-analyst",
+      "identifier": "crypto-news-analyst",
+      "knowledgeCount": 0,
+      "meta": {
+        "title": "Crypto News Analyst",
+        "description": "CoinDesk、The Block、Decryptなどの主要な暗号通貨出版物から最新の暗号ニュースを集約・分析します",
+        "avatar": "📰",
+        "category": "crypto",
+        "tags": [
+          "news",
+          "analysis",
+          "market",
+          "research",
+          "sentiment",
+          "clawd",
+          "solana",
+          "narrative",
+          "analytics"
+        ]
+      },
+      "pluginCount": 0,
+      "schemaVersion": 1,
+      "tokenUsage": 900
+    }
+  ],
+  "tags": [
+    "clawd",
+    "solana",
+    "one-shot",
+    "defi",
+    "analytics",
+    "分析",
+    "meteora",
+    "kamino",
+    "optimization",
+    "drift",
+    "リスク",
+    "security",
+    "helius",
+    "最適化",
+    "governance",
+    "amm",
+    "orca",
+    "apy",
+    "marginfi",
+    "ポートフォリオ",
+    "dev-tools",
+    "layer-2",
+    "教育",
+    "戦略",
+    "利回り",
+    "risk",
+    "analysis"
+  ]
+}

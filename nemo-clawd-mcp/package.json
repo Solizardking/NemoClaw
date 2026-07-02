@@ -1,12 +1,13 @@
 {
   "name": "@mawdbotsonsolana/nemoclawd-mcp",
   "version": "0.1.0",
-  "description": "nemoClawd MCP Server — xAI Grok powered Solana agentic tools with 31 MCP tools",
+  "description": "nemo-clawd MCP server: xAI Grok powered Solana agentic tools with 31 MCP tools",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "nemoclawd-mcp": "dist/index.js"
+    "nemoclawd-mcp": "dist/index.js",
+    "nemo-clawd-mcp": "dist/index.js"
   },
   "scripts": {
     "build": "tsc",

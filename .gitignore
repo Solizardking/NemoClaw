@@ -5,7 +5,8 @@
 .pytest_cache/
 __pycache__/
 coverage/
-dist/
+dist/*
+!dist/package.json
 docs/_build/
 node_modules/
 

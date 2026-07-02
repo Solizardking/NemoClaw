@@ -20,7 +20,7 @@ status: published
 
 # Architecture
 
-Nemo Clawd has two main components: a TypeScript plugin that integrates with the Nemo Clawd CLI, and a Python blueprint that orchestrates OpenShell resources.
+Nemo Clawd has three main components: a TypeScript plugin that integrates with the Nemo Clawd CLI, a Hermes-derived agent image with bundled MCP tooling, and a Python blueprint that orchestrates OpenShell resources.
 
 ## Nemo Clawd Plugin
 
@@ -45,8 +45,28 @@ nemoclawd/
 │       ├── exec.ts                 Subprocess execution of blueprint runner
 │       └── state.ts                Persistent state (run IDs)
 ├── nemoclawd.plugin.json            Plugin manifest
-└── package.json                    Commands declared under nemo clawd.extensions
+└── package.json                    Published CLI package metadata
 ```
+
+## Nemo Clawd Agent Image
+
+The first-class `nemo-clawd` agent image derives from the Hermes sandbox image.
+It keeps the Hermes runtime contract while layering the Nemo Clawd MCP server, the Python blueprint, and the agent manifest used by OpenShell.
+
+```text
+agents/nemo-clawd/
+├── Dockerfile                    Hermes-derived image definition
+├── manifest.yaml                 Agent contract, ports, MCP server, state paths
+├── policy-additions.yaml         MCP-specific egress additions
+└── start-mcp.sh                  Stdio MCP launcher
+
+nemo-clawd-mcp/
+├── src/index.ts                  Stdio MCP server and 31 tool definitions
+└── src/http.ts                   Separate Streamable HTTP transport entry point
+```
+
+The sandbox contract starts the bundled MCP server through `/usr/local/bin/nemo-clawd-mcp` over stdio.
+Remote HTTP MCP deployments use the package HTTP entry point separately.
 
 ## Nemo Clawd Blueprint
 
@@ -55,7 +75,7 @@ The plugin resolves, verifies, and executes the blueprint as a subprocess.
 The blueprint drives all interactions with the OpenShell CLI.
 
 ```text
-nemoclawd-blueprint/
+nemo-clawd-python/
 ├── blueprint.yaml                  Manifest — version, profiles, compatibility
 ├── orchestrator/
 │   └── runner.py                   CLI runner — plan / apply / status
@@ -81,11 +101,14 @@ flowchart LR
 
 ## Sandbox Environment
 
-The sandbox runs the
-[`ghcr.io/nvidia/openshell-community/sandboxes/nemo clawd`](https://github.com/NVIDIA/OpenShell-Community)
-container image. Inside the sandbox:
+The sandbox runs the `ghcr.io/nvidia/nemoclaw/nemo-clawd:latest` container image.
+The blueprint creates the sandbox with the Docker-safe name `nemoclawd` and forwards ports `18789` and `8642`.
 
-- Nemo Clawd runs with the Nemo Clawd plugin pre-installed.
+Inside the sandbox:
+
+- Hermes runs at `/usr/local/bin/hermes`.
+- The bundled Nemo Clawd MCP server runs at `/usr/local/bin/nemo-clawd-mcp`.
+- The Python blueprint is available under `/opt/nemo-clawd-python`.
 - Inference calls are routed through OpenShell to the configured provider.
 - Network egress is restricted by the baseline policy in `nemoclawd-sandbox.yaml`.
 - Filesystem access is confined to `/sandbox` and `/tmp` for read-write access, with system paths read-only.

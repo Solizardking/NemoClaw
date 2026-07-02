@@ -6,6 +6,7 @@ const { execSync, spawnSync } = require("child_process");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
+const { pathToFileURL } = require("url");
 
 const { ROOT, SCRIPTS, run, runCapture } = require("./lib/runner");
 const {
@@ -26,6 +27,7 @@ const GLOBAL_COMMANDS = new Set([
   "onboard", "launch", "list", "deploy", "setup", "setup-spark",
   "start", "stop", "status", "solana", "wallet",
   "financial-harness",
+  "dist",
   "doctor", "version", "--version", "-v",
   "help", "--help", "-h",
 ]);
@@ -184,6 +186,35 @@ function printOpenShellTransportHint(output) {
   if (listener.cwd && listener.cwd.includes(`${path.sep}Pump-Fun${path.sep}dashboard`)) {
     console.error("  It looks like the Pump-Fun dashboard is using the OpenShell gateway port.");
     console.error("  Set DASHBOARD_PORT=18789 and restart the dashboard.");
+  }
+}
+
+async function runDistRuntime(argv, { explicit = false } = {}) {
+  const entryPath = path.join(ROOT, "dist", "entry.js");
+  if (!fs.existsSync(entryPath)) {
+    if (explicit) {
+      console.error(`  Compiled dist runtime not found: ${entryPath}`);
+      process.exit(1);
+    }
+    return false;
+  }
+
+  process.argv = [process.argv[0], process.argv[1], ...argv];
+  process.env.NEMOCLAWD_DIST_RUNTIME = "1";
+  process.env.CLAWDBOT_CLI_NAME = "nemoclawd";
+  process.env.CLAWDBOT_NO_RESPAWN = "1";
+
+  try {
+    await import(pathToFileURL(entryPath).href);
+    return true;
+  } catch (error) {
+    if (!explicit) {
+      return false;
+    }
+    const message = error && error.stack ? error.stack : String(error);
+    console.error("[nemoclawd] Failed to start dist runtime:");
+    console.error(message);
+    process.exit(1);
   }
 }
 
@@ -350,7 +381,7 @@ async function deploy(instanceName) {
     await ensureGithubToken();
   }
   const name = instanceName;
-  const gpu = process.env.NEMOCLAW_GPU || "a2-highgpu-1g:nvidia-tesla-a100:1";
+  const gpu = process.env.NEMOCLAWD_GPU || "a2-highgpu-1g:nvidia-tesla-a100:1";
 
   console.log("");
   console.log(`  Deploying Nemo Clawd to Brev instance: ${name}`);
@@ -1214,6 +1245,7 @@ function help() {
   Services:
     nemoclawd start / stop / status   Manage auxiliary services
     nemoclawd version                 Print the installed CLI version
+    nemoclawd dist <command>          Run the compiled dist runtime directly
 
   Inside the sandbox you get:
     helius-cli, plus Solana CLI tools when the target architecture supports them
@@ -1240,6 +1272,7 @@ const [cmd, ...args] = process.argv.slice(2);
   // Global commands
   if (GLOBAL_COMMANDS.has(cmd)) {
     switch (cmd) {
+      case "dist":        await runDistRuntime(args, { explicit: true }); break;
       case "onboard":     await onboard(); break;
       case "launch":      await launch(args); break;
       case "setup":       await setup(); break;
@@ -1287,6 +1320,10 @@ const [cmd, ...args] = process.argv.slice(2);
         console.error(`  Valid actions: connect, financial-harness, solana-stack, solana-agent, solana-bridge, telegram-bot, payment-app, swarm-bot, websocket-server, status, logs, policy-add, policy-list, destroy`);
         process.exit(1);
     }
+    return;
+  }
+
+  if (await runDistRuntime(process.argv.slice(2))) {
     return;
   }
 

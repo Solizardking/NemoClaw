@@ -1,0 +1,3 @@
+Bot Name: mawdb0t
+Telegram Username: @mawdclawdbot
+Status: Running (PID 90337 since 3:09 PM)

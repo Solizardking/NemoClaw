@@ -25,6 +25,19 @@ The plugin commands run under the `nemoclawd` namespace inside the Nemo Clawd CL
 The standalone `nemoclawd` binary handles host-side setup, deployment, Solana integration, and service management.
 Both interfaces are installed when you run `npm install -g @mawdbotsonsolana/nemoclawd`.
 
+## Command Dispatch
+
+The standalone binary checks host commands and registered sandbox names before it hands a command to the compiled runtime.
+If the command is not a built-in host command and does not match a sandbox, `nemoclawd` delegates to `dist/entry.js` when the packaged runtime is present.
+
+Use `nemoclawd dist <command>` to run the compiled runtime directly.
+This is useful when a runtime command has the same name as a host command.
+
+```console
+$ nemoclawd dist status --help
+$ nemoclawd gateway --help
+```
+
 ## Quick Start
 
 ### `nemoclawd launch `

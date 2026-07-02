@@ -1,0 +1,26 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "bun run build",
+  "outputDirectory": "public",
+  "installCommand": "bun install",
+  "rewrites": [
+    { "source": "/api/agents", "destination": "/api/agents/index.json" },
+    { "source": "/api/agents/catalog", "destination": "/api/agents/catalog/index.json" },
+    { "source": "/api/agents/registry", "destination": "/api/agents/registry/index.json" },
+    { "source": "/api/agents/acp", "destination": "/api/agents/acp-registry.json" },
+    { "source": "/agents-manifest.json", "destination": "/api/agents/catalog/index.json" },
+    { "source": "/agents-catalog.json", "destination": "/api/agents/catalog/index.json" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*).json",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, OPTIONS" },
+        { "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800" },
+        { "key": "Vary", "value": "Origin" }
+      ]
+    }
+  ]
+}
+

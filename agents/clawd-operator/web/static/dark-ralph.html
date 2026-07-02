@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dark Ralph 🦞 CLAWD OODA Trading Loop</title>
+  <meta name="description" content="Live Solana autonomous trading dashboard — OODA loop powered by Jupiter Swap V2.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦞</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@400;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+:root{--sol-purple:#9945FF;--sol-green:#14F195;--sol-blue:#00D1FF;--sol-dark:#0a0a0f;--sol-darker:#050508;--sol-card:#0d0d14;--lobster:#c93a2b;--lobster-deep:#7a1f15;--lobster-shell:#3a0f0a;--text-primary:#fff;--text-secondary:#a0a0a0;--text-muted:#666}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'JetBrains Mono',monospace;background:var(--sol-darker);color:var(--text-secondary);overflow-x:hidden;line-height:1.6}
+.container{max-width:1400px;margin:0 auto;padding:0 2rem}
+.grid-bg{position:fixed;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(rgba(201,58,43,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(201,58,43,.05) 1px,transparent 1px);background-size:60px 60px;z-index:1;pointer-events:none}
+.scanlines{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1000;background:repeating-linear-gradient(0deg,rgba(0,0,0,.03),rgba(0,0,0,.03) 1px,transparent 1px,transparent 2px);opacity:.4}
+main{position:relative;z-index:10}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:1rem 2rem;background:rgba(5,5,8,.92);backdrop-filter:blur(20px);border-bottom:1px solid rgba(201,58,43,.18);display:flex;justify-content:space-between;align-items:center}
+.nav-logo{font-family:'Orbitron',sans-serif;font-size:1.4rem;font-weight:700;background:linear-gradient(135deg,var(--lobster),var(--sol-purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none;display:flex;align-items:center;gap:.5rem}
+.nav-links{display:flex;gap:1.75rem;list-style:none;align-items:center}
+.nav-links a{color:var(--text-muted);text-decoration:none;font-size:.9rem;transition:color .3s}
+.nav-links a:hover,.nav-links a.active{color:var(--lobster)}
+.nav-cta{background:linear-gradient(135deg,var(--lobster),var(--lobster-deep));color:#fff!important;padding:.6rem 1.2rem!important;border-radius:6px;font-weight:600}
+
+.section-header{text-align:center;margin-bottom:2rem;padding-top:6rem}
+.section-badge{display:inline-block;background:rgba(201,58,43,.1);border:1px solid rgba(201,58,43,.25);padding:.35rem .9rem;border-radius:50px;font-size:.75rem;color:var(--lobster);margin-bottom:.75rem;text-transform:uppercase;letter-spacing:.1em}
+.section-header h2{font-family:'Orbitron',sans-serif;font-size:clamp(1.4rem,3vw,2rem);font-weight:700;margin-bottom:.5rem;color:var(--text-primary)}
+.section-header p{color:var(--text-muted);font-size:.85rem;max-width:680px;margin:0 auto}
+
+/* DASHBOARD GRID */
+.dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.25rem;margin-bottom:2rem}
+.dash-card{background:linear-gradient(135deg,rgba(201,58,43,.05),rgba(122,31,21,.02));border:1px solid rgba(201,58,43,.18);border-radius:14px;padding:1.25rem;transition:border-color .3s}
+.dash-card:hover{border-color:rgba(201,58,43,.35)}
+.dash-card.full{grid-column:1/-1}
+.dash-card h3{font-family:'Orbitron',sans-serif;font-size:.8rem;color:var(--text-muted);margin-bottom:.75rem;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between;align-items:center}
+.dash-card h3 .live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--sol-green);animation:pulse 2s infinite}
+
+.metric-row{display:flex;gap:1rem;flex-wrap:wrap}
+.metric{flex:1;min-width:100px;text-align:center;padding:.6rem;background:rgba(0,0,0,.2);border-radius:8px}
+.metric .val{font-size:1.2rem;font-weight:700;color:var(--text-primary)}
+.metric .label{font-size:.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.metric .val.green{color:var(--sol-green)}
+.metric .val.red{color:var(--lobster)}
+.metric .val.blue{color:var(--sol-blue)}
+
+.tick-log{max-height:350px;overflow-y:auto;font-size:.78rem;line-height:1.7;font-family:'JetBrains Mono',monospace}
+.tick-log::-webkit-scrollbar{width:4px}
+.tick-log::-webkit-scrollbar-track{background:transparent}
+.tick-log::-webkit-scrollbar-thumb{background:rgba(201,58,43,.3);border-radius:2px}
+.tick-entry{display:flex;gap:.5rem;padding:4px 0;border-bottom:1px solid rgba(201,58,43,.06);align-items:center}
+.tick-time{color:var(--text-muted);min-width:60px;font-size:.72rem}
+.tick-action{font-weight:600;min-width:50px;text-align:center;padding:0 4px;border-radius:3px}
+.tick-action.buy,.tick-action.BUY{color:var(--sol-green);background:rgba(20,241,149,.1)}
+.tick-action.sell,.tick-action.SELL{color:var(--lobster);background:rgba(201,58,43,.1)}
+.tick-action.hold,.tick-action.HOLD{color:var(--text-secondary)}
+.tick-price{color:var(--lobster);min-width:80px;text-align:right}
+.tick-pnl{min-width:60px;text-align:right}
+.tick-pnl.pos{color:var(--sol-green)}
+.tick-pnl.neg{color:var(--lobster)}
+.tick-detail{color:#555;font-size:.7rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+
+.chart-wrap{position:relative;height:220px}
+.chart-wrap canvas{width:100%!important;height:100%!important}
+
+.pos-table{width:100%;border-collapse:collapse;font-size:.8rem}
+.pos-table th{padding:.5rem .6rem;text-align:left;color:var(--text-muted);border-bottom:1px solid rgba(201,58,43,.12);text-transform:uppercase;font-size:.7rem;letter-spacing:.04em}
+.pos-table td{padding:.5rem .6rem;border-bottom:1px solid rgba(201,58,43,.06)}
+.pos-table tr:hover{background:rgba(201,58,43,.04)}
+.pos-table .pos{color:var(--sol-green)}.pos-table .neg{color:var(--lobster)}
+
+.safety-bar{display:flex;gap:1.25rem;flex-wrap:wrap;justify-content:center;padding:1.5rem 0}
+.pill{font-size:.72rem;font-weight:600;padding:.35rem .8rem;border-radius:50px;text-transform:uppercase;letter-spacing:.06em}
+.pill.green{background:rgba(20,241,149,.12);color:var(--sol-green);border:1px solid rgba(20,241,149,.3)}
+.pill.blue{background:rgba(0,209,255,.1);color:var(--sol-blue);border:1px solid rgba(0,209,255,.3)}
+.pill.red{background:rgba(201,58,43,.1);color:var(--lobster);border:1px solid rgba(201,58,43,.35)}
+.pill.yellow{background:rgba(255,183,77,.1);color:#ffb74d;border:1px solid rgba(255,183,77,.3)}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+@media(max-width:768px){
+  .dash-grid{grid-template-columns:1fr}
+  .nav-links{display:none}
+  .metric-row{flex-direction:column}
+}
+  </style>
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <div class="scanlines"></div>
+
+  <nav>
+    <a href="/" class="nav-logo"><span>🦞</span><span>DARK RALPH</span></a>
+    <ul class="nav-links">
+      <li><a href="/">Operator</a></li>
+      <li><a href="/dark-ralph" class="active">Dark Ralph</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <!-- HEADER -->
+    <div class="section-header" style="padding-top:7rem">
+      <span class="section-badge">LIVE · JUPITER ULTRA</span>
+      <h2>CLAWD OODA Loop</h2>
+      <p style="font-size:.78rem;color:#555">
+        Token: <code style="color:var(--lobster)">8cHzQHUS2s2h8TzCmfqPKYiM4dSt4roa3n7MyRLApump</code>
+        &nbsp;·&nbsp; Autonomous trading via SolanaTradingAdapter
+      </p>
+      <div class="safety-bar">
+        <span class="pill" id="pill-mode">LOADING</span>
+        <span class="pill" id="pill-dryrun">—</span>
+        <span class="pill" id="pill-connection" style="border-color:#555;color:#555">● connecting</span>
+      </div>
+    </div>
+
+    <div class="container">
+      <!-- STATUS ROW -->
+      <div class="dash-grid">
+        <div class="dash-card">
+          <h3><span>📊 Token Price</span><span id="price-updated"></span></h3>
+          <div class="metric-row">
+            <div class="metric"><div class="val blue" id="dp-price">—</div><div class="label">Price USD</div></div>
+            <div class="metric"><div class="val" id="dp-change">—</div><div class="label">24h Change</div></div>
+            <div class="metric"><div class="val" id="dp-volume">—</div><div class="label">24h Volume</div></div>
+            <div class="metric"><div class="val" id="dp-sol">—</div><div class="label">SOL Balance</div></div>
+          </div>
+        </div>
+        <div class="dash-card">
+          <h3><span>📈 P&L</span></h3>
+          <div class="metric-row">
+            <div class="metric"><div class="val" id="dp-trades">0</div><div class="label">Total Trades</div></div>
+            <div class="metric"><div class="val green" id="dp-wins">0</div><div class="label">Wins</div></div>
+            <div class="metric"><div class="val red" id="dp-losses">0</div><div class="label">Losses</div></div>
+            <div class="metric"><div class="val" id="dp-pnl">$0.00</div><div class="label">Total P&L</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRICE CHART + TICK LOG -->
+      <div class="dash-grid">
+        <div class="dash-card">
+          <h3><span>🕯️ Price History</span><span class="live-dot"></span></h3>
+          <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
+        </div>
+        <div class="dash-card">
+          <h3><span>🔄 OODA Loop Ticks</span><span id="tick-count">0</span></h3>
+          <div class="tick-log" id="tickLog">
+            <div style="color:#444;text-align:center;padding:2rem 0">Waiting for trading loop data…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- POSITIONS -->
+      <div class="dash-card full">
+        <h3><span>📋 Open Positions</span></h3>
+        <table class="pos-table">
+          <thead><tr>
+            <th>Token</th><th>Entry ($)</th><th>Size (SOL)</th><th>Tokens</th><th>Current ($)</th><th>P&L %</th><th>Duration</th>
+          </tr></thead>
+          <tbody id="positionsBody">
+            <tr><td colspan="7" style="text-align:center;color:#444;padding:2rem 0">No open positions</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- TRADE HISTORY -->
+      <div class="dash-card full">
+        <h3><span>📜 Trade History</span><span id="history-count">0</span></h3>
+        <table class="pos-table">
+          <thead><tr>
+            <th>Time</th><th>Action</th><th>Token</th><th>Amount (SOL)</th><th>Price ($)</th><th>P&L %</th><th>Sig</th>
+          </tr></thead>
+          <tbody id="historyBody">
+            <tr><td colspan="7" style="text-align:center;color:#444;padding:2rem 0">No trades yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script>
+// ─── Auth / API helpers ───────────────────────────────────────────────
+const BASE = window.location.origin;
+const TOKEN = localStorage.getItem('ralph_auth_token');
+const headers = TOKEN ? {Authorization:'Bearer '+TOKEN} : {};
+
+async function api(path){
+  const r = await fetch(BASE+path,{headers});
+  if(!r.ok) throw new Error('API error: '+r.status);
+  return r.json();
+}
+
+// ─── Color maps ───────────────────────────────────────────────────────
+const actColor = {BUY:'#14F195',SELL:'#c93a2b',HOLD:'#a0a0a0',buy:'#14F195',sell:'#c93a2b',hold:'#a0a0a0'};
+const actLabel = {BUY:'BUY',SELL:'SELL',HOLD:'HOLD',buy:'BUY',sell:'SELL',hold:'HOLD'};
+
+// ─── State ────────────────────────────────────────────────────────────
+let priceHistory = [];
+const MAX_PRICE_POINTS = 100;
+let priceChart = null;
+let lastTickTs = 0;
+let tickIdCounter = 0;
+const MAX_TICK_LOG = 200;
+
+// ─── Chart init ───────────────────────────────────────────────────────
+function initChart(){
+  const ctx = document.getElementById('priceChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0,0,0,220);
+  grad.addColorStop(0,'rgba(201,58,43,.3)');
+  grad.addColorStop(1,'rgba(201,58,43,0)');
+  priceChart = new Chart(ctx,{
+    type:'line',
+    data:{labels:[],datasets:[{
+      label:'Price USD',
+      data:[],
+      borderColor:'#c93a2b',
+      backgroundColor:grad,
+      borderWidth:2,
+      fill:true,
+      tension:.3,
+      pointRadius:0,
+      pointHoverRadius:4
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      animation:{duration:0},
+      interaction:{mode:'index',intersect:false},
+      scales:{
+        x:{display:true,grid:{color:'rgba(201,58,43,.06)',drawBorder:false},ticks:{color:'#666',maxTicksLimit:8,maxRotation:0}},
+        y:{display:true,grid:{color:'rgba(201,58,43,.06)',drawBorder:false},ticks:{color:'#666',callback:v=>'$'+v.toFixed(8)}}
+      },
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#0d0d14',titleColor:'#fff',bodyColor:'#a0a0a0',borderColor:'rgba(201,58,43,.3)',borderWidth:1,padding:10,displayColors:false}}
+    }
+  });
+}
+
+function addPricePoint(price, ts){
+  if(!price||price<=0) return;
+  const t = ts ? new Date(ts*1000).toLocaleTimeString() : new Date().toLocaleTimeString();
+  priceHistory.push({t,v:price});
+  if(priceHistory.length>MAX_PRICE_POINTS) priceHistory.shift();
+  if(priceChart){
+    priceChart.data.labels = priceHistory.map(p=>p.t);
+    priceChart.data.datasets[0].data = priceHistory.map(p=>p.v);
+    priceChart.update('none');
+  }
+}
+
+// ─── DOM refs ─────────────────────────────────────────────────────────
+function $(id){return document.getElementById(id)}
+
+function updateDashboard(data){
+  // Price info
+  const price = data.price_usd || 0;
+  $('dp-price').textContent = price ? '$'+price.toFixed(8) : '—';
+  $('dp-change').textContent = data.price_change_24h != null ? data.price_change_24h.toFixed(2)+'%' : '—';
+  $('dp-change').style.color = (data.price_change_24h||0)>=0 ? 'var(--sol-green)' : 'var(--lobster)';
+  $('dp-volume').textContent = data.volume_24h ? '$'+data.volume_24h.toLocaleString() : '—';
+  $('dp-sol').textContent = data.sol_balance ? data.sol_balance.toFixed(4)+' SOL' : '—';
+  if(data.volume_24h) $('dp-volume').textContent = '$'+(data.volume_24h>=1000?(data.volume_24h/1000).toFixed(1)+'K':data.volume_24h.toFixed(2));
+  if(price) addPricePoint(price, data.ts);
+
+  // P&L
+  $('dp-trades').textContent = data.total_trades||0;
+  $('dp-wins').textContent = data.successful_trades||0;
+  $('dp-losses').textContent = data.failed_trades||0;
+  const pnl = data.total_pnl_usd||0;
+  $('dp-pnl').textContent = (pnl>=0?'+':'')+'$'+pnl.toFixed(4);
+  $('dp-pnl').style.color = pnl>=0 ? 'var(--sol-green)' : 'var(--lobster)';
+
+  // Mode pills
+  if(data.mode){
+    $('pill-mode').textContent = data.mode.toUpperCase();
+    $('pill-mode').className = 'pill '+(data.mode==='conservative'?'blue':data.mode==='moderate'?'green':data.mode==='aggressive'?'yellow':'red');
+  }
+  $('pill-dryrun').textContent = data.dry_run ? 'DRY RUN' : 'LIVE';
+  $('pill-dryrun').className = 'pill '+(data.dry_run?'yellow':'green');
+  $('pill-connection').textContent = '● LIVE';
+  $('pill-connection').style.color = 'var(--sol-green)';
+  $('pill-connection').style.borderColor = 'rgba(20,241,149,.3)';
+}
+
+function appendTick(tick){
+  if(!tick||tick.ts===lastTickTs) return;
+  lastTickTs = tick.ts;
+  tickIdCounter++;
+
+  const log = $('tickLog');
+  const time = tick.ts ? new Date(tick.ts*1000).toISOString().slice(11,19) : '??:??:??';
+  const act = (tick.action||'?').toUpperCase();
+  const price = tick.price_usd != null ? tick.price_usd.toFixed(8) : '—';
+  const pnl = tick.total_pnl_usd;
+  const sig = tick.signature ? tick.signature.slice(0,8)+'…' : '';
+
+  const div = document.createElement('div');
+  div.className = 'tick-entry';
+  div.innerHTML = `
+    <span class="tick-time">${time}</span>
+    <span class="tick-action ${act}">${act}</span>
+    <span class="tick-price">$${price}</span>
+    <span class="tick-pnl ${pnl>=0?'pos':'neg'}">${pnl>=0?'+':''}$${pnl.toFixed(6)}</span>
+    <span class="tick-detail">${sig}${tick.dry_run?' · dry-run':''} ${tick.elapsed_seconds?'· '+(tick.elapsed_seconds.toFixed(1))+'s':''}</span>
+  `;
+  log.prepend(div);
+
+  // Trim
+  while(log.children.length>MAX_TICK_LOG) log.removeChild(log.lastChild);
+  $('tick-count').textContent = tickIdCounter;
+}
+
+function updatePositions(positions){
+  const body = $('positionsBody');
+  if(!positions||!positions.length){
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#444;padding:2rem 0">No open positions</td></tr>';
+    return;
+  }
+  body.innerHTML = positions.map(p=>{
+    const pnl = p.unrealized_pnl_pct||0;
+    const dur = p.timestamp ? Math.floor((Date.now()/1000-p.timestamp)/60) : 0;
+    return `<tr>
+      <td style="color:var(--lobster)">${p.token_mint.slice(0,8)+'…'}</td>
+      <td>$${(p.entry_price_usd||0).toFixed(8)}</td>
+      <td>${(p.entry_amount_sol||0).toFixed(4)}</td>
+      <td>${(p.token_amount||0).toLocaleString()}</td>
+      <td>$${(p.latest_price||p.entry_price_usd||0).toFixed(8)}</td>
+      <td class="${pnl>=0?'pos':'neg'}">${pnl>=0?'+':''}${pnl.toFixed(2)}%</td>
+      <td style="color:#666">${dur}m</td>
+    </tr>`;
+  }).join('');
+}
+
+function updateHistory(trades){
+  const body = $('historyBody');
+  if(!trades||!trades.length){
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#444;padding:2rem 0">No trades yet</td></tr>';
+    return;
+  }
+  $('history-count').textContent = trades.length;
+  body.innerHTML = trades.slice().reverse().map(t=>{
+    const ts = t.timestamp ? new Date(t.timestamp*1000).toISOString().slice(11,19) : '—';
+    return `<tr>
+      <td style="color:#666">${ts}</td>
+      <td style="color:${actColor[t.action]||'#fff'};font-weight:600">${actLabel[t.action]||t.action}</td>
+      <td style="color:var(--lobster)">${(t.token_symbol||t.token_mint||'').slice(0,8)}</td>
+      <td>${(t.amount_sol||0).toFixed(4)}</td>
+      <td>$${(t.price||0).toFixed(8)}</td>
+      <td class="${t.pnl_pct>=0?'pos':'neg'}">${t.pnl_pct!=null?(t.pnl_pct>=0?'+':'')+t.pnl_pct.toFixed(2)+'%':'—'}</td>
+      <td style="color:#555;font-size:.7rem">${t.signature?t.signature.slice(0,8)+'…':'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── Data fetch loop ──────────────────────────────────────────────────
+async function fetchAll(){
+  try{
+    // Trading status (includes P&L, mode, dry_run)
+    const statusResp = await api('/api/trading/status');
+    const adapters = statusResp.trading_adapters||[];
+    if(adapters.length){
+      updateDashboard(adapters[0]);
+    }
+
+    // Positions
+    const posResp = await api('/api/trading/positions');
+    updatePositions(posResp.positions);
+
+    // Trade history
+    const histResp = await api('/api/trading/history?limit=50');
+    updateHistory(histResp.trades);
+
+    // Ticks
+    const tickResp = await api('/api/trading/ticks?limit=50');
+    const ticks = tickResp.ticks||[];
+    if(ticks.length){
+      // Get price from last tick if not already set
+      const last = ticks[ticks.length-1];
+      if(last && !priceHistory.length){
+        updateDashboard(last);
+      }
+      ticks.forEach(t=>appendTick(t));
+    }else{
+      $('tickLog').innerHTML = '<div style="color:#444;text-align:center;padding:2rem 0">No ticks yet — trading adapter needs to run</div>';
+    }
+  }catch(e){
+    console.error('fetchAll:',e);
+    $('pill-connection').textContent = '● OFFLINE';
+    $('pill-connection').style.color = '#666';
+    $('pill-connection').style.borderColor = '#555';
+  }
+}
+
+// ─── WebSocket live tick listener ─────────────────────────────────────
+let ws = null;
+function connectWs(){
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = TOKEN ? `${protocol}//${window.location.host}/ws?token=${encodeURIComponent(TOKEN)}` : `${protocol}//${window.location.host}/ws`;
+  try{
+    ws = new WebSocket(wsUrl);
+    ws.onmessage = e => {
+      try{
+        const msg = JSON.parse(e.data);
+        if(msg.type === 'trading_tick' && msg.data){
+          appendTick(msg.data);
+        }
+      }catch(_){}
+    };
+    ws.onclose = ()=>{setTimeout(connectWs, 5000)};
+    ws.onerror = ()=>{ws && ws.close()};
+  }catch(_){}
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', ()=>{
+  initChart();
+  fetchAll();
+  setInterval(fetchAll, 10000);  // poll every 10s
+  connectWs();
+});
+  </script>
+</body>
+</html>

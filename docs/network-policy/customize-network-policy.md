@@ -30,13 +30,13 @@ Nemo Clawd supports both static policy changes that persist across restarts and 
 
 ## Static Changes
 
-Static changes modify the baseline policy file and take effect after the next sandbox creation.
+Static changes modify the baseline policy file and take effect after the next sandbox creation or migration.
 
 ### Edit the Policy File
 
-Open `nemoclawd-blueprint/policies/nemoclawd-sandbox.yaml` and add or modify endpoint entries.
+Open `nemo-clawd-python/policies/nemoclawd-sandbox.yaml` and add or modify endpoint entries.
 
-Each entry in the `network` section defines an endpoint group with the following fields:
+Each entry in the `network_policies` section defines an endpoint group with the following fields:
 
 `endpoints`
 : Host and port pairs that the sandbox can reach.
@@ -47,15 +47,16 @@ Each entry in the `network` section defines an endpoint group with the following
 `rules`
 : HTTP methods and paths that are permitted.
 
-### Re-Run Onboard
+### Re-Run Setup
 
-Apply the updated policy by re-running the onboard wizard:
+Apply the updated policy by re-running the setup path that creates or migrates the sandbox:
 
 ```console
-$ nemoclawd onboard
+$ nemoclawd migrate
 ```
 
-The wizard picks up the modified policy file and applies it to the sandbox.
+For a fresh sandbox, re-run the launch flow that created it.
+The setup flow picks up the modified policy file and applies it to the sandbox.
 
 ### Verify the Policy
 
@@ -72,14 +73,14 @@ Dynamic changes apply a policy update to a running sandbox without restarting it
 ### Create a Policy File
 
 Create a YAML file with the endpoints to add.
-Follow the same format as the baseline policy in `nemoclawd-blueprint/policies/nemoclawd-sandbox.yaml`.
+Follow the same format as the baseline policy in `nemo-clawd-python/policies/nemoclawd-sandbox.yaml`.
 
 ### Apply the Policy
 
 Use the OpenShell CLI to apply the policy update:
 
 ```console
-$ openshell policy set <policy-file>
+$ openshell policy set --policy <policy-file> --wait <sandbox-name>
 ```
 
 The change takes effect immediately.

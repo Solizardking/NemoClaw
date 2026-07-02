@@ -13,15 +13,29 @@ profiles:
   - vllm
 
 description: |
-  Nemo Clawd blueprint: orchestrates Nemo Clawd sandbox creation, migration,
-  and NIM/vLLM inference routing inside OpenShell.
+  Nemo Clawd blueprint: orchestrates a Hermes-derived Nemo Clawd sandbox,
+  bundled MCP tooling, migration, and NIM/vLLM inference routing inside
+  OpenShell.
 
 components:
+  agent:
+    name: "nemo-clawd"
+    base_agent: "hermes"
+    manifest: "agents/nemo-clawd/manifest.yaml"
+
   sandbox:
-    image: "ghcr.io/nvidia/openshell-community/sandboxes/nemo clawd:latest"
+    image: "ghcr.io/nvidia/nemoclaw/nemo-clawd:latest"
     name: "nemoclawd"
     forward_ports:
       - 18789
+      - 8642
+
+  mcp:
+    name: "nemo-clawd"
+    transport: "stdio"
+    command: "/usr/local/bin/nemo-clawd-mcp"
+    package_dir: "/opt/nemo-clawd-mcp"
+    tool_count: 31
 
   inference:
     profiles:
@@ -55,7 +69,7 @@ components:
         credential_default: "dummy"
 
   policy:
-    base: "sandboxes/nemo clawd/policy.yaml"
+    base: "policies/nemoclawd-sandbox.yaml"
     additions:
       nim_service:
         name: nim_service

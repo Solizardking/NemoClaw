@@ -39,7 +39,7 @@ RUN groupadd -r sandbox && useradd -r -g sandbox -d /sandbox -s /bin/bash sandbo
     && chown -R sandbox:sandbox /sandbox
 
 # Install Nemo Clawd CLI
-RUN npm install -g nemo clawd@1.0.0
+RUN npm install -g @mawdbotsonsolana/nemoclawd@0.5.0
 
 # Install PyYAML for blueprint runner
 RUN pip3 install --break-system-packages pyyaml

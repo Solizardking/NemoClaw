@@ -13,7 +13,7 @@ const policies = require("./policies");
 const { checkCgroupConfig } = require("./preflight");
 const solana = require("./solana");
 const HOST_GATEWAY_URL = "http://host.openshell.internal";
-const EXPERIMENTAL = process.env.NEMOCLAW_EXPERIMENTAL === "1";
+const EXPERIMENTAL = process.env.NEMOCLAWD_EXPERIMENTAL === "1";
 
 // ── Helpers ──────────────────────────────────────────────────────
 
@@ -347,7 +347,7 @@ async function setupNim(sandboxName, gpu) {
   const ollamaRunning = !!runCapture("curl -sf http://localhost:11434/api/tags 2>/dev/null", { ignoreError: true });
   const vllmRunning = !!runCapture("curl -sf http://localhost:8000/v1/models 2>/dev/null", { ignoreError: true });
 
-  // Auto-select only with NEMOCLAW_EXPERIMENTAL=1 (prevents silent misconfiguration)
+  // Auto-select only with NEMOCLAWD_EXPERIMENTAL=1 (prevents silent misconfiguration)
   if (EXPERIMENTAL) {
     if (vllmRunning) {
       console.log("  ✓ vLLM detected on localhost:8000 — using it [experimental]");
@@ -367,7 +367,7 @@ async function setupNim(sandboxName, gpu) {
     }
   }
 
-  // Build options list — only show local options with NEMOCLAW_EXPERIMENTAL=1
+  // Build options list — only show local options with NEMOCLAWD_EXPERIMENTAL=1
   const options = [];
   if (EXPERIMENTAL && gpu && gpu.nimCapable) {
     options.push({ key: "nim", label: "Local NIM container (NVIDIA GPU) [experimental]" });

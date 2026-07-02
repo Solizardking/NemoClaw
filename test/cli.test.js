@@ -56,7 +56,7 @@ describe("CLI dispatch", () => {
   it("unknown command exits 1", () => {
     const r = run("boguscmd");
     assert.equal(r.code, 1);
-    assert.ok(r.out.includes("Unknown command"));
+    assert.match(r.out, /unknown command/i);
   });
 
   it("list exits 0", () => {
@@ -81,6 +81,20 @@ describe("CLI dispatch", () => {
     assert.equal(report.mode, "dry-run");
     assert.equal(report.guardrails.signingEnabled, false);
     assert.equal(report.guardrails.transactionSubmissionEnabled, false);
+  });
+
+  it("routes unknown legacy commands through the compiled dist runtime", () => {
+    const r = run("gateway --help");
+    assert.equal(r.code, 0);
+    assert.ok(r.out.includes("Usage: clawdbot gateway"), "missing compiled gateway help");
+    assert.ok(r.out.includes("Run the WebSocket Gateway"), "missing compiled gateway description");
+  });
+
+  it("supports explicit compiled dist runtime dispatch", () => {
+    const r = run("dist status --help");
+    assert.equal(r.code, 0);
+    assert.ok(r.out.includes("Usage: clawdbot status"), "missing compiled status help");
+    assert.ok(r.out.includes("Show channel health"), "missing compiled status description");
   });
 
   it("solana overview prefers active gateway last sandbox over first registry entry", () => {

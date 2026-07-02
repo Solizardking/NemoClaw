@@ -1,3 +1,7 @@
+<!-- SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved. -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+
+<!-- start-badges -->
 <p align="center">
   <strong>🦀 nemoClawd</strong><br/>
   <em>Solana x xAI Agentic Trading Engine — Powered by $CLAWD</em>
@@ -14,6 +18,7 @@
   <img src="https://img.shields.io/badge/MCP-31%20tools-blueviolet?style=flat-square" alt="MCP Tools">
   <img src="https://img.shields.io/badge/Multi--Agent-4--16%20agents-purple?style=flat-square" alt="Multi-Agent">
 </p>
+<!-- end-badges -->
 
 ---
 
@@ -50,6 +55,7 @@
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+<!-- start-quickstart-guide -->
 ### Quick Start
 
 ```bash
@@ -58,9 +64,13 @@ npm install -g @mawdbotsonsolana/nemoclawd
 # Start with Grok + Solana tools
 nemoclawd launch
 
+# Inspect dry-run wallet, RPC, policy, and trade guardrails
+nemoclawd financial-harness
+
 # Run demo walkthrough
 nemoclawd demo
 ```
+<!-- end-quickstart-guide -->
 
 ### xAI Grok Setup
 
