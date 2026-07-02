@@ -9,6 +9,7 @@ digest: ""  # Computed at release time
 profiles:
   - default
   - solana
+  - openrouter
   - ncp
   - nim-local
   - vllm
@@ -38,6 +39,13 @@ components:
         endpoint: "https://api.x.ai/v1"
         model: "grok-4.20-reasoning"
         credential_env: "XAI_API_KEY"
+
+      openrouter:
+        provider_type: "openai"
+        provider_name: "openrouter"
+        endpoint: "https://openrouter.ai/api/v1"
+        model: "~openai/gpt-latest"
+        credential_env: "OPENROUTER_API_KEY"
 
       ncp:
         provider_type: "nvidia"
@@ -81,6 +89,17 @@ components:
             tls: terminate
             rules:
               - allow: { method: "*", path: "/**" }
+      openrouter:
+        name: openrouter
+        endpoints:
+          - host: "openrouter.ai"
+            port: 443
+            protocol: rest
+            enforcement: enforce
+            tls: terminate
+            rules:
+              - allow: { method: GET, path: "/api/v1/models" }
+              - allow: { method: POST, path: "/api/v1/chat/completions" }
       solana_rpc:
         name: solana_rpc
         endpoints:

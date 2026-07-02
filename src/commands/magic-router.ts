@@ -493,8 +493,9 @@ function applyCommandsFor(candidate: CandidateModel): string[] {
 function applyRecommendation(
   candidate: CandidateModel,
   execFileSyncImpl: typeof execFileSync,
+  env: NodeJS.ProcessEnv,
 ): void {
-  const credential = `${candidate.credentialEnv}=${process.env[candidate.credentialEnv] ?? ""}`;
+  const credential = `${candidate.credentialEnv}=${env[candidate.credentialEnv] ?? ""}`;
   const config = `OPENAI_BASE_URL=${candidate.endpoint}`;
   try {
     execFileSyncImpl("openshell", [
@@ -595,7 +596,7 @@ export async function recommendMagicRoute(opts: MagicRouterOptions): Promise<Mag
     if (!env[selected.credentialEnv]) {
       throw new Error(`Cannot apply Magic Router result without ${selected.credentialEnv}`);
     }
-    applyRecommendation(selected, opts.execFileSyncImpl ?? execFileSync);
+    applyRecommendation(selected, opts.execFileSyncImpl ?? execFileSync, env);
   }
 
   return recommendation;
