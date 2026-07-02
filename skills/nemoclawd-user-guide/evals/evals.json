@@ -3,22 +3,22 @@
     "id": "nemoclawd-user-guide-install-001",
     "question": "Help me install nemoclawd from my coding assistant and keep secrets out of chat.",
     "expected_skill": "nemoclawd-user-guide",
-    "ground_truth": "A Nemo Clawd-specific answer that starts from README.md and install.sh, uses the `nemoclawd` binary, gives redacted xAI/Solana environment placeholders, and avoids asking for secrets in chat.",
+    "ground_truth": "A Nemo Clawd-specific answer that starts from README.md, docs/get-started/quickstart.md, and install.sh, uses the `nemoclawd` binary, gives redacted xAI/Solana environment placeholders, and avoids asking for secrets in chat.",
     "expected_behavior": [
       "Uses `nemoclawd-user-guide`.",
-      "Starts from local README.md and install.sh.",
+      "Starts from local README.md, docs/get-started/quickstart.md, and install.sh.",
       "Uses `nemoclawd` command examples.",
       "Does not ask the user to paste secrets into chat."
     ]
   },
   {
     "id": "nemoclawd-user-guide-mcp-001",
-    "question": "Configure the bundled MCP server for Solana tools.",
+    "question": "Configure the bundled MCP server and docs MCP route for Solana tools.",
     "expected_skill": "nemoclawd-user-guide",
-    "ground_truth": "A Nemo Clawd-specific answer that uses nemo-clawd-mcp/README.md, identifies the stdio and HTTP entrypoints, and explains which Solana credentials are optional or required.",
+    "ground_truth": "A Nemo Clawd-specific answer that uses nemo-clawd-mcp/README.md for the bundled MCP server, uses `https://docs.nvidia.com/nemoclawd/_mcp/server` for docs search when local docs are unavailable, and keeps Solana credentials redacted.",
     "expected_behavior": [
       "Uses `nemo-clawd-mcp/README.md`.",
-      "Mentions `nemoclawd-mcp`.",
+      "Includes `https://docs.nvidia.com/nemoclawd/_mcp/server`.",
       "Keeps API keys and wallet secrets redacted."
     ]
   },
@@ -34,10 +34,22 @@
     ]
   },
   {
+    "id": "nemoclawd-user-guide-agent-auth-001",
+    "question": "Verify a Solana agent with SIWS, CAAP, a TEE quote, and CLAWD token gating without scraping wallets manually.",
+    "expected_skill": "nemoclawd-user-guide",
+    "ground_truth": "A Nemo Clawd answer that routes identity work through agent-auth, starts with the lightweight CAAP status check when possible, explains SIWS challenge/verify and full CAAP attestation, and warns before paid x402 attestation calls.",
+    "expected_behavior": [
+      "Uses the `agent-auth` flow.",
+      "Mentions SIWS, CAAP, TEE evidence, and CLAWD tier gating.",
+      "Does not recommend ad-hoc wallet scraping.",
+      "Warns before paid full attestation."
+    ]
+  },
+  {
     "id": "nemoclawd-user-guide-blueprint-001",
     "question": "Explain how the Nemo Clawd OpenShell blueprint migrates my local state.",
     "expected_skill": "nemoclawd-user-guide",
-    "ground_truth": "A Nemo Clawd answer that points to nemoclaw-blueprint and src/commands/migration-state.ts, explains `.nemoclawd` snapshots, and warns about preserving secrets and symlinks.",
+    "ground_truth": "A Nemo Clawd answer that points to nemoclaw-blueprint and nemo-clawd-python as compatibility paths, explains `.nemoclawd` snapshots, and warns about preserving secrets and symlinks.",
     "expected_behavior": [
       "Uses blueprint and migration source files.",
       "Mentions `.nemoclawd` state.",

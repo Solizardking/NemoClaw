@@ -35,7 +35,7 @@
 - [ ] Quality Gates section completed with required justifications or waivers
 - [ ] No secrets, API keys, or credentials committed
 - [ ] `npm run docs` builds without warnings (doc changes only)
-- [ ] Doc pages follow the [style guide](https://github.com/NVIDIA/NemoClaw/blob/main/docs/CONTRIBUTING.md) (doc changes only)
+- [ ] Doc pages follow `docs/CONTRIBUTING.md` (doc changes only)
 - [ ] New doc pages include SPDX header and frontmatter (new pages only)
 
 ---

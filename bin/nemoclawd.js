@@ -26,6 +26,7 @@ const financialHarness = require("./lib/financial-harness");
 const GLOBAL_COMMANDS = new Set([
   "onboard", "launch", "list", "deploy", "setup", "setup-spark",
   "start", "stop", "status", "solana", "wallet",
+  "ai-training",
   "birth",
   "financial-harness",
   "dist",
@@ -1384,6 +1385,74 @@ function doctor() {
   console.log("");
 }
 
+function aiTrainingCommand(args = []) {
+  const json = args.includes("--json");
+  const action = args.find((arg) => !arg.startsWith("--")) || "status";
+  const validActions = new Set(["status", "check"]);
+
+  if (!validActions.has(action)) {
+    console.error(`  Unknown ai-training action: ${action}`);
+    console.error("  Valid actions: status, check");
+    process.exit(1);
+  }
+
+  const { verifyAiTraining } = require(path.join(ROOT, "scripts", "verify-ai-training.js"));
+  const report = verifyAiTraining(ROOT);
+
+  if (json) {
+    console.log(JSON.stringify(report, null, 2));
+    if (action === "check" && !report.ok) {
+      process.exit(1);
+    }
+    return;
+  }
+
+  console.log("");
+  console.log("  Nemo Clawd AI Training");
+  console.log("  ══════════════════════");
+  printDoctorLine(report.ok ? "ok" : "fail", "Source lane", `${report.summary.present}/${report.summary.required} required paths`);
+  printDoctorLine("ok", "Model kit", "ai-training/model-kit");
+  printDoctorLine("ok", "NVIDIA integration", "ai-training/nvidia");
+  printDoctorLine("ok", "Onchain programs", "ai-training/programs");
+  printDoctorLine("ok", "Trading factory", "ai-training/trading_factory");
+
+  if (!report.ok) {
+    const missing = report.required.filter((item) => !item.ok);
+    if (missing.length > 0) {
+      console.log("");
+      console.log("  Missing required paths:");
+      missing.forEach((item) => console.log(`    - ${item.path}`));
+    }
+    if (report.forbidden.length > 0) {
+      console.log("");
+      console.log("  Forbidden generated or local paths present:");
+      report.forbidden.forEach((item) => console.log(`    - ${item.path}`));
+    }
+    if (report.oversizedFiles.length > 0) {
+      console.log("");
+      console.log("  Oversized files:");
+      report.oversizedFiles.forEach((item) => console.log(`    - ${item.path}`));
+    }
+    if (report.secretFindings.length > 0) {
+      console.log("");
+      console.log("  Secret-like findings:");
+      report.secretFindings.forEach((item) => console.log(`    - ${item.path}: ${item.reason}`));
+    }
+  }
+
+  console.log("");
+  console.log("  Commands:");
+  console.log("    npm run ai-training:check");
+  console.log("    npm run ai-training:model-kit:build");
+  console.log("    ai-training/model-kit/bin/clawd-model-kit --help");
+  console.log("    python3 ai-training/scripts/run_local_clawd_stack.py --best-effort");
+  console.log("");
+
+  if (action === "check" && !report.ok) {
+    process.exit(1);
+  }
+}
+
 // ── Help ─────────────────────────────────────────────────────────
 
 function help() {
@@ -1403,6 +1472,8 @@ function help() {
     nemoclawd financial-harness       Dry-run wallet, RPC, policy, and signing guardrails
     nemoclawd wallet create           Create an encrypted Privy agentic wallet
     nemoclawd wallet list             List all wallets
+    nemoclawd ai-training             Inspect bundled AI training source lanes
+    nemoclawd ai-training check       Verify training source lanes for build/package
     nemoclawd birth                   List lobster-themed Clawd agents available at birth
     nemoclawd birth <agent-id>        Hatch a Clawd agent persona locally
     nemoclawd onboard                 Full interactive setup wizard
@@ -1472,6 +1543,7 @@ const [cmd, ...args] = process.argv.slice(2);
       case "doctor":      doctor(); break;
       case "solana":      await quickStartSolana(args); break;
       case "wallet":      await walletCommand(args); break;
+      case "ai-training": aiTrainingCommand(args); break;
       case "birth":       birth(args); break;
       case "financial-harness": financialHarnessCommand(args); break;
       case "version":

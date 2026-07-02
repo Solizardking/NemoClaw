@@ -5,102 +5,102 @@
 
 ## Project Overview
 
-NVIDIA NemoClaw is an open-source reference stack for running always-on AI agents such as [OpenClaw](https://openclaw.ai) and [Hermes](https://get-hermes.ai/) inside [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell) sandboxes more safely. It provides CLI tooling, a blueprint for sandbox orchestration, and security hardening.
+Nemo Clawd is a Solana-native agentic runtime distributed as
+`@mawdbotsonsolana/nemoclawd`. It provides the `nemoclawd` CLI, OpenShell
+sandbox orchestration, a Nemo Clawd MCP server, Solana wallet/RPC guardrails,
+CLAWD-aware agent auth flows, and service helpers for Telegram, bridges,
+payments, swarm bots, and websocket relays.
 
 Status: Active development. Interfaces may change without notice.
 
 ## Agent Skills
 
-This repo ships agent skills under `.agents/skills/`.
-Use `nemoclaw-user-guide` for end-user documentation routing, `nemoclaw-contributor-*` for contributor workflows, and `nemoclaw-maintainer-*` for maintainer workflows.
-Load the `nemoclaw-skills-guide` skill for a full catalog and quick decision guide mapping tasks to skills.
+This repo ships source-side agent skills under `.agents/skills/`.
+Use `nemoclawd-user-guide` for end-user documentation routing, Solana setup,
+MCP setup, financial-harness safety checks, and CAAP/SIWS agent-auth guidance.
+Load `nemoclawd-skills-guide` for the source skill catalog.
+
+The `.claude/skills` path is a symlink to `.agents/skills`.
+The repo still contains legacy internal `nemoclaw-maintainer-*` and
+`nemoclaw-contributor-*` skill directories. Treat them as compatibility-only
+workflow helpers for old repository maintenance tasks unless a user explicitly
+asks for those workflows.
 
 ## Architecture
 
 | Path | Language | Purpose |
 |------|----------|---------|
-| `bin/` | JavaScript (CJS) | CLI launcher (`nemoclaw.js`) and small compatibility helpers |
-| `src/lib/` | TypeScript | Core CLI logic: onboard, credentials, inference, policies, preflight, runner |
-| `nemoclaw/` | TypeScript | Plugin project (Commander CLI extension for OpenClaw) |
-| `nemoclaw/src/blueprint/` | TypeScript | Runner, snapshot, SSRF validation, state management |
-| `nemoclaw/src/commands/` | TypeScript | Slash commands, migration state |
-| `nemoclaw/src/onboard/` | TypeScript | Onboarding config |
-| `nemoclaw-blueprint/` | YAML | Blueprint definition and network policies |
-| `nemoclaw-blueprint/model-specific-setup/` | JSON | Agent-scoped model/provider compatibility registry |
-| `scripts/` | Bash/JS/TS | Install helpers, setup, automation, E2E tooling |
-| `test/` | JavaScript (ESM) | Root-level integration tests (Vitest) |
-| `test/e2e/` | Bash/JS/TS | End-to-end tests, target registry, and live runner (see `test/e2e/README.md`) |
-| `docs/` | MDX/Markdown | User-facing Fern docs and Markdown routes for AI documentation clients |
-| `fern/` | YAML/CSS/SVG | Fern site configuration and shared assets |
-
-Package-specific guides:
-
-- Messaging architecture and channel migration guidance: [`src/lib/messaging/AGENTS.md`](src/lib/messaging/AGENTS.md)
+| `bin/` | JavaScript (CJS) | CLI launcher (`nemoclawd.js`), legacy shim (`nemoclaw.js`), and runtime helpers |
+| `src/` | TypeScript | Plugin/runtime source for blueprint, commands, and onboarding |
+| `nemo-clawd-mcp/` | TypeScript | Bundled Nemo Clawd MCP server and Solana tool catalog |
+| `nemo-clawd-python/` | Python/YAML | Current blueprint artifact, migrations, orchestrator, and policy presets |
+| `nemoclaw-blueprint/` | Python/YAML | Compatibility blueprint path retained for existing package and docs references |
+| `agents/` and `agent/` | JSON/Python | Clawd agent catalog, locales, schemas, and Solana agent implementations |
+| `extensions/` | JSON | Clawd extension manifests, including Solana and messaging integrations |
+| `scripts/` | Bash/JS/Python | Install, setup, Solana stack, payment, bridge, Telegram, and audit helpers |
+| `docs/` | Markdown | User-facing Nemo Clawd documentation, including Solana onboarding and financial harness |
+| `skills/` | Markdown/JSON | Published NVSkills catalog copy; currently `skills/nemoclawd-user-guide/` |
+| `.agents/skills/` | Markdown/TS/Shell | Source-side skills used by local agents |
+| `test/` | JavaScript | Node test suite for package behavior |
 
 ## Quick Reference
 
 | Task | Command |
 |------|---------|
-| Install all deps | `npm install && npm link && cd nemoclaw && npm install && npm run build && cd .. && uv sync` |
-| Check contributor environment | `npm run dev:doctor` |
-| Build plugin | `cd nemoclaw && npm run build` |
-| Watch mode | `cd nemoclaw && npm run dev` |
-| Run all tests | `npm test` |
-| Render behavior-oriented test tree | `npm run test:spec` |
-| Run fast source tests | `npm run test:fast` |
-| Run integration tests | `npm run test:integration` |
-| Run package contracts | `npm run test:package` |
-| Run live E2E targets | `npm run test:live-e2e` |
-| Run plugin tests | `cd nemoclaw && npm test` |
-| Run all linters | `make check` |
-| Run all hooks manually | `npx prek run --all-files` |
-| Type-check CLI | `npm run typecheck:cli` |
-| Auto-format | `make format` |
-| Build docs | `npm run docs` |
-| Serve docs locally | `npm run docs:live` |
+| Install root deps | `npm install` |
+| Install MCP deps | `npm --prefix nemo-clawd-mcp install` |
+| Build plugin and MCP server | `npm run build` |
+| Build plugin only | `npm run build:plugin` |
+| Build MCP server only | `npm run build:mcp` |
+| Run tests | `npm test` |
+| Run Solana readiness check | `npm run tools:solana:readiness` |
+| Run devnet payment harness | `npm run tools:solana:payments` |
+| Run public release audit | `npm run public:audit` |
+| Dry-run npm package | `npm run pack:check` |
+| Run release check | `npm run release:check` |
+| Inspect CLI help | `node bin/nemoclawd.js --help` |
+
+There is no `npm run dev:doctor` script in this checkout. Use the targeted
+scripts above for verification.
 
 ## Key Architecture Decisions
 
-### Dual-Language Stack
+### Dual Runtime Stack
 
-- **CLI and plugin**: TypeScript (`src/`, `nemoclaw/src/`) with a small CommonJS launcher in `bin/`; ESM in `test/`
-- **Blueprint**: YAML configuration (`nemoclaw-blueprint/`)
-- **Docs**: Fern MDX for user-facing pages, with Markdown routes exposed by Fern for AI documentation clients
-- **Tooling scripts**: Bash and Python
-
-The `bin/` directory uses CommonJS intentionally for the launcher and a few compatibility helpers so the CLI still has a stable executable entry point. The main CLI implementation lives in `src/` and compiles to `dist/`. The `nemoclaw/` plugin uses TypeScript and requires compilation.
+- **CLI and plugin**: TypeScript source plus CommonJS launchers in `bin/`.
+- **MCP server**: `nemo-clawd-mcp/` builds separately and is included in the
+  root `npm run build` flow.
+- **Blueprint**: Python/YAML artifacts live in `nemo-clawd-python/`, with
+  `nemoclaw-blueprint/` retained as a compatibility path.
+- **Docs**: Markdown pages under `docs/`; generated HTML under `docs/_build/`
+  is not the source of truth.
+- **Solana runtime**: Scripts and agents under `scripts/`, `agent/`, `agents/`,
+  and `extensions/` wire RPC, wallets, trading tools, Telegram, and MCP.
 
 ### Testing Strategy
 
-Tests are organized into disjoint Vitest projects defined in `vitest.config.ts`:
+The root `npm test` script runs `node --test test/*.test.js`.
+Use focused tests for changed behavior and reserve `npm run release:check` for
+broader release validation. Do not call live Solana mainnet, paid x402, or real
+trading flows from unit tests.
 
-1. **`cli`** — `src/**/*.test.ts` — CLI unit tests importing source
-2. **`integration`** — `test/**/*.test.{js,ts}` — root integration tests importing source; excludes the explicit lanes below
-3. **`installer-integration`** — installer tests that spawn real `install.sh` processes
-4. **`package-contract`** — `test/package-contract/**/*.test.ts` — the only non-live lane that imports compiled CLI/plugin artifacts
-5. **`plugin`** — `nemoclaw/src/**/*.test.ts` — plugin unit tests co-located with source
-6. **`e2e-support`** — fast tests for the E2E fixture/support layer
-7. **`e2e-live`** — opt-in live targets that mutate real external state
-8. **`e2e-branch-validation`** — opt-in validation on an ephemeral Brev instance
+When changing Solana-facing behavior:
 
-When writing tests:
-
-- Root-level tests (`test/`) use ESM imports
-- Plugin tests use TypeScript and are co-located with their source files
-- Import CLI source from ordinary tests. Put genuine compiled-artifact assertions under `test/package-contract/`.
-- Keep project globs disjoint; `npm run test:projects:check` derives membership from Vitest and rejects overlap.
-- Write behavior-oriented titles, put local issue references in a final `(#1234)` suffix, and use `npm run test:spec` for the hierarchical specification view.
-- Mock external dependencies; don't call real NVIDIA APIs in unit tests
-- E2E tests run on ephemeral Brev cloud instances
+- Prefer local validator, devnet, dry-run, or no-network checks first.
+- Mock external RPC, Telegram, wallet, and paid attestation calls.
+- Add coverage for wallet-safety, network-policy, and secret-redaction paths.
 
 ### Security Model
 
-NemoClaw isolates agents inside OpenShell sandboxes with:
+Nemo Clawd runs agents inside OpenShell sandboxes with:
 
-- Network policies (`nemoclaw-blueprint/policies/`) controlling egress
-- Credential sanitization to prevent leaks
-- SSRF validation (`nemoclaw/src/blueprint/ssrf.ts`)
-- Docker capability drops and process limits
+- Network policies controlling egress to Solana RPC, xAI/NVIDIA inference, and
+  approved integration endpoints.
+- Credential and wallet-secret handling that keeps private keys, seed phrases,
+  API keys, bot tokens, and paid RPC URLs out of chat and logs.
+- Dry-run financial harness checks before live Solana runtime services.
+- Agent identity and subscription gating through SIWS, CAAP/1.0, CLAWD SPL token
+  balance, and TEE evidence when `agent-auth` is used.
 
 Security-sensitive code paths require extra test coverage.
 
@@ -108,17 +108,19 @@ Security-sensitive code paths require extra test coverage.
 
 ### Commit Messages
 
-Conventional Commits required. Enforced by commitlint via prek `commit-msg` hook.
+Conventional Commits are required:
 
 ```text
 <type>(<scope>): <description>
 ```
 
-Types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `merge`
+Types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `perf`,
+`merge`.
 
 ### SPDX Headers
 
-Every source file must include an SPDX license header. The pre-commit hook auto-inserts them:
+Every source file must include an SPDX license header. The hooks may auto-insert
+headers, but add them manually for new files when practical.
 
 ```javascript
 // SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
@@ -127,110 +129,110 @@ Every source file must include an SPDX license header. The pre-commit hook auto-
 
 For shell scripts use `#` comments. For Markdown use HTML comments.
 
-### JavaScript
+### JavaScript and TypeScript
 
-- `bin/` launcher and remaining `scripts/*.js`: **CommonJS** (`require`/`module.exports`), Node.js 22.16+
-- `test/`: **ESM** (`import`/`export`)
-- Biome config in `biome.json`
-- Keep function complexity low; existing complexity hotspots are tracked separately
-- Unused vars pattern: prefix with `_`
-
-### TypeScript
-
-- Plugin code in `nemoclaw/src/` is linted and formatted by the root Biome config
-- CLI type-checking via `tsconfig.cli.json`
-- Plugin type-checking via `nemoclaw/tsconfig.json`
+- `bin/` launcher files and small helpers use CommonJS where needed for CLI
+  compatibility.
+- TypeScript builds through `tsconfig.nemoclawd.json` and the MCP server's own
+  `tsconfig.json`.
+- Keep function complexity low and prefer existing local helpers over new
+  abstractions.
+- Prefix intentionally unused variables with `_`.
 
 ### Shell Scripts
 
-- ShellCheck enforced (`.shellcheckrc` at root)
-- `shfmt` for formatting
-- All scripts must have shebangs and be executable
+- Shell scripts must have shebangs and be executable.
+- Prefer existing scripts under `scripts/` for Solana stack operations instead
+  of duplicating setup logic.
 
 ### No External Project Links
 
-Do not add links to third-party code repositories, community collections, or unofficial resources. Links to official tool documentation (Node.js, Python, uv) are acceptable.
-
-## Git Hooks (prek)
-
-All hooks managed by [prek](https://prek.j178.dev/) (installed via `npm install`):
-
-| Hook | What runs |
-|------|-----------|
-| **pre-commit** | File fixers, formatters, linters, Vitest (plugin) |
-| **commit-msg** | commitlint (Conventional Commits) |
-| **pre-push** | TypeScript type check (tsc --noEmit for plugin, JS, CLI) |
+Do not add links to third-party code repositories, community collections, or
+unofficial resources. Links to official tool documentation are acceptable.
 
 ## Working with This Repo
 
 ### Before Making Changes
 
-1. Read `CONTRIBUTING.md` for the full contributor guide
-2. Run `npm run dev:doctor` to verify the contributor environment without changing it
-3. Run tests targeted to the area you plan to change; reserve the full suite for broad changes
+1. Read `CONTRIBUTING.md` for the contributor guide.
+2. Run targeted tests or checks for the area you plan to change.
+3. Use `npm run tools:solana:readiness` for Solana safety checks when relevant.
 
 ### Git and GitHub Access Failures
 
-Follow `.agents/skills/_shared/git-github-hard-stop.md`: if SSH, `gh`, authentication, authorization, remote access, or push permission fails, stop and ask the user instead of working around access. Do not stop for ordinary merge conflicts or dirty-worktree state; resolve mechanical conflicts in the relevant workflow and ask the user only when resolution would change behavior or contributor intent.
+Follow `.agents/skills/_shared/git-github-hard-stop.md`: if SSH, `gh`,
+authentication, authorization, remote access, or push permission fails, stop and
+ask the user instead of working around access. Do not stop for ordinary merge
+conflicts or dirty-worktree state; resolve mechanical conflicts in the relevant
+workflow and ask only when resolution would change behavior or contributor
+intent.
 
 ### Pull Request Follow-Up
 
-Follow `.agents/skills/_shared/pr-follow-up.md`: after opening or pushing to a PR, monitor required CI and automated review comments, address valid CodeRabbit and PR Review Advisor findings, and consult the user when feedback is ambiguous or design-changing.
+Follow `.agents/skills/_shared/pr-follow-up.md`: after opening or pushing to a
+PR, monitor required CI and automated review comments, address valid automated
+review findings, and consult the user when feedback is ambiguous or
+design-changing.
 
 ### Common Patterns
 
 **Adding a CLI command:**
 
-- Entry point: `bin/nemoclaw.js` (launches the compiled CLI in `dist/`)
-- Main CLI implementation lives in `src/lib/` and compiles to `dist/lib/`
-- Add tests in `test/`
+- Entry point: `bin/nemoclawd.js`.
+- Add implementation under `src/`, `bin/lib/`, or the relevant runtime module
+  according to the existing pattern.
+- Add focused tests under `test/`.
 
-**Adding a plugin feature:**
+**Adding an MCP tool:**
 
-- Source: `nemoclaw/src/`
-- Co-locate tests as `*.test.ts`
-- Build with `cd nemoclaw && npm run build`
+- Source: `nemo-clawd-mcp/src/`.
+- Update `nemo-clawd-mcp/README.md` when user-facing tool behavior changes.
+- Build with `npm run build:mcp`.
 
-**Adding a network policy preset:**
+**Adding Solana runtime behavior:**
 
-- Add YAML to `nemoclaw-blueprint/policies/presets/`
-- Follow existing preset structure (see `slack.yaml`, `discord.yaml`)
+- Keep wallet-aware operations behind explicit dry-run or user confirmation.
+- Add or update policy presets in `nemo-clawd-python/policies/` or
+  `nemoclaw-blueprint/policies/` as needed.
+- Prefer devnet/test-validator verification before any mainnet guidance.
 
-**Adding model-specific sandbox compatibility:**
+**Updating the user skill:**
 
-- Add a declarative manifest under `nemoclaw-blueprint/model-specific-setup/<agent>/`
-- Use one exact `agent` per manifest (`openclaw`, `hermes`, etc.); do not make shared multi-agent manifests
-- Put OpenClaw executable wrappers under `nemoclaw-blueprint/openclaw-plugins/`
-- Put Hermes executable wrappers under `agents/hermes/`
-- Keep `agents/hermes/generate-config.ts` as a thin build-time entrypoint; add Hermes env parsing, config construction, registry handling, and serialization under `agents/hermes/config/`
-- Do not add Hermes behavior for an OpenClaw issue without a Hermes-specific repro or acceptance test
+- Source: `.agents/skills/nemoclawd-user-guide/`.
+- Published copy: `skills/nemoclawd-user-guide/`.
+- Keep both copies in sync and update evals when the routing behavior changes.
 
 ### Gotchas
 
-- `npm install` at root triggers `prek install` which sets up git hooks. If hooks fail, check that `core.hooksPath` is unset: `git config --unset core.hooksPath`
-- The `nemoclaw/` subdirectory has its own `package.json` and `node_modules`, while sharing the root Biome config — it's a separate npm project
-- SPDX headers are auto-inserted by pre-commit hooks; don't worry about adding them manually
-- Coverage thresholds are ratcheted in `ci/coverage-threshold-*.json` — new code should not decrease CLI or plugin coverage
-- The `.claude/skills` symlink points to `.agents/skills` — both paths resolve to the same content
+- `nemoclaw-blueprint/` and some `nemoclaw*` filenames are compatibility paths.
+  Do not rename runtime paths unless the package manifest, imports, docs, and
+  tests are updated together.
+- The root package publishes `skills/nemoclawd-user-guide/**`; keep catalog
+  docs aligned with that path.
+- `.venv/`, `.mypy_cache/`, `.logs/`, `dist/`, and `docs/_build/` are generated
+  or environment-specific artifacts. Do not treat them as source docs.
 
 ## Documentation
 
-- Treat `docs/` as the source of truth for user-facing documentation and follow `docs/CONTRIBUTING.md`.
-- After completing development changes, run a documentation writer subagent before final handoff. Give it the changed files, behavior summary, and test evidence so it can update docs or report that no doc changes are needed.
-- For normal docs changes, include source pages under `docs/`.
-- Update `.agents/skills/nemoclaw-user-guide/SKILL.md` only when the AI-agent docs routing guidance changes.
-- During release prep, run `nemoclaw-contributor-update-docs`, make doc version bumps, and open the docs refresh PR with the docs changes.
+- Treat `docs/` as the source of truth for user-facing documentation and follow
+  `docs/CONTRIBUTING.md` for docs changes.
+- After completing development changes, run a documentation review before final
+  handoff. Give the reviewer the changed files, behavior summary, and test
+  evidence so it can update docs or report that no doc changes are needed.
+- Update `.agents/skills/nemoclawd-user-guide/SKILL.md` only when AI-agent docs
+  routing guidance changes, and update `skills/nemoclawd-user-guide/` with it.
 
 ## PR Requirements
 
-- Create feature branch from `main`
-- Let normal commit and push hooks provide hook verification before submitting
-- Contributor-owned PRs must self-serve the DCO declaration and GitHub commit verification before opening a PR
-- Every contributor-owned PR description must include a valid `Signed-off-by:` declaration for the contributor, and every commit in the PR must appear as `Verified` in GitHub
-- Contributor agents must stop before `gh pr create` if the PR body will not include the DCO declaration or any commit is missing GitHub verification; tell the contributor to fix the issue before opening a PR
-- If force-push is not allowed and an already-published branch contains an unverified commit, require a fresh branch and fresh PR with a clean compliant history
-- Run targeted tests for changed behavior, and run `npm run docs` for doc changes
-- Use `npx prek run --from-ref main --to-ref HEAD` if hooks were skipped or unavailable
-- Follow PR template (`.github/PULL_REQUEST_TEMPLATE.md`)
-- No secrets, API keys, or credentials committed
-- Limit open PRs to fewer than 10
+- Create feature branches from `main`.
+- Let normal commit and push hooks provide verification before submitting.
+- Contributor-owned PRs must self-serve the DCO declaration and GitHub commit
+  verification before opening a PR.
+- Every contributor-owned PR description must include a valid `Signed-off-by:`
+  declaration for the contributor, and every commit in the PR must appear as
+  `Verified` in GitHub.
+- Stop before `gh pr create` if the PR body will not include the DCO declaration
+  or any commit is missing GitHub verification.
+- Run targeted tests for changed behavior, and run docs checks for docs changes.
+- No secrets, API keys, wallet private keys, seed phrases, or credentials may be
+  committed.

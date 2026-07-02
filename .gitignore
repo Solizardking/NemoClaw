@@ -63,3 +63,19 @@ extensions/**/node_modules/
 extensions/**/dist/
 extensions/**/package-lock.json
 extensions/**/pnpm-lock.yaml
+
+# AI training source lane: keep generated data, local state, and large artifacts out.
+ai-training/.claude/
+ai-training/.hf/
+ai-training/.venv/
+ai-training/**/.venv/
+ai-training/**/.uv-cache/
+ai-training/**/__pycache__/
+ai-training/data/
+ai-training/outputs/
+ai-training/target/
+ai-training/wandb/
+ai-training/ollama/build/
+ai-training/nvidia/outputs/
+ai-training/etc/
+ai-training/*.jsonl

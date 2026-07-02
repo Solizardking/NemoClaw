@@ -1,36 +1,36 @@
 ---
-name: "nemoclaw-skills-guide"
-description: "Start here. Introduces what NemoClaw is, what agent skills are available, and which skill to use for a given task. Use when discovering NemoClaw capabilities, choosing the right skill, or orienting in the project. Trigger keywords - skills, capabilities, what can I do, help, guide, index, overview, start here."
+name: "nemoclawd-skills-guide"
+description: "Start here. Introduces what Nemo Clawd is, what agent skills are available, and which skill to use for Solana-native Clawd tasks. Use when discovering Nemo Clawd capabilities, choosing the right skill, or orienting in the project. Trigger keywords - skills, capabilities, what can I do, help, guide, index, overview, start here, solana clawd, nemoclawd."
 license: "Apache-2.0"
 ---
 
-# NemoClaw Skills Guide
+# Nemo Clawd Skills Guide
 
-NVIDIA NemoClaw runs OpenClaw always-on assistants inside hardened OpenShell sandboxes with NVIDIA inference (Nemotron).
-It provides CLI tooling, guided onboarding, a security blueprint, routed inference, and workspace management.
+Nemo Clawd is a Solana-native agentic runtime packaged as
+`@mawdbotsonsolana/nemoclawd`. It combines the `nemoclawd` CLI, OpenShell
+sandboxing, xAI/NVIDIA inference routing, the bundled Nemo Clawd MCP server,
+Solana wallet and RPC guardrails, and CLAWD-aware agent auth flows.
 
-This guide lists every agent skill shipped with NemoClaw, organized by audience.
-Load the specific skill you need after identifying it here.
+This guide lists the active source skills for Nemo Clawd and calls out legacy
+compatibility skills that still exist for old maintainer workflows. Load the
+specific skill you need after identifying it here.
 
 ## Skill Buckets
 
-Skills are grouped into three buckets by audience.
-The prefix in each skill name indicates who it is for.
+### `nemoclawd-user-*` (1 skill)
 
-### `nemoclaw-user-*` (1 skill)
+For end users operating a Nemo Clawd sandbox or asking a coding assistant for
+setup help. Covers routing to local docs, public Markdown docs, Solana
+onboarding, MCP setup, financial-harness guardrails, and agent-auth flows.
 
-For end users operating a NemoClaw sandbox.
-Covers routing human users' AI agents to the canonical NemoClaw Markdown documentation.
+### Legacy internal workflow skills
 
-### `nemoclaw-maintainer-*` (13 skills)
+The source tree still contains internal `nemoclaw-maintainer-*` and
+`nemoclaw-contributor-*` directories. Treat those as compatibility-only workflow
+helpers for old repository maintenance tasks, not user-facing Nemo Clawd skills.
+Do not copy them into the published `skills/` catalog.
 
-For project maintainers.
-Covers the daily maintainer cadence (morning standup, daytime loop, evening handoff), workflow policy reference, cutting releases, drafting release notes, finding PRs to review, comparing PRs, cross-issue sweeps, triage, normalizing issue and PR title tags, performing security code reviews, and verifying whether stale bug reports still reproduce on the latest release.
-
-### `nemoclaw-contributor-*` (3 skills)
-
-For contributors to the NemoClaw codebase.
-Covers creating pull requests that follow the project template, monitoring CI and automated review feedback after pushing, drafting documentation updates from recent commits, and onboarding new messaging channels.
+When working on public Nemo Clawd support, prefer `nemoclawd-user-guide`.
 
 ## Skill Catalog
 
@@ -39,49 +39,24 @@ Covers creating pull requests that follow the project template, monitoring CI an
 <!-- user-skills-table:begin -->
 | Skill | Summary |
 |-------|---------|
-| `nemoclaw-user-guide` | Route human users' AI agents to `llms.txt` and the relevant NemoClaw Markdown docs for installation, configuration, operation, security, and troubleshooting. |
+| `nemoclawd-user-guide` | Route human users' AI agents to local docs, `llms.txt`, the Nemo Clawd docs MCP server, Solana onboarding pages, financial-harness guardrails, MCP setup, and agent-auth guidance for installation, configuration, operation, security, and troubleshooting. |
 <!-- user-skills-table:end -->
-
-### Maintainer Skills
-
-| Skill | Summary |
-|-------|---------|
-| `nemoclaw-maintainer-morning` | Morning standup: triage the backlog, determine the day's target version, label selected items, surface stragglers, and output the daily plan. |
-| `nemoclaw-maintainer-triage` | Suggest and optionally apply labels for issues and PRs using the live NemoClaw triage instructions. |
-| `nemoclaw-maintainer-policies` | Read-only maintainer workflow policy reference for Issue Type, labels, Project fields, daily release labels, triage, duplicates, blocked items, and workflow decisions. |
-| `nemoclaw-maintainer-cross-issue-sweep` | Scan open issues for adjacent fixes or contradiction risks when reviewing a PR. |
-| `nemoclaw-maintainer-day` | Daytime loop: pick the highest-value version-targeted item and execute the right workflow (merge gate, salvage, security sweep, test gaps, hotspot cooling, or sequencing). Designed for `/loop`. |
-| `nemoclaw-maintainer-evening` | End-of-day handoff: check version progress, identify stragglers, generate a QA handoff summary, cut the release tag, bump stragglers to the next patch, and hand off release notes. |
-| `nemoclaw-maintainer-cut-release-tag` | Cut an annotated semver tag on a maintainer-confirmed `origin/main` commit, wait for workflow-managed `latest`, and bump remaining open items to the next patch; `lkg` stays manual. |
-| `nemoclaw-maintainer-release-notes` | Draft release notes from live tag/compare data, with the three-paragraph narrative, categorized change list, and external-only contributor thanks. |
-| `nemoclaw-maintainer-find-review-pr` | Find open security PRs with Urgent or High Project Priority, link each to its issue, detect duplicates, and present a review summary. |
-| `nemoclaw-maintainer-pr-comparator` | Compare competing PRs for the same issue and recommend which one to merge. |
-| `nemoclaw-maintainer-normalize-title-tags` | Preview and remove bracketed `NemoClaw` title tags from issues and PRs case-insensitively, even when the tag appears later in the title. |
-| `nemoclaw-maintainer-security-code-review` | Perform a 9-category security review of a PR or issue, producing per-category PASS/WARNING/FAIL verdicts. |
-| `nemoclaw-maintainer-verify-stale` | Verify whether old issues with native Issue Type `Bug` still reproduce on latest. Reuses or provisions a Brev box, scores confidence, and proposes evidence-backed Project/comment writes for approval; never auto-closes. |
-
-### Contributor Skills
-
-| Skill | Summary |
-|-------|---------|
-| `nemoclaw-contributor-create-pr` | Create GitHub pull requests that follow the NemoClaw PR template, including pre-PR checks, conventional commit titles, DCO sign-off, post-push CI monitoring, and CodeRabbit/PR Review Advisor follow-up. |
-| `nemoclaw-contributor-onboard-messaging-channel` | Add or review a new messaging channel with manifest-first implementation, upstream source analysis, plugin install confirmation, reachability checks, policies, docs, and tests. |
-| `nemoclaw-contributor-update-docs` | Scan recent git commits for user-facing changes and draft or update documentation pages during release prep. |
 
 ## Getting Started
 
-Ask the user which role best describes them:
+For user support, start with `nemoclawd-user-guide`.
 
-- **User** — operating a NemoClaw sandbox (running, configuring, monitoring).
-- **Contributor** — contributing code or docs to the NemoClaw project.
-- **Maintainer** — triaging, reviewing, releasing, and managing the project day-to-day.
+Use it for:
 
-Skills are cumulative. Each role includes the skills from the roles above it:
+- Installing `@mawdbotsonsolana/nemoclawd`.
+- Launching or checking `nemoclawd` sandboxes.
+- Setting Solana RPC, Helius, Privy, Telegram, or xAI configuration safely.
+- Running `nemoclawd financial-harness` before live services.
+- Configuring the bundled Nemo Clawd MCP server.
+- Explaining SIWS, CAAP/1.0, CLAWD token gating, and Phala TEE attestation via `agent-auth`.
+- Routing to local `docs/` pages or `https://docs.nvidia.com/nemoclawd/llms.txt`.
 
-| Role | Skills included | Count | Start with |
-|------|----------------|-------|------------|
-| User | `nemoclaw-user-*` | 1 | `nemoclaw-user-guide` |
-| Contributor | `nemoclaw-user-*` + `nemoclaw-contributor-*` | 4 | `nemoclaw-user-guide` |
-| Maintainer | All skills | 17 | `nemoclaw-maintainer-morning` |
-
-After identifying the role, present the applicable skills from the Skill Catalog above and recommend the starting skill.
+When the user asks about repository maintenance, CI triage, PR review, or old
+NVIDIA workflow automation, inspect the relevant compatibility skill directly
+and verify that its repository assumptions still match the current Nemo Clawd
+checkout before acting.

@@ -1,57 +1,59 @@
 [
   {
-    "id": "nemoclaw-user-guide-install-openclaw-001",
-    "question": "Help me install NemoClaw with OpenClaw from my coding assistant. I need the official docs and I do not want to paste secrets into chat.",
-    "expected_skill": "nemoclaw-user-guide",
-    "ground_truth": "A NemoClaw-specific answer that uses the user guide skill to route the assistant to `llms.txt` and the OpenClaw Markdown prerequisites and quickstart pages, asks one setup question at a time, and handles credentials with redacted placeholders instead of chat-transcribed secrets.",
+    "id": "nemoclawd-user-guide-install-001",
+    "question": "Help me install nemoclawd from my coding assistant and keep secrets out of chat.",
+    "expected_skill": "nemoclawd-user-guide",
+    "ground_truth": "A Nemo Clawd-specific answer that starts from README.md, docs/get-started/quickstart.md, and install.sh, uses the `nemoclawd` binary, gives redacted xAI/Solana environment placeholders, and avoids asking for secrets in chat.",
     "expected_behavior": [
-      "Uses `nemoclaw-user-guide`.",
-      "Starts from `https://docs.nvidia.com/nemoclaw/llms.txt` and the OpenClaw `.md` docs.",
+      "Uses `nemoclawd-user-guide`.",
+      "Starts from local README.md, docs/get-started/quickstart.md, and install.sh.",
+      "Uses `nemoclawd` command examples.",
       "Does not tell the user to paste secrets into chat."
     ]
   },
   {
-    "id": "nemoclaw-user-guide-mcp-server-001",
-    "question": "Configure my coding assistant to search the NemoClaw docs through MCP before answering setup questions.",
-    "expected_skill": "nemoclaw-user-guide",
-    "ground_truth": "A NemoClaw-specific answer that uses the user guide skill to configure the docs MCP server at `https://docs.nvidia.com/nemoclaw/_mcp/server`, mentions the read-only `searchDocs` docs search tool, and gives client-specific setup guidance such as the Claude Code command or Cursor MCP server configuration.",
+    "id": "nemoclawd-user-guide-mcp-001",
+    "question": "Configure the bundled MCP server and docs MCP route for Solana tools.",
+    "expected_skill": "nemoclawd-user-guide",
+    "ground_truth": "A Nemo Clawd-specific answer that uses nemo-clawd-mcp/README.md for the bundled MCP server, uses `https://docs.nvidia.com/nemoclawd/_mcp/server` for docs search when local docs are unavailable, and keeps Solana credentials redacted.",
     "expected_behavior": [
-      "Uses `nemoclaw-user-guide`.",
-      "Includes `https://docs.nvidia.com/nemoclaw/_mcp/server`.",
-      "Mentions MCP docs search before falling back to Markdown docs."
+      "Uses `nemo-clawd-mcp/README.md`.",
+      "Includes `https://docs.nvidia.com/nemoclawd/_mcp/server`.",
+      "Keeps API keys and wallet secrets redacted."
     ]
   },
   {
-    "id": "nemoclaw-user-guide-hermes-variant-001",
-    "question": "Use the Hermes version of the NemoClaw docs and walk me through the first sandbox setup.",
-    "expected_skill": "nemoclaw-user-guide",
-    "ground_truth": "A NemoClaw-specific answer that selects the Hermes documentation variant, fetches the Hermes Markdown home, prerequisites, and quickstart pages, and avoids mixing OpenClaw-specific instructions unless the difference is explained.",
+    "id": "nemoclawd-user-guide-solana-001",
+    "question": "Set up Solana RPC for Nemo Clawd without live trades.",
+    "expected_skill": "nemoclawd-user-guide",
+    "ground_truth": "A safe Solana-native setup answer that distinguishes local/test-validator or read-only RPC checks from mainnet trading and recommends a validation command.",
     "expected_behavior": [
-      "Uses `nemoclaw-user-guide`.",
-      "Routes to Hermes `.md` pages.",
-      "Keeps instructions variant-specific."
+      "Distinguishes local, devnet, and mainnet risk.",
+      "Uses Solana RPC environment variables.",
+      "Recommends a validation command such as `nemoclawd solana`."
     ]
   },
   {
-    "id": "nemoclaw-user-guide-local-inference-001",
-    "question": "Switch my NemoClaw sandbox to local Ollama and use the Markdown docs instead of guessing.",
-    "expected_skill": "nemoclaw-user-guide",
-    "ground_truth": "A NemoClaw-specific answer that routes through `llms.txt` to the inference Markdown pages, gathers provider and model choices one at a time, and recommends verification after the switch.",
+    "id": "nemoclawd-user-guide-agent-auth-001",
+    "question": "Verify a Solana agent with SIWS, CAAP, a TEE quote, and CLAWD token gating without scraping wallets manually.",
+    "expected_skill": "nemoclawd-user-guide",
+    "ground_truth": "A Nemo Clawd answer that routes identity work through agent-auth, starts with the lightweight CAAP status check when possible, explains SIWS challenge/verify and full CAAP attestation, and warns before paid x402 attestation calls.",
     "expected_behavior": [
-      "Uses `nemoclaw-user-guide`.",
-      "Fetches inference pages from the Markdown docs.",
-      "Recommends a verification step after configuration."
+      "Uses the `agent-auth` flow.",
+      "Mentions SIWS, CAAP, TEE evidence, and CLAWD tier gating.",
+      "Does not recommend ad-hoc wallet scraping.",
+      "Warns before paid full attestation."
     ]
   },
   {
-    "id": "nemoclaw-user-guide-policy-troubleshooting-001",
-    "question": "My agent hit a blocked network request. Help me find the right NemoClaw docs for approving it safely.",
-    "expected_skill": "nemoclaw-user-guide",
-    "ground_truth": "A NemoClaw-specific answer that routes to the network-policy Markdown pages and relevant troubleshooting or command reference pages, explains assumptions, and avoids granting broad egress without context.",
+    "id": "nemoclawd-user-guide-blueprint-001",
+    "question": "Explain how the Nemo Clawd OpenShell blueprint migrates my local state.",
+    "expected_skill": "nemoclawd-user-guide",
+    "ground_truth": "A Nemo Clawd answer that points to nemoclaw-blueprint and nemo-clawd-python as compatibility paths, explains `.nemoclawd` snapshots, and warns about preserving secrets and symlinks.",
     "expected_behavior": [
-      "Uses `nemoclaw-user-guide`.",
-      "Fetches network policy and troubleshooting Markdown docs.",
-      "Frames approval as a least-privilege workflow."
+      "Uses blueprint and migration source files.",
+      "Mentions `.nemoclawd` state.",
+      "Warns before destructive or mainnet-affecting actions."
     ]
   }
 ]
