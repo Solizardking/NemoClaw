@@ -39,6 +39,7 @@ vdr-notes/
 .direnv/
 .env
 .env.*
+!agents/clawd-operator/.env.example
 .envrc
 .netrc
 .npmrc

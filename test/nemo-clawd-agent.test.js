@@ -20,6 +20,9 @@ describe("nemo-clawd agent packaging", () => {
     assert.match(manifest, /^base_agent: hermes$/m);
     assert.match(manifest, /command: \/usr\/local\/bin\/nemo-clawd-mcp/);
     assert.match(manifest, /tool_count: 31/);
+    assert.match(manifest, /name: clawd-operator/);
+    assert.match(manifest, /binary_path: \/usr\/local\/bin\/clawd-operator/);
+    assert.match(manifest, /clawd_agent_dir: \/opt\/clawd-operator\/clawd-agent/);
   });
 
   it("uses Docker-safe image and executable names in the Python blueprint", () => {
@@ -28,6 +31,8 @@ describe("nemo-clawd agent packaging", () => {
     assert.match(blueprint, /image: "ghcr\.io\/nvidia\/nemoclaw\/nemo-clawd:latest"/);
     assert.match(blueprint, /name: "nemo-clawd"/);
     assert.match(blueprint, /command: "\/usr\/local\/bin\/nemo-clawd-mcp"/);
+    assert.match(blueprint, /name: "clawd-operator"/);
+    assert.match(blueprint, /command: "\/usr\/local\/bin\/clawd-operator"/);
     assert.doesNotMatch(blueprint, /nemo clawd/);
   });
 
@@ -37,8 +42,27 @@ describe("nemo-clawd agent packaging", () => {
     assert.doesNotMatch(policy, /\/usr\/local\/bin\/nemo clawd/);
     assert.match(policy, /\/usr\/local\/bin\/nemoclawd/);
     assert.match(policy, /\/usr\/local\/bin\/nemo-clawd-mcp/);
+    assert.match(policy, /\/usr\/local\/bin\/clawd-operator/);
     assert.match(policy, /host: api\.x\.ai/);
     assert.match(policy, /host: mainnet\.helius-rpc\.com/);
+    assert.match(policy, /host: api\.jup\.ag/);
+    assert.match(policy, /host: public-api\.birdeye\.so/);
+  });
+
+  it("installs clawd-operator without copying secret env files into the image contract", () => {
+    const dockerfile = readRepoFile("agents/nemo-clawd/Dockerfile");
+    const dockerignore = readRepoFile(".dockerignore");
+    const packageJson = JSON.parse(readRepoFile("package.json"));
+
+    assert.match(dockerfile, /COPY agents\/clawd-operator\/ \/opt\/clawd-operator\//);
+    assert.match(dockerfile, /COPY agents\/nemo-clawd\/start-operator\.sh \/usr\/local\/bin\/clawd-operator/);
+    assert.match(dockerfile, /secret env files must not be copied into clawd-operator image layers/);
+    assert.match(dockerignore, /^\.env$/m);
+    assert.match(dockerignore, /^\.env\.\*$/m);
+    assert.match(dockerignore, /^!agents\/clawd-operator\/\.env\.example$/m);
+    assert.ok(packageJson.files.includes("agents/clawd-operator/.env.example"));
+    assert.ok(!packageJson.files.includes("agents/clawd-operator/.env"));
+    assert.ok(!packageJson.files.includes("agents/clawd-operator/clawd-agent/.env.local"));
   });
 });
 

@@ -80,6 +80,7 @@ network_policies:
       - { path: /usr/local/bin/claude }
       - { path: /usr/local/bin/nemoclawd }
       - { path: /usr/local/bin/nemo-clawd-mcp }
+      - { path: /usr/local/bin/clawd-operator }
 
   github:
     name: github
@@ -166,6 +167,7 @@ network_policies:
           - allow: { method: POST, path: "/v1/images/generations" }
     binaries:
       - { path: /usr/local/bin/nemo-clawd-mcp }
+      - { path: /usr/local/bin/clawd-operator }
       - { path: /usr/bin/node }
 
   helius_rpc:
@@ -181,6 +183,7 @@ network_policies:
           - allow: { method: POST, path: "/**" }
     binaries:
       - { path: /usr/local/bin/nemo-clawd-mcp }
+      - { path: /usr/local/bin/clawd-operator }
       - { path: /usr/bin/node }
 
   birdeye_market_data:
@@ -193,8 +196,17 @@ network_policies:
         tls: terminate
         rules:
           - allow: { method: GET, path: "/**" }
+      - host: public-api.birdeye.so
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: POST, path: "/**" }
     binaries:
       - { path: /usr/local/bin/nemo-clawd-mcp }
+      - { path: /usr/local/bin/clawd-operator }
       - { path: /usr/bin/node }
 
   coingecko_market_data:
@@ -209,7 +221,59 @@ network_policies:
           - allow: { method: GET, path: "/**" }
     binaries:
       - { path: /usr/local/bin/nemo-clawd-mcp }
+      - { path: /usr/local/bin/clawd-operator }
       - { path: /usr/bin/node }
+
+  jupiter_swap:
+    name: jupiter_swap
+    endpoints:
+      - host: api.jup.ag
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: POST, path: "/**" }
+    binaries:
+      - { path: /usr/local/bin/clawd-operator }
+
+  clawd_solana_tools:
+    name: clawd_solana_tools
+    endpoints:
+      - host: api.mainnet-beta.solana.com
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: POST, path: "/**" }
+      - host: public-api-v2.bags.fm
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: POST, path: "/**" }
+      - host: pump.fun
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+          - allow: { method: POST, path: "/**" }
+      - host: data.solanatracker.io
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        tls: terminate
+        rules:
+          - allow: { method: GET, path: "/**" }
+    binaries:
+      - { path: /usr/local/bin/clawd-operator }
 
   # ── Messaging — pre-allowed for agent notifications ────────────
   # Telegram Bot API is open by default so the agent can send

@@ -23,6 +23,7 @@ Thumbs.db
 # being sent to the Docker daemon and permanently baked into image layers.
 .env
 .env.*
+!agents/clawd-operator/.env.example
 .envrc
 .npmrc
 .netrc

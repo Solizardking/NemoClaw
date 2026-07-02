@@ -37,6 +37,16 @@ components:
     package_dir: "/opt/nemo-clawd-mcp"
     tool_count: 31
 
+  operator:
+    name: "clawd-operator"
+    package_dir: "/opt/clawd-operator"
+    command: "/usr/local/bin/clawd-operator"
+    default_config: "/opt/clawd-operator/ralph.yml"
+    codex_acp_config: "/opt/clawd-operator/ralph.codex-acp.yml"
+    prompt_file: "/opt/clawd-operator/PROMPT.md"
+    skills_dir: "/opt/clawd-operator/skills"
+    clawd_agent_dir: "/opt/clawd-operator/clawd-agent"
+
   inference:
     profiles:
       default:

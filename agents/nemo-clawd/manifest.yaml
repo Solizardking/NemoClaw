@@ -66,6 +66,19 @@ blueprint:
     - snapshots
     - staging
 
+operator:
+  name: clawd-operator
+  display_name: "OpenClawd Operator"
+  package_dir: /opt/clawd-operator
+  binary_path: /usr/local/bin/clawd-operator
+  module: ralph_orchestrator
+  default_config: /opt/clawd-operator/ralph.yml
+  codex_acp_config: /opt/clawd-operator/ralph.codex-acp.yml
+  prompt_file: /opt/clawd-operator/PROMPT.md
+  skills_dir: /opt/clawd-operator/skills
+  clawd_agent_dir: /opt/clawd-operator/clawd-agent
+  env_example: /opt/clawd-operator/.env.example
+
 # ── State directories ──────────────────────────────────────────
 state_dirs:
   - memories
@@ -113,7 +126,12 @@ phone_home_hosts:
   - api.x.ai
   - mainnet.helius-rpc.com
   - api.birdeye.so
+  - public-api.birdeye.so
   - api.coingecko.com
+  - api.jup.ag
+  - public-api-v2.bags.fm
+  - pump.fun
+  - data.solanatracker.io
   - api.telegram.org
 
 package_registry:

@@ -34,21 +34,36 @@ RUN npm ci --ignore-scripts --no-audit --no-fund \
 
 COPY nemo-clawd-mcp/README.md /opt/nemo-clawd-mcp/README.md
 COPY nemo-clawd-python/ /opt/nemo-clawd-python/
+COPY agents/clawd-operator/ /opt/clawd-operator/
 COPY agents/nemo-clawd/manifest.yaml /opt/nemoclaw-agents/nemo-clawd/manifest.yaml
 COPY agents/nemo-clawd/policy-additions.yaml /opt/nemoclaw-agents/nemo-clawd/policy-additions.yaml
 COPY agents/nemo-clawd/start-mcp.sh /usr/local/bin/nemo-clawd-mcp
+COPY agents/nemo-clawd/start-operator.sh /usr/local/bin/clawd-operator
 
 RUN set -eu; \
     chmod 755 /usr/local/bin/nemo-clawd-mcp; \
-    chmod -R a+rX /opt/nemo-clawd-mcp /opt/nemo-clawd-python /opt/nemoclaw-agents/nemo-clawd; \
+    chmod 755 /usr/local/bin/clawd-operator; \
+    if find /opt/clawd-operator -name '.env' -o -name '.env.local' | grep -q .; then \
+        echo "ERROR: secret env files must not be copied into clawd-operator image layers" >&2; \
+        exit 1; \
+    fi; \
+    python3 -m venv /opt/clawd-operator/.venv; \
+    /opt/clawd-operator/.venv/bin/python -m pip install --upgrade pip; \
+    /opt/clawd-operator/.venv/bin/python -m pip install --no-cache-dir /opt/clawd-operator; \
+    chmod -R a+rX /opt/nemo-clawd-mcp /opt/nemo-clawd-python /opt/nemoclaw-agents/nemo-clawd /opt/clawd-operator; \
     python3 -m py_compile \
         /opt/nemo-clawd-python/orchestrator/runner.py \
         /opt/nemo-clawd-python/migrations/snapshot.py; \
+    /opt/clawd-operator/.venv/bin/python -m py_compile \
+        /opt/clawd-operator/src/ralph_orchestrator/__main__.py \
+        /opt/clawd-operator/src/ralph_orchestrator/orchestrator.py; \
     node -e "import('/opt/nemo-clawd-mcp/dist/index.js').then((m) => { if (!Array.isArray(m.TOOLS) || m.TOOLS.length !== 31) throw new Error('expected 31 MCP tools'); })"
 
 ENV NEMOCLAW_AGENT=nemo-clawd \
     NEMOCLAW_BLUEPRINT_PATH=/opt/nemo-clawd-python \
     NEMO_CLAWD_MCP_SERVER=/usr/local/bin/nemo-clawd-mcp \
-    NEMO_CLAWD_MCP_PACKAGE_DIR=/opt/nemo-clawd-mcp
+    NEMO_CLAWD_MCP_PACKAGE_DIR=/opt/nemo-clawd-mcp \
+    OPENCLAWD_OPERATOR_HOME=/opt/clawd-operator \
+    CLAWD_OPERATOR_COMMAND=/usr/local/bin/clawd-operator
 
 WORKDIR /sandbox
