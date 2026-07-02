@@ -9,9 +9,9 @@ metadata:
 # Nemo Clawd User Guide
 
 Use this skill when a user wants help operating the Solana-native `nemoclawd`
-stack or routing a coding assistant to the right docs. Treat `NemoClaw`,
-`nemoclaw`, `OpenClaw`, and plain `claw` wording as legacy preview terminology
-unless the user is asking about repository history or compatibility code.
+stack or routing a coding assistant to the right docs. Treat pre-Clawd product
+and binary names as legacy preview terminology unless the user is asking about
+repository history or compatibility code.
 
 ## Source Order
 
