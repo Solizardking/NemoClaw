@@ -35,9 +35,10 @@ export function verifyBlueprintDigest(
 export function checkCompatibility(
   manifest: BlueprintManifest,
   openshellVersion: string,
-  openclawVersion: string,
+  clawdVersion: string,
 ): string[] {
   const errors: string[] = [];
+  const requiredClawdVersion = manifest.minClawdVersion || manifest.minNemoclawdVersion;
 
   if (
     manifest.minOpenShellVersion &&
@@ -47,10 +48,10 @@ export function checkCompatibility(
   }
 
   if (
-    manifest.minOpenClawVersion &&
-    !satisfiesMinVersion(openclawVersion, manifest.minOpenClawVersion)
+    requiredClawdVersion &&
+    !satisfiesMinVersion(clawdVersion, requiredClawdVersion)
   ) {
-    errors.push(`OpenClaw version ${openclawVersion} < required ${manifest.minOpenClawVersion}`);
+    errors.push(`Clawd version ${clawdVersion} < required ${requiredClawdVersion}`);
   }
 
   return errors;

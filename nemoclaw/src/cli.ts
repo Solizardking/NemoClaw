@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * CLI registrar for `openclaw nemoclaw <subcommand>`.
+ * CLI registrar for `clawd nemoclawd <subcommand>`.
  *
  * Wires commander.js subcommands to the existing blueprint infrastructure.
  */
 
-import type { OpenClawPluginApi, PluginCliContext } from "./index.js";
+import type { ClawdPluginApi, PluginCliContext } from "./index.js";
 import { getPluginConfig } from "./index.js";
 import { cliStatus } from "./commands/status.js";
 import { cliMigrate } from "./commands/migrate.js";
@@ -17,14 +17,14 @@ import { cliEject } from "./commands/eject.js";
 import { cliLogs } from "./commands/logs.js";
 import { cliOnboard } from "./commands/onboard.js";
 
-export function registerCliCommands(ctx: PluginCliContext, api: OpenClawPluginApi): void {
+export function registerCliCommands(ctx: PluginCliContext, api: ClawdPluginApi): void {
   const { program, logger } = ctx;
   const pluginConfig = getPluginConfig(api);
 
-  const nemoclaw = program.command("nemoclaw").description("NemoClaw sandbox management");
+  const nemoclawd = program.command("nemoclawd").description("Nemo Clawd sandbox management");
 
-  // openclaw nemoclaw status
-  nemoclaw
+  // clawd nemoclawd status
+  nemoclawd
     .command("status")
     .description("Show sandbox, blueprint, and inference state")
     .option("--json", "Output as JSON", false)
@@ -32,10 +32,10 @@ export function registerCliCommands(ctx: PluginCliContext, api: OpenClawPluginAp
       await cliStatus({ json: opts.json, logger, pluginConfig });
     });
 
-  // openclaw nemoclaw migrate
-  nemoclaw
+  // clawd nemoclawd migrate
+  nemoclawd
     .command("migrate")
-    .description("Migrate host OpenClaw installation into an OpenShell sandbox")
+    .description("Migrate host Clawd installation into an OpenShell sandbox")
     .option("--dry-run", "Show what would be migrated without making changes", false)
     .option("--profile <profile>", "Blueprint profile to use", "default")
     .option("--skip-backup", "Skip creating a host backup snapshot", false)
@@ -49,10 +49,10 @@ export function registerCliCommands(ctx: PluginCliContext, api: OpenClawPluginAp
       });
     });
 
-  // openclaw nemoclaw launch
-  nemoclaw
+  // clawd nemoclawd launch
+  nemoclawd
     .command("launch")
-    .description("Fresh setup: bootstrap OpenClaw inside OpenShell")
+    .description("Fresh setup: bootstrap Clawd inside OpenShell")
     .option("--force", "Skip ergonomics warning and force plugin-driven bootstrap", false)
     .option("--profile <profile>", "Blueprint profile to use", "default")
     .action(async (opts: { force: boolean; profile: string }) => {
@@ -64,17 +64,17 @@ export function registerCliCommands(ctx: PluginCliContext, api: OpenClawPluginAp
       });
     });
 
-  // openclaw nemoclaw connect
-  nemoclaw
+  // clawd nemoclawd connect
+  nemoclawd
     .command("connect")
-    .description("Open an interactive shell inside the OpenClaw sandbox")
+    .description("Open an interactive shell inside the Clawd sandbox")
     .option("--sandbox <name>", "Sandbox name to connect to", pluginConfig.sandboxName)
     .action(async (opts: { sandbox: string }) => {
       await cliConnect({ sandbox: opts.sandbox, logger });
     });
 
-  // openclaw nemoclaw logs
-  nemoclaw
+  // clawd nemoclawd logs
+  nemoclawd
     .command("logs")
     .description("Stream blueprint execution and sandbox logs")
     .option("-f, --follow", "Follow log output", false)
@@ -90,8 +90,8 @@ export function registerCliCommands(ctx: PluginCliContext, api: OpenClawPluginAp
       });
     });
 
-  // openclaw nemoclaw eject
-  nemoclaw
+  // clawd nemoclawd eject
+  nemoclawd
     .command("eject")
     .description("Rollback from OpenShell and restore host installation")
     .option("--run-id <id>", "Specific blueprint run ID to rollback from")
@@ -105,8 +105,8 @@ export function registerCliCommands(ctx: PluginCliContext, api: OpenClawPluginAp
       });
     });
 
-  // openclaw nemoclaw onboard
-  nemoclaw
+  // clawd nemoclawd onboard
+  nemoclawd
     .command("onboard")
     .description("Interactive setup: configure inference endpoint, credential, and model")
     .option("--api-key <key>", "API key for endpoints that require one (skips prompt)")

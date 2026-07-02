@@ -4,9 +4,9 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-const STATE_DIR = join(process.env.HOME ?? "/tmp", ".nemoclaw", "state");
+const STATE_DIR = join(process.env.HOME ?? "/tmp", ".nemoclawd", "state");
 
-export interface NemoClawState {
+export interface NemoClawdState {
   lastRunId: string | null;
   lastAction: string | null;
   blueprintVersion: string | null;
@@ -28,10 +28,10 @@ function ensureStateDir(): void {
 }
 
 function statePath(): string {
-  return join(STATE_DIR, "nemoclaw.json");
+  return join(STATE_DIR, "nemoclawd.json");
 }
 
-function blankState(): NemoClawState {
+function blankState(): NemoClawdState {
   return {
     lastRunId: null,
     lastAction: null,
@@ -44,16 +44,16 @@ function blankState(): NemoClawState {
   };
 }
 
-export function loadState(): NemoClawState {
+export function loadState(): NemoClawdState {
   ensureStateDir();
   const path = statePath();
   if (!existsSync(path)) {
     return blankState();
   }
-  return JSON.parse(readFileSync(path, "utf-8")) as NemoClawState;
+  return JSON.parse(readFileSync(path, "utf-8")) as NemoClawdState;
 }
 
-export function saveState(state: NemoClawState): void {
+export function saveState(state: NemoClawdState): void {
   ensureStateDir();
   state.updatedAt = new Date().toISOString();
   if (!state.createdAt) state.createdAt = state.updatedAt;

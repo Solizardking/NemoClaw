@@ -32,6 +32,8 @@ describe("CLI dispatch", () => {
     assert.ok(r.out.includes("doctor"), "missing doctor command");
     assert.ok(r.out.includes("launch"), "missing launch command");
     assert.ok(r.out.includes("financial-harness"), "missing financial harness command");
+    assert.ok(r.out.includes("birth"), "missing birth command");
+    assert.ok(r.out.includes("Lobster-themed"), "missing lobster theme");
     assert.ok(r.out.includes("solana-agent"), "missing Solana agent action");
     assert.ok(r.out.includes("solana-bridge"), "missing Solana bridge action");
     assert.ok(r.out.includes("solana start"), "missing Solana one-shot action");
@@ -81,6 +83,33 @@ describe("CLI dispatch", () => {
     assert.equal(report.mode, "dry-run");
     assert.equal(report.guardrails.signingEnabled, false);
     assert.equal(report.guardrails.transactionSubmissionEnabled, false);
+  });
+
+  it("birth --json lists localized Clawd agents", () => {
+    const r = run("birth --json");
+    assert.equal(r.code, 0);
+    const deck = JSON.parse(r.out);
+    assert.equal(deck.theme, "lobster");
+    assert.equal(deck.symbol, "🦞");
+    assert.ok(deck.count >= 42, "missing locale birth agents");
+    assert.ok(
+      deck.agents.some((agent) => agent.id === "clawd-onboarding-guide"),
+      "missing clawd-onboarding-guide",
+    );
+    assert.ok(
+      deck.agents.some((agent) => agent.id === "yield-dashboard-builder"),
+      "missing yield-dashboard-builder",
+    );
+  });
+
+  it("birth writes a lobster-themed agent record", () => {
+    const r = run("birth clawd-onboarding-guide --locale fr-FR --json");
+    assert.equal(r.code, 0);
+    const record = JSON.parse(r.out);
+    assert.equal(record.theme, "lobster");
+    assert.equal(record.id, "clawd-onboarding-guide");
+    assert.equal(record.locale, "fr-FR");
+    assert.ok(record.path.endsWith("clawd-onboarding-guide.json"));
   });
 
   it("routes unknown legacy commands through the compiled dist runtime", () => {

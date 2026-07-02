@@ -26,6 +26,7 @@ const financialHarness = require("./lib/financial-harness");
 const GLOBAL_COMMANDS = new Set([
   "onboard", "launch", "list", "deploy", "setup", "setup-spark",
   "start", "stop", "status", "solana", "wallet",
+  "birth",
   "financial-harness",
   "dist",
   "doctor", "version", "--version", "-v",
@@ -46,6 +47,189 @@ function getCliVersion() {
 
 function shellQuote(value) {
   return `'${String(value).replace(/'/g, `'\\''`)}'`;
+}
+
+function getBirthAgentLocales(agentDir) {
+  return fs
+    .readdirSync(agentDir)
+    .filter((file) => /^index(?:\.[A-Za-z0-9-]+)?\.json$/.test(file))
+    .map((file) => {
+      const match = file.match(/^index(?:\.([A-Za-z0-9-]+))?\.json$/);
+      return match && match[1] ? match[1] : "default";
+    })
+    .sort((a, b) => {
+      if (a === "default") return -1;
+      if (b === "default") return 1;
+      return a.localeCompare(b);
+    });
+}
+
+function readJsonIfPresent(filePath) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf-8"));
+  } catch {
+    return null;
+  }
+}
+
+function listBirthAgents() {
+  const localesDir = path.join(ROOT, "agents", "locales");
+  const sourceDir = path.join(ROOT, "agents", "src");
+  if (!fs.existsSync(localesDir)) {
+    return [];
+  }
+
+  return fs
+    .readdirSync(localesDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => {
+      const id = entry.name;
+      const localeDir = path.join(localesDir, id);
+      const source = readJsonIfPresent(path.join(sourceDir, `${id}.json`)) || {};
+      const defaultLocale = readJsonIfPresent(path.join(localeDir, "index.json")) || {};
+      const meta = source.meta || defaultLocale.meta || {};
+      return {
+        id,
+        title: meta.title || id,
+        category: meta.category || "clawd",
+        description: meta.description || defaultLocale.summary || "",
+        avatar: meta.avatar || "🦞",
+        oneShot: source.oneShot === true,
+        featured: source.featured === true,
+        locales: getBirthAgentLocales(localeDir),
+      };
+    })
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function parseBirthArgs(args) {
+  const parsed = {
+    id: null,
+    locale: "default",
+    json: false,
+    listOnly: false,
+  };
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--json") {
+      parsed.json = true;
+    } else if (arg === "--locale") {
+      parsed.locale = args[i + 1] || "default";
+      i += 1;
+    } else if (arg.startsWith("--locale=")) {
+      parsed.locale = arg.slice("--locale=".length) || "default";
+    } else if (arg === "list" || arg === "--list") {
+      parsed.listOnly = true;
+    } else if (!parsed.id) {
+      parsed.id = arg;
+    }
+  }
+
+  return parsed;
+}
+
+function resolveBirthLocaleFile(agentId, requestedLocale) {
+  const localeDir = path.join(ROOT, "agents", "locales", agentId);
+  const localeFile =
+    requestedLocale && requestedLocale !== "default"
+      ? path.join(localeDir, `index.${requestedLocale}.json`)
+      : path.join(localeDir, "index.json");
+  if (fs.existsSync(localeFile)) {
+    return localeFile;
+  }
+  return path.join(localeDir, "index.json");
+}
+
+function birth(args = []) {
+  const parsed = parseBirthArgs(args);
+  const agents = listBirthAgents();
+  const payload = {
+    theme: "lobster",
+    symbol: "🦞",
+    count: agents.length,
+    agents,
+  };
+
+  if (!parsed.id || parsed.listOnly) {
+    if (parsed.json) {
+      console.log(JSON.stringify(payload, null, 2));
+      return;
+    }
+
+    console.log("");
+    console.log("  🦞 Nemo Clawd birth deck");
+    console.log("");
+    console.log(`  ${agents.length} Clawd agents are available at birth:`);
+    for (const agent of agents) {
+      const localePreview = agent.locales.slice(0, 4).join(", ");
+      const more = agent.locales.length > 4 ? ` +${agent.locales.length - 4}` : "";
+      console.log(`    - ${agent.id.padEnd(32)} ${agent.title} (${localePreview}${more})`);
+    }
+    console.log("");
+    console.log("  Hatch one:");
+    console.log("    nemoclawd birth clawd-onboarding-guide");
+    console.log("    nemoclawd birth airdrop-hunter --locale fr-FR");
+    console.log("");
+    return;
+  }
+
+  const agent = agents.find((item) => item.id === parsed.id);
+  if (!agent) {
+    console.error(`  Unknown birth agent: ${parsed.id}`);
+    console.error("  Run `nemoclawd birth list` to see available Clawd agents.");
+    process.exit(1);
+  }
+
+  const sourcePath = path.join(ROOT, "agents", "src", `${agent.id}.json`);
+  const localePath = resolveBirthLocaleFile(agent.id, parsed.locale);
+  const localeData = readJsonIfPresent(localePath) || {};
+  const sourceData = readJsonIfPresent(sourcePath) || {};
+  const localeMatch = path.basename(localePath).match(/^index(?:\.([A-Za-z0-9-]+))?\.json$/);
+  const selectedLocale = localeMatch?.[1] || "default";
+  const nemoHome = process.env.NEMOCLAWD_HOME || path.join(os.homedir(), ".nemoclawd");
+  const birthDir = path.join(nemoHome, "birth");
+  fs.mkdirSync(birthDir, { recursive: true, mode: 0o700 });
+
+  const record = {
+    theme: "lobster",
+    symbol: "🦞",
+    bornAt: new Date().toISOString(),
+    id: agent.id,
+    title: agent.title,
+    category: agent.category,
+    locale: selectedLocale,
+    persona: {
+      sourcePath,
+      localePath,
+      openingMessage: localeData.config?.openingMessage || sourceData.config?.openingMessage || null,
+      openingQuestions: localeData.config?.openingQuestions || sourceData.config?.openingQuestions || [],
+    },
+    commands: {
+      status: "nemoclawd solana",
+      harness: "nemoclawd financial-harness",
+      start: `nemoclawd solana start ${registry.getDefault() || "<sandbox>"}`,
+    },
+  };
+
+  const outPath = path.join(birthDir, `${agent.id}.json`);
+  fs.writeFileSync(outPath, JSON.stringify(record, null, 2) + "\n", { mode: 0o600 });
+
+  if (parsed.json) {
+    console.log(JSON.stringify({ ...record, path: outPath }, null, 2));
+    return;
+  }
+
+  console.log("");
+  console.log(`  🦞 Hatched ${agent.title}`);
+  console.log(`  Agent:  ${agent.id}`);
+  console.log(`  Locale: ${selectedLocale}`);
+  console.log(`  Record: ${outPath}`);
+  console.log("");
+  console.log("  Next commands:");
+  console.log("    nemoclawd solana");
+  console.log("    nemoclawd financial-harness");
+  console.log("");
 }
 
 function deriveWebsocketUrl(rpcUrl) {
@@ -1205,6 +1389,7 @@ function doctor() {
 function help() {
   console.log(`
   nemoclawd — Autonomous Solana Trading Agent
+  🦞 Lobster-themed Clawd command deck
 
   ⚡ Fastest path:
     npm install -g @mawdbotsonsolana/nemoclawd
@@ -1215,9 +1400,11 @@ function help() {
     nemoclawd launch                  Doctor + onboard + start the best available stack
     nemoclawd solana                  Solana status + available commands
     nemoclawd solana start            One-shot startup (bridge + bot + relay)
-    nemoclawd financial-harness       Dry-run wallet, RPC, policy, and trade guardrails
+    nemoclawd financial-harness       Dry-run wallet, RPC, policy, and signing guardrails
     nemoclawd wallet create           Create an encrypted Privy agentic wallet
     nemoclawd wallet list             List all wallets
+    nemoclawd birth                   List lobster-themed Clawd agents available at birth
+    nemoclawd birth <agent-id>        Hatch a Clawd agent persona locally
     nemoclawd onboard                 Full interactive setup wizard
 
   Sandbox Management:
@@ -1249,7 +1436,7 @@ function help() {
 
   Inside the sandbox you get:
     helius-cli, plus Solana CLI tools when the target architecture supports them
-    Pump-Fun SDK, 43 DeFi agent personas, Privy wallet skill
+    Pump-Fun SDK, localized Clawd agent personas, Privy wallet skill
 
   Default model: 8bit/DeepSolana (via Ollama, auto-pulled on onboard)
 
@@ -1285,6 +1472,7 @@ const [cmd, ...args] = process.argv.slice(2);
       case "doctor":      doctor(); break;
       case "solana":      await quickStartSolana(args); break;
       case "wallet":      await walletCommand(args); break;
+      case "birth":       birth(args); break;
       case "financial-harness": financialHarnessCommand(args); break;
       case "version":
       case "--version":

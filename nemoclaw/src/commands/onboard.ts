@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { execFileSync, execSync } from "node:child_process";
-import type { PluginLogger, NemoClawConfig } from "../index.js";
+import type { PluginLogger, NemoClawdConfig } from "../index.js";
 import {
   loadOnboardConfig,
   saveOnboardConfig,
   type EndpointType,
-  type NemoClawOnboardConfig,
+  type NemoClawdOnboardConfig,
 } from "../onboard/config.js";
 import { promptInput, promptConfirm, promptSelect } from "../onboard/prompt.js";
 import { validateApiKey, maskApiKey } from "../onboard/validate.js";
@@ -19,14 +19,14 @@ export interface OnboardOptions {
   endpointUrl?: string;
   model?: string;
   logger: PluginLogger;
-  pluginConfig: NemoClawConfig;
+  pluginConfig: NemoClawdConfig;
 }
 
 const ENDPOINT_TYPES: EndpointType[] = ["build", "ncp", "nim-local", "vllm", "ollama", "custom"];
 const SUPPORTED_ENDPOINT_TYPES: EndpointType[] = ["build", "ncp"];
 
 function isExperimentalEnabled(): boolean {
-  return process.env.NEMOCLAW_EXPERIMENTAL === "1";
+  return process.env.NEMOCLAWD_EXPERIMENTAL === "1";
 }
 
 const BUILD_ENDPOINT_URL = "https://integrate.api.nvidia.com/v1";
@@ -129,7 +129,7 @@ function testCommand(command: string): boolean {
   }
 }
 
-function showConfig(config: NemoClawOnboardConfig, logger: PluginLogger): void {
+function showConfig(config: NemoClawdOnboardConfig, logger: PluginLogger): void {
   logger.info(`  Endpoint:    ${config.endpointType} (${config.endpointUrl})`);
   if (config.ncpPartner) {
     logger.info(`  NCP Partner: ${config.ncpPartner}`);
@@ -190,7 +190,7 @@ export async function cliOnboard(opts: OnboardOptions): Promise<void> {
   const { logger } = opts;
   const nonInteractive = isNonInteractive(opts);
 
-  logger.info("NemoClaw Onboarding");
+  logger.info("Nemo Clawd Onboarding");
   logger.info("-------------------");
 
   // Step 0: Check existing config
@@ -448,6 +448,6 @@ export async function cliOnboard(opts: OnboardOptions): Promise<void> {
   logger.info(`  Credential: $${credentialEnv}`);
   logger.info("");
   logger.info("Next steps:");
-  logger.info("  openclaw nemoclaw launch     # Bootstrap sandbox");
-  logger.info("  openclaw nemoclaw status     # Check configuration");
+  logger.info("  clawd nemoclawd launch     # Bootstrap sandbox");
+  logger.info("  clawd nemoclawd status     # Check configuration");
 }

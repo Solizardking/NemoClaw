@@ -4,7 +4,7 @@
 import { exec } from "node:child_process";
 import { existsSync } from "node:fs";
 import { promisify } from "node:util";
-import type { PluginLogger, NemoClawConfig } from "../index.js";
+import type { PluginLogger, NemoClawdConfig } from "../index.js";
 import { loadState } from "../blueprint/state.js";
 
 const execAsync = promisify(exec);
@@ -16,19 +16,19 @@ const execAsync = promisify(exec);
  * would always fail — producing false-negative "not running" reports.
  */
 function isInsideSandbox(): boolean {
-  return existsSync("/sandbox/.openclaw") || existsSync("/sandbox/.nemoclaw");
+  return existsSync("/sandbox/.clawd") || existsSync("/sandbox/.nemoclawd");
 }
 
 export interface StatusOptions {
   json: boolean;
   logger: PluginLogger;
-  pluginConfig: NemoClawConfig;
+  pluginConfig: NemoClawdConfig;
 }
 
 export async function cliStatus(opts: StatusOptions): Promise<void> {
   const { json: jsonOutput, logger } = opts;
   const state = loadState();
-  const sandboxName = state.sandboxName ?? "openclaw";
+  const sandboxName = state.sandboxName ?? "nemoclawd";
   const insideSandbox = isInsideSandbox();
 
   const [sandbox, inference] = await Promise.all([
@@ -37,7 +37,7 @@ export async function cliStatus(opts: StatusOptions): Promise<void> {
   ]);
 
   const statusData = {
-    nemoclaw: {
+    nemoclawd: {
       lastAction: state.lastAction,
       lastRunId: state.lastRunId,
       blueprintVersion: state.blueprintVersion,
@@ -55,7 +55,7 @@ export async function cliStatus(opts: StatusOptions): Promise<void> {
     return;
   }
 
-  logger.info("NemoClaw Status");
+  logger.info("Nemo Clawd Status");
   logger.info("===============");
   logger.info("");
 
@@ -107,7 +107,7 @@ export async function cliStatus(opts: StatusOptions): Promise<void> {
     logger.info("");
     logger.info("Rollback:");
     logger.info(`  Snapshot:  ${state.migrationSnapshot}`);
-    logger.info("  Run 'openclaw nemoclaw eject' to restore host installation.");
+    logger.info("  Run 'clawd nemoclawd eject' to restore host installation.");
   }
 }
 

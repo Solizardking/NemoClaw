@@ -309,7 +309,8 @@ echo ""
 info "Installation complete!"
 info "nemoclawd $(nemoclawd --version 2>/dev/null || echo 'v0.1.0') is ready."
 echo ""
-echo "  Run \`nemoclawd onboard \` to get started"
+echo "  Run \`nemoclawd birth\` to see lobster-themed Clawd agents available at birth"
+echo "  Run \`nemoclawd onboard\` to get started"
 echo ""
 
 # ── Post-install: shell reload instructions ──────────────────

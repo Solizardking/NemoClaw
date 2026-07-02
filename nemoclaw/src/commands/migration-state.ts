@@ -19,7 +19,7 @@ import { create as createTar } from "tar";
 import JSON5 from "json5";
 import type { PluginLogger } from "../index.js";
 
-const SANDBOX_MIGRATION_DIR = "/sandbox/.nemoclaw/migration";
+const SANDBOX_MIGRATION_DIR = "/sandbox/.nemoclawd/migration";
 const SNAPSHOT_VERSION = 2;
 
 export type MigrationRootKind = "workspace" | "agentDir" | "skillsExtraDir";
@@ -39,7 +39,7 @@ export interface MigrationExternalRoot {
   bindings: MigrationRootBinding[];
 }
 
-export interface HostOpenClawState {
+export interface HostClawdState {
   exists: boolean;
   homeDir: string | null;
   stateDir: string | null;
@@ -85,7 +85,7 @@ type CandidateRoot = {
   required: boolean;
 };
 
-type OpenClawConfigDocument = Record<string, unknown>;
+type ClawdConfigDocument = Record<string, unknown>;
 
 function resolveHostHome(env: NodeJS.ProcessEnv = process.env): string {
   const fallbackHome = env.HOME?.trim() || env.USERPROFILE?.trim() || os.homedir();
@@ -129,7 +129,7 @@ function resolveStateDir(env: NodeJS.ProcessEnv = process.env): string {
   if (override) {
     return resolveUserPath(override, env);
   }
-  return path.join(resolveHostHome(env), ".openclaw");
+  return path.join(resolveHostHome(env), ".clawd");
 }
 
 function resolveConfigPath(stateDir: string, env: NodeJS.ProcessEnv = process.env): string {
@@ -137,10 +137,10 @@ function resolveConfigPath(stateDir: string, env: NodeJS.ProcessEnv = process.en
   if (override) {
     return resolveUserPath(override, env);
   }
-  return path.join(stateDir, "openclaw.json");
+  return path.join(stateDir, "clawd.json");
 }
 
-function loadConfigDocument(configPath: string): OpenClawConfigDocument | null {
+function loadConfigDocument(configPath: string): ClawdConfigDocument | null {
   if (!existsSync(configPath)) {
     return null;
   }
@@ -149,7 +149,7 @@ function loadConfigDocument(configPath: string): OpenClawConfigDocument | null {
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
     throw new Error(`Config at ${configPath} is not a JSON object.`);
   }
-  return parsed as OpenClawConfigDocument;
+  return parsed as ClawdConfigDocument;
 }
 
 function collectSymlinkPaths(rootPath: string): string[] {
@@ -215,13 +215,13 @@ function defaultWorkspacePath(env: NodeJS.ProcessEnv = process.env): string {
   const home = resolveHostHome(env);
   const profile = env.OPENCLAW_PROFILE?.trim();
   if (profile && profile.toLowerCase() !== "default") {
-    return path.join(home, ".openclaw", `workspace-${profile}`);
+    return path.join(home, ".clawd", `workspace-${profile}`);
   }
-  return path.join(home, ".openclaw", "workspace");
+  return path.join(home, ".clawd", "workspace");
 }
 
 function collectExternalRoots(
-  config: OpenClawConfigDocument | null,
+  config: ClawdConfigDocument | null,
   stateDir: string,
 ): { roots: MigrationExternalRoot[]; warnings: string[]; errors: string[] } {
   const warnings: string[] = [];
@@ -367,7 +367,7 @@ function collectExternalRoots(
   return { roots: validRoots, warnings, errors };
 }
 
-export function detectHostOpenClaw(env: NodeJS.ProcessEnv = process.env): HostOpenClawState {
+export function detectHostClawd(env: NodeJS.ProcessEnv = process.env): HostClawdState {
   const homeDir = resolveHostHome(env);
   const stateDir = resolveStateDir(env);
   const configPath = resolveConfigPath(stateDir, env);
@@ -394,17 +394,17 @@ export function detectHostOpenClaw(env: NodeJS.ProcessEnv = process.env): HostOp
 
   const errors: string[] = [];
   const warnings: string[] = [];
-  let config: OpenClawConfigDocument | null = null;
+  let config: ClawdConfigDocument | null = null;
 
   if (!stateExists) {
-    errors.push(`Resolved OpenClaw state directory does not exist: ${stateDir}`);
+    errors.push(`Resolved Clawd state directory does not exist: ${stateDir}`);
   }
 
   try {
     config = loadConfigDocument(configPath);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    errors.push(`Failed to parse OpenClaw config at ${configPath}: ${msg}`);
+    errors.push(`Failed to parse Clawd config at ${configPath}: ${msg}`);
   }
 
   const rootInfo = collectExternalRoots(config, stateDir);
@@ -481,9 +481,9 @@ function readSnapshotManifest(snapshotDir: string): SnapshotManifest {
 
 function resolveConfigSourcePath(manifest: SnapshotManifest, snapshotDir: string): string {
   if (manifest.hasExternalConfig) {
-    return path.join(snapshotDir, "config", "openclaw.json");
+    return path.join(snapshotDir, "config", "clawd.json");
   }
-  return path.join(snapshotDir, "openclaw", "openclaw.json");
+  return path.join(snapshotDir, "clawd", "clawd.json");
 }
 
 function setConfigValue(document: Record<string, unknown>, configPath: string, value: string): void {
@@ -531,10 +531,10 @@ function setConfigValue(document: Record<string, unknown>, configPath: string, v
 }
 
 function prepareSandboxState(snapshotDir: string, manifest: SnapshotManifest): string {
-  const preparedStateDir = path.join(snapshotDir, "sandbox-bundle", "openclaw");
+  const preparedStateDir = path.join(snapshotDir, "sandbox-bundle", "clawd");
   rmSync(preparedStateDir, { recursive: true, force: true });
   mkdirSync(path.dirname(preparedStateDir), { recursive: true });
-  copyDirectory(path.join(snapshotDir, "openclaw"), preparedStateDir);
+  copyDirectory(path.join(snapshotDir, "clawd"), preparedStateDir);
 
   const configSourcePath = resolveConfigSourcePath(manifest, snapshotDir);
   const config = existsSync(configSourcePath) ? loadConfigDocument(configSourcePath) ?? {} : {};
@@ -545,37 +545,37 @@ function prepareSandboxState(snapshotDir: string, manifest: SnapshotManifest): s
     }
   }
 
-  writeFileSync(path.join(preparedStateDir, "openclaw.json"), JSON.stringify(config, null, 2));
+  writeFileSync(path.join(preparedStateDir, "clawd.json"), JSON.stringify(config, null, 2));
   return preparedStateDir;
 }
 
 export function createSnapshotBundle(
-  hostState: HostOpenClawState,
+  hostState: HostClawdState,
   logger: PluginLogger,
   options: { persist: boolean },
 ): SnapshotBundle | null {
   if (!hostState.stateDir || !hostState.homeDir) {
-    logger.error("Cannot snapshot host OpenClaw state: no state directory was resolved.");
+    logger.error("Cannot snapshot host Clawd state: no state directory was resolved.");
     return null;
   }
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const parentDir = path.join(
     hostState.homeDir,
-    ".nemoclaw",
+    ".nemoclawd",
     options.persist ? "snapshots" : "staging",
     timestamp,
   );
 
   try {
     mkdirSync(parentDir, { recursive: true });
-    const snapshotStateDir = path.join(parentDir, "openclaw");
+    const snapshotStateDir = path.join(parentDir, "clawd");
     copyDirectory(hostState.stateDir, snapshotStateDir);
 
     if (hostState.configPath && hostState.hasExternalConfig) {
       const configSnapshotDir = path.join(parentDir, "config");
       mkdirSync(configSnapshotDir, { recursive: true });
-      copyFileSync(hostState.configPath, path.join(configSnapshotDir, "openclaw.json"));
+      copyFileSync(hostState.configPath, path.join(configSnapshotDir, "clawd.json"));
     }
 
     const externalRoots: MigrationExternalRoot[] = [];
@@ -646,7 +646,7 @@ export function loadSnapshotManifest(snapshotDir: string): SnapshotManifest {
 
 export function restoreSnapshotToHost(snapshotDir: string, logger: PluginLogger): boolean {
   const manifest = readSnapshotManifest(snapshotDir);
-  const snapshotStateDir = path.join(snapshotDir, "openclaw");
+  const snapshotStateDir = path.join(snapshotDir, "clawd");
   if (!existsSync(snapshotStateDir)) {
     logger.error(`Snapshot directory not found: ${snapshotStateDir}`);
     return false;
@@ -654,7 +654,7 @@ export function restoreSnapshotToHost(snapshotDir: string, logger: PluginLogger)
 
   try {
     if (existsSync(manifest.stateDir)) {
-      const archiveName = `${manifest.stateDir}.nemoclaw-archived-${String(Date.now())}`;
+      const archiveName = `${manifest.stateDir}.nemoclawd-archived-${String(Date.now())}`;
       renameSync(manifest.stateDir, archiveName);
       logger.info(`Archived current state directory to ${archiveName}`);
     }
@@ -663,13 +663,13 @@ export function restoreSnapshotToHost(snapshotDir: string, logger: PluginLogger)
     copyDirectory(snapshotStateDir, manifest.stateDir);
 
     if (manifest.hasExternalConfig && manifest.configPath) {
-      const configSnapshotPath = path.join(snapshotDir, "config", "openclaw.json");
+      const configSnapshotPath = path.join(snapshotDir, "config", "clawd.json");
       mkdirSync(path.dirname(manifest.configPath), { recursive: true });
       copyFileSync(configSnapshotPath, manifest.configPath);
       logger.info(`Restored external config to ${manifest.configPath}`);
     }
 
-    logger.info("Host OpenClaw state restored.");
+    logger.info("Host Clawd state restored.");
     return true;
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);

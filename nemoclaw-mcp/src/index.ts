@@ -1,11 +1,16 @@
+// SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
 /**
- * nemoClawd MCP Server
- * 
+ * Nemo Clawd MCP Server
+ *
  * xAI Grok powered Solana agentic tools with 31 MCP tools.
  * Connects to Helius RPC/DAS and xAI Grok API for autonomous trading.
  */
 
+import { pathToFileURL } from "node:url";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -17,14 +22,27 @@ import {
 const XAI_API_KEY = process.env.XAI_API_KEY || "";
 const HELIUS_API_KEY = process.env.HELIUS_API_KEY || "";
 const HELIUS_RPC_URL = process.env.HELIUS_RPC_URL || `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+const BIRDEYE_API_KEY = process.env.BIRDEYE_API_KEY || "";
 
 // Grok API base
 const GROK_API_BASE = "https://api.x.ai/v1";
 
+type JsonObject = Record<string, unknown>;
+
+function asJsonObject(value: unknown): JsonObject {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
+}
+
+function getJsonObject(value: unknown, key: string): JsonObject {
+  return asJsonObject(asJsonObject(value)[key]);
+}
+
 // Create server
+export const SERVER_NAME = "nemoclaw-mcp";
+
 const server = new Server(
   {
-    name: "nemoClawd MCP Server",
+    name: SERVER_NAME,
     version: "0.1.0",
   },
   {
@@ -40,7 +58,7 @@ const server = new Server(
 // TOOL DEFINITIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const TOOLS = [
+export const TOOLS = [
   // Solana Market Data
   {
     name: "solana_price",
@@ -426,8 +444,8 @@ async function heliusRpc<T = unknown>(
       params,
     }),
   });
-  const data = await response.json();
-  return data.result;
+  const data = asJsonObject(await response.json());
+  return data.result as T;
 }
 
 async function grokChat(
@@ -448,8 +466,15 @@ async function grokChat(
     body: JSON.stringify({ model, messages, stream }),
   });
 
-  const data = await response.json();
-  return stream ? data : data.choices[0]?.message?.content || "";
+  const data = asJsonObject(await response.json());
+  if (stream) {
+    return JSON.stringify(data);
+  }
+  const choices = Array.isArray(data.choices) ? data.choices : [];
+  const firstChoice = asJsonObject(choices[0]);
+  const message = getJsonObject(firstChoice, "message");
+  const content = message.content;
+  return typeof content === "string" ? content : "";
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -464,12 +489,14 @@ async function handleToolCall(name: string, args: Record<string, unknown>) {
       const response = await fetch(
         `https://api.birdeye.so/public/v1/token/${token}?api_key=${BIRDEYE_API_KEY || ""}`
       );
-      const data = await response.json();
+      const data = asJsonObject(await response.json());
+      const value = getJsonObject(getJsonObject(data, "data"), "value");
+      const price = value.price;
       return {
         content: [
           {
             type: "text",
-            text: `Price: $${data.data?.value?.price || "unavailable"}`,
+            text: `Price: $${typeof price === "number" || typeof price === "string" ? price : "unavailable"}`,
           },
         ],
       };
@@ -546,12 +573,14 @@ async function handleToolCall(name: string, args: Record<string, unknown>) {
       const response = await fetch(
         "https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd"
       );
-      const data = await response.json();
+      const data = asJsonObject(await response.json());
+      const solana = getJsonObject(data, "solana");
+      const usd = solana.usd;
       return {
         content: [
           {
             type: "text",
-            text: `SOL: $${data.solana?.usd || "unavailable"}`,
+            text: `SOL: $${typeof usd === "number" || typeof usd === "string" ? usd : "unavailable"}`,
           },
         ],
       };
@@ -850,16 +879,19 @@ server.setRequestHandler(ListPromptsRequestSchema, async () => {
   return { prompts: [] };
 });
 
-// Start server
-const transport = process.argv.includes("--http")
-  ? { type: "http" as const }
-  : { type: "stdio" as const };
+function isDirectRun(): boolean {
+  const entrypoint = process.argv[1];
+  return Boolean(entrypoint) && import.meta.url === pathToFileURL(entrypoint).href;
+}
 
-server.connect(transport.type === "http"
-  ? new (await import("@modelcontextprotocol/sdk/server/http.js")).HttpServer(server, { port: 3000 })
-  : new (await import("@modelcontextprotocol/sdk/server/stdio.js")).StdioServer(server)
-);
+export async function startStdioServer(): Promise<void> {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error("Nemo Clawd MCP Server running (stdio)");
+}
 
-console.error("nemoClawd MCP Server running...");
+if (isDirectRun()) {
+  await startStdioServer();
+}
 
 export { server };

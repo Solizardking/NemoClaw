@@ -55,7 +55,7 @@ export async function cliStatus(opts: StatusOptions): Promise<void> {
     return;
   }
 
-  logger.info("Nemo Clawd Status");
+  logger.info("🦞 Nemo Clawd Status");
   logger.info("===============");
   logger.info("");
 

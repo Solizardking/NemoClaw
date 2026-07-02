@@ -19,7 +19,7 @@ export interface LaunchOptions {
 export async function cliLaunch(opts: LaunchOptions): Promise<void> {
   const { force, profile, logger, pluginConfig } = opts;
 
-  logger.info("Nemo Clawd launch: setting up Nemo Clawd inside OpenShell");
+  logger.info("🦞 Nemo Clawd launch: setting up Nemo Clawd inside OpenShell");
 
   // Check if there's an existing host Nemo Clawd installation
   const hostState = detectHostNemoclawd();
@@ -116,7 +116,7 @@ export async function cliLaunch(opts: LaunchOptions): Promise<void> {
   });
 
   logger.info("");
-  logger.info("Nemo Clawd is now running inside OpenShell.");
+  logger.info("🦞 Nemo Clawd is now running inside OpenShell.");
   logger.info(`Sandbox: ${pluginConfig.sandboxName}`);
   logger.info("");
   logger.info("Next steps:");

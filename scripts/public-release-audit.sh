@@ -29,14 +29,31 @@ fi
 
 echo "[public-audit] scanning tracked file contents for live credentials..."
 content_matches="$(
-  git ls-files -z | xargs -0 rg -n --no-heading --color never --pcre2 \
-    -e '-----BEGIN (RSA|EC|OPENSSH|DSA) PRIVATE KEY-----' \
-    -e 'nvapi-[A-Za-z0-9_-]{20,}' \
-    -e 'sk-[A-Za-z0-9]{20,}' \
-    -e 'ghp_[A-Za-z0-9]{30,}' \
-    -e 'AKIA[A-Z0-9]{16}' \
-    -e 'bot[0-9]{8,}:[A-Za-z0-9_-]{30,}' \
-    || true
+  python3 - <<'PY'
+import re
+import subprocess
+from pathlib import Path
+
+patterns = [
+    re.compile(r"-----BEGIN (RSA|EC|OPENSSH|DSA) PRIVATE KEY-----"),
+    re.compile(r"nvapi-[A-Za-z0-9_-]{20,}"),
+    re.compile(r"sk-[A-Za-z0-9]{20,}"),
+    re.compile(r"ghp_[A-Za-z0-9]{30,}"),
+    re.compile(r"AKIA[A-Z0-9]{16}"),
+    re.compile(r"bot[0-9]{8,}:[A-Za-z0-9_-]{30,}"),
+]
+
+for filename in subprocess.check_output(["git", "ls-files"], text=True).splitlines():
+    path = Path(filename)
+    if not path.is_file():
+        continue
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    for lineno, line in enumerate(text.splitlines(), start=1):
+        if "guard-secrets:allow" in line:
+            continue
+        if any(pattern.search(line) for pattern in patterns):
+            print(f"{filename}:{lineno}:{line}")
+PY
 )"
 if [ -n "$content_matches" ]; then
   echo "[public-audit] live secret-like content found:" >&2

@@ -7,9 +7,58 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const repoRoot = path.resolve(__dirname, "..");
+const requiredBirthAgents = [
+  "airdrop-hunter",
+  "alpha-leak-detector",
+  "apy-vs-apr-educator",
+  "bridge-security-analyst",
+  "clawd-bridge-assistant",
+  "clawd-governance-guide",
+  "clawd-liquidity-strategist",
+  "clawd-onboarding-guide",
+  "clawd-portfolio-tracker",
+  "clawd-risk-monitor",
+  "clawd-yield-aggregator",
+  "crypto-news-analyst",
+  "crypto-tax-strategist",
+  "defi-insurance-advisor",
+  "defi-onboarding-mentor",
+  "defi-protocol-comparator",
+  "defi-risk-scoring-engine",
+  "defi-yield-farmer",
+  "dex-aggregator-optimizer",
+  "gas-optimization-expert",
+  "governance-proposal-analyst",
+  "impermanent-loss-calculator",
+  "layer2-comparison-guide",
+  "liquidation-risk-manager",
+  "liquidity-pool-analyzer",
+  "mev-protection-advisor",
+  "narrative-trend-analyst",
+  "nft-liquidity-advisor",
+  "portfolio-rebalancing-advisor",
+  "protocol-revenue-analyst",
+  "protocol-treasury-analyst",
+  "pump-fun-sdk-expert",
+  "smart-contract-auditor",
+  "spa-tokenomics-analyst",
+  "stablecoin-comparator",
+  "staking-rewards-calculator",
+  "token-unlock-tracker",
+  "usds-stablecoin-expert",
+  "vespa-optimizer",
+  "wallet-security-advisor",
+  "whale-watcher",
+  "yield-dashboard-builder",
+  "yield-sustainability-analyst",
+];
 
 function readRepoFile(relativePath) {
   return fs.readFileSync(path.join(repoRoot, relativePath), "utf8");
+}
+
+function repoFileExists(relativePath) {
+  return fs.existsSync(path.join(repoRoot, relativePath));
 }
 
 describe("nemo-clawd agent packaging", () => {
@@ -101,6 +150,69 @@ describe("nemo-clawd agent packaging", () => {
     assert.ok(!files.includes("agents/hermes/.env.local"));
     assert.match(nemoClawdDockerfile, /FROM \$\{BASE_IMAGE\}/);
     assert.match(nemoClawdDockerfile, /command -v hermes/);
+  });
+
+  it("packages localized birth agents and the Nemo Clawd user-guide skill", () => {
+    const packageJson = JSON.parse(readRepoFile("package.json"));
+    const rootPlugin = JSON.parse(readRepoFile("nemoclawd.plugin.json"));
+    const nestedPlugin = JSON.parse(readRepoFile("nemoclaw/clawd.plugin.json"));
+    const files = packageJson.files;
+
+    assert.ok(files.includes("agents/agents-catalog.json"));
+    assert.ok(files.includes("agents/agents-manifest.json"));
+    assert.ok(files.includes("agents/locales/**"));
+    assert.ok(files.includes("agents/src/*.json"));
+    assert.ok(files.includes("skills/README.md"));
+    assert.ok(files.includes("skills/nemoclawd-user-guide/**"));
+    assert.ok(files.includes("nemoclaw/clawd.plugin.json"));
+    assert.ok(files.includes("nemoclaw/package.json"));
+    assert.ok(files.includes("nemoclaw/package-lock.json"));
+    assert.ok(files.includes("nemoclaw/tsconfig.json"));
+    assert.ok(files.includes("nemoclaw/vitest.config.ts"));
+    assert.ok(files.includes("nemoclaw/.prettierrc"));
+    assert.ok(files.includes("nemoclaw/eslint.config.mjs"));
+    assert.ok(files.includes("nemoclaw/src/**"));
+    assert.ok(files.includes("nemoclaw/dist/**"));
+    assert.ok(files.includes("nemoclaw-blueprint/Makefile"));
+    assert.ok(files.includes("nemoclaw-blueprint/blueprint.yaml"));
+    assert.ok(files.includes("nemoclaw-blueprint/pyproject.toml"));
+    assert.ok(files.includes("nemoclaw-blueprint/migrations/*.py"));
+    assert.ok(files.includes("nemoclaw-blueprint/orchestrator/*.py"));
+    assert.ok(files.includes("nemoclaw-blueprint/policies/**/*.yaml"));
+    assert.ok(files.includes("nemoclaw-mcp/README.md"));
+    assert.ok(files.includes("nemoclaw-mcp/package.json"));
+    assert.ok(files.includes("nemoclaw-mcp/package-lock.json"));
+    assert.ok(files.includes("nemoclaw-mcp/tsconfig.json"));
+    assert.ok(files.includes("nemoclaw-mcp/src/**"));
+    assert.ok(files.includes("nemoclaw-mcp/dist/**"));
+    assert.ok(files.includes("schemas/*.json"));
+    assert.ok(!files.includes("agents/**"));
+    assert.ok(!files.includes("node_modules"));
+    assert.ok(!files.includes("nemoclaw/node_modules/**"));
+    assert.ok(!files.includes("nemoclaw-mcp/node_modules/**"));
+    assert.ok(!files.includes("nemoclaw-blueprint/**"));
+    assert.ok(!files.includes("nemoclaw/openclaw.plugin.json"));
+
+    assert.ok(repoFileExists("skills/nemoclawd-user-guide/SKILL.md"));
+    assert.ok(repoFileExists("skills/nemoclawd-user-guide/BENCHMARK.md"));
+    assert.ok(repoFileExists("skills/nemoclawd-user-guide/skill-card.md"));
+    assert.ok(repoFileExists("skills/nemoclawd-user-guide/skill.oms.sig"));
+    assert.ok(repoFileExists("skills/nemoclawd-user-guide/evals/evals.json"));
+    assert.ok(repoFileExists("nemoclaw/clawd.plugin.json"));
+    assert.ok(repoFileExists("schemas/clawd-plugin.schema.json"));
+    assert.ok(repoFileExists("schemas/openclaw-plugin.schema.json"));
+    assert.ok(repoFileExists("nemoclaw-blueprint/blueprint.yaml"));
+    assert.ok(repoFileExists("nemoclaw-mcp/src/index.ts"));
+    assert.equal(rootPlugin.name, "Nemo Clawd");
+    assert.equal(rootPlugin.activation.onStartup, true);
+    assert.equal(rootPlugin.commandAliases[0].name, "nemoclawd");
+    assert.equal(nestedPlugin.name, "Nemo Clawd");
+    assert.equal(nestedPlugin.configSchema.properties.sandboxName.default, "nemoclawd");
+
+    for (const agentId of requiredBirthAgents) {
+      assert.ok(repoFileExists(`agents/locales/${agentId}/index.json`), `missing locale ${agentId}`);
+      assert.ok(repoFileExists(`agents/src/${agentId}.json`), `missing source ${agentId}`);
+    }
   });
 });
 

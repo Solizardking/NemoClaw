@@ -16,7 +16,7 @@ import { getCacheDir, getCachedBlueprintPath, readCachedManifest } from "./resol
  *   1. Resolve "latest" to a concrete version tag via registry API
  *   2. Download the blueprint tarball from the OCI registry or GitHub release
  *   3. Verify digest (SHA-256) against the registry manifest
- *   4. Check compatibility metadata (min OpenShell/OpenClaw versions)
+ *   4. Check compatibility metadata (min OpenShell/Clawd versions)
  *   5. Extract to local cache dir
  *   6. Return resolved blueprint
  *

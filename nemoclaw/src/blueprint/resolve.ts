@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { NemoClawConfig } from "../index.js";
+import type { NemoClawdConfig } from "../index.js";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fetchBlueprint } from "./fetch.js";
@@ -9,7 +9,8 @@ import { fetchBlueprint } from "./fetch.js";
 export interface BlueprintManifest {
   version: string;
   minOpenShellVersion: string;
-  minOpenClawVersion: string;
+  minNemoclawdVersion: string;
+  minClawdVersion: string;
   profiles: string[];
   digest: string;
 }
@@ -21,7 +22,7 @@ export interface ResolvedBlueprint {
   cached: boolean;
 }
 
-const CACHE_DIR = join(process.env.HOME ?? "/tmp", ".nemoclaw", "blueprints");
+const CACHE_DIR = join(process.env.HOME ?? "/tmp", ".nemoclawd", "blueprints");
 
 export function getCacheDir(): string {
   return CACHE_DIR;
@@ -53,13 +54,14 @@ function parseManifestHeader(raw: string): BlueprintManifest {
   return {
     version: get("version"),
     minOpenShellVersion: get("min_openshell_version"),
-    minOpenClawVersion: get("min_openclaw_version"),
+    minNemoclawdVersion: get("min_nemoclawd_version"),
+    minClawdVersion: get("min_clawd_version"),
     profiles: profiles ? profiles.split(",").map((p) => p.trim()) : ["default"],
     digest: get("digest"),
   };
 }
 
-export async function resolveBlueprint(config: NemoClawConfig): Promise<ResolvedBlueprint> {
+export async function resolveBlueprint(config: NemoClawdConfig): Promise<ResolvedBlueprint> {
   const version = config.blueprintVersion;
 
   // Check local cache first

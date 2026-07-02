@@ -12,7 +12,7 @@ export interface ConnectOptions {
 export async function cliConnect(opts: ConnectOptions): Promise<void> {
   const { sandbox: sandboxName, logger } = opts;
 
-  logger.info(`Connecting to Nemo Clawd sandbox: ${sandboxName}`);
+  logger.info(`🦞 Connecting to Nemo Clawd sandbox: ${sandboxName}`);
   logger.info("You will be inside the sandbox. Run 'nemoclawd' commands normally.");
   logger.info("Type 'exit' to return to your host shell.");
   logger.info("");

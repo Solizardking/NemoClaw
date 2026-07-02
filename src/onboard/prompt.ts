@@ -42,7 +42,7 @@ export async function promptSelect(
 ): Promise<string> {
   const rl = createInterface({ input: stdin, output: stdout });
   try {
-    console.log(`\n${question}\n`);
+    console.log(`\n🦞 ${question}\n`);
     for (let i = 0; i < options.length; i++) {
       const marker = i === defaultIndex ? "*" : " ";
       const optHint = options[i].hint;

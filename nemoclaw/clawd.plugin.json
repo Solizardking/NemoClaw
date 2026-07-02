@@ -1,8 +1,17 @@
 {
-  "id": "nemoclaw",
-  "name": "NemoClaw",
+  "id": "nemoclawd",
+  "name": "Nemo Clawd",
   "version": "0.1.0",
-  "description": "Migrate and run OpenClaw inside OpenShell with optional NIM-backed inference",
+  "description": "Migrate and run Clawd inside OpenShell with optional NIM-backed inference",
+  "commandAliases": [
+    {
+      "name": "nemoclawd",
+      "kind": "runtime-slash"
+    }
+  ],
+  "activation": {
+    "onStartup": true
+  },
   "configSchema": {
     "type": "object",
     "properties": {
@@ -14,12 +23,12 @@
       "blueprintRegistry": {
         "type": "string",
         "description": "OCI registry or GitHub release URL for blueprint artifacts",
-        "default": "ghcr.io/nvidia/nemoclaw-blueprint"
+        "default": "ghcr.io/nvidia/nemoclawd-blueprint"
       },
       "sandboxName": {
         "type": "string",
-        "description": "Name for the OpenClaw sandbox in OpenShell",
-        "default": "openclaw"
+        "description": "Name for the Clawd sandbox in OpenShell",
+        "default": "nemoclawd"
       },
       "inferenceProvider": {
         "type": "string",

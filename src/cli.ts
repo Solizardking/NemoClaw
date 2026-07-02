@@ -21,7 +21,7 @@ export function registerCliCommands(ctx: PluginCliContext, api: NemoclawdPluginA
   const { program, logger } = ctx;
   const pluginConfig = getPluginConfig(api);
 
-  const nemoclawd = program.command("nemoclawd").description("Nemo Clawd sandbox management");
+  const nemoclawd = program.command("nemoclawd").description("🦞 Nemo Clawd lobster command deck");
 
   // nemoclawd status
   nemoclawd

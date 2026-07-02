@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * Blueprint artifact fetching — download versioned blueprint archives from
+ * Lobster-themed Nemo Clawd blueprint fetching — download versioned blueprint archives from
  * an OCI registry or GitHub release, extract to local cache.
  */
 

@@ -51,7 +51,7 @@ export async function execBlueprint(
   if (options.dryRun) args.push("--dry-run");
   if (options.endpointUrl) args.push("--endpoint-url", options.endpointUrl);
 
-  logger.info(`Running blueprint: ${options.action} (profile: ${options.profile})`);
+  logger.info(`🦞 Running Nemo Clawd blueprint: ${options.action} (profile: ${options.profile})`);
 
   return new Promise((resolve) => {
     const chunks: string[] = [];

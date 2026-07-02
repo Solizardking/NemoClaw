@@ -3,6 +3,15 @@
   "name": "Nemo Clawd",
   "version": "0.1.0",
   "description": "Migrate and run Nemo Clawd inside OpenShell with optional NIM-backed inference",
+  "commandAliases": [
+    {
+      "name": "nemoclawd",
+      "kind": "runtime-slash"
+    }
+  ],
+  "activation": {
+    "onStartup": true
+  },
   "configSchema": {
     "type": "object",
     "properties": {

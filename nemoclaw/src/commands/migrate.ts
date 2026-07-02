@@ -3,7 +3,7 @@
 
 import { execFileSync } from "node:child_process";
 import { join, posix as pathPosix } from "node:path";
-import type { PluginLogger, NemoClawConfig } from "../index.js";
+import type { PluginLogger, NemoClawdConfig } from "../index.js";
 import { resolveBlueprint } from "../blueprint/resolve.js";
 import { verifyBlueprintDigest } from "../blueprint/verify.js";
 import { execBlueprint } from "../blueprint/exec.js";
@@ -12,34 +12,34 @@ import {
   cleanupSnapshotBundle,
   createArchiveFromDirectory,
   createSnapshotBundle,
-  detectHostOpenClaw,
+  detectHostClawd,
   loadSnapshotManifest,
   type SnapshotBundle,
 } from "./migration-state.js";
 
-export { detectHostOpenClaw, type HostOpenClawState } from "./migration-state.js";
+export { detectHostClawd, type HostClawdState } from "./migration-state.js";
 
-const SANDBOX_ARCHIVE_DIR = "/sandbox/.nemoclaw/migration/archives";
+const SANDBOX_ARCHIVE_DIR = "/sandbox/.nemoclawd/migration/archives";
 
 export interface MigrateOptions {
   dryRun: boolean;
   profile: string;
   skipBackup: boolean;
   logger: PluginLogger;
-  pluginConfig: NemoClawConfig;
+  pluginConfig: NemoClawdConfig;
 }
 
 export async function cliMigrate(opts: MigrateOptions): Promise<void> {
   const { dryRun, profile, skipBackup, logger, pluginConfig } = opts;
 
-  logger.info("NemoClaw migrate: moving host OpenClaw into OpenShell sandbox");
+  logger.info("Nemo Clawd migrate: moving host Clawd into OpenShell sandbox");
 
-  logger.info("Detecting host OpenClaw installation...");
-  const hostState = detectHostOpenClaw();
+  logger.info("Detecting host Clawd installation...");
+  const hostState = detectHostClawd();
 
   if (!hostState.exists || !hostState.stateDir) {
-    logger.error("No OpenClaw installation found for the current host environment.");
-    logger.info("Use 'openclaw nemoclaw launch' for a fresh install.");
+    logger.error("No Clawd installation found for the current host environment.");
+    logger.info("Use 'clawd nemoclawd launch' for a fresh install.");
     return;
   }
 
@@ -59,7 +59,7 @@ export async function cliMigrate(opts: MigrateOptions): Promise<void> {
     for (const error of hostState.errors) {
       logger.error(error);
     }
-    logger.error("Refusing to migrate until all external OpenClaw roots can be resolved.");
+    logger.error("Refusing to migrate until all external Clawd roots can be resolved.");
     return;
   }
 
@@ -71,7 +71,7 @@ export async function cliMigrate(opts: MigrateOptions): Promise<void> {
       logger.info(`  2. Capture external config file: ${hostState.configPath}`);
     }
     if (hostState.externalRoots.length > 0) {
-      logger.info("  3. Capture external OpenClaw roots and rewrite config paths for the sandbox:");
+      logger.info("  3. Capture external Clawd roots and rewrite config paths for the sandbox:");
       for (const root of hostState.externalRoots) {
         logger.info(`     - ${root.sourcePath} -> ${root.sandboxPath}`);
       }
@@ -136,7 +136,7 @@ export async function cliMigrate(opts: MigrateOptions): Promise<void> {
   logger.info(`Snapshot saved to ${bundle.snapshotDir}`);
 
   try {
-    logger.info("Packaging OpenClaw state for sandbox import...");
+    logger.info("Packaging Clawd state for sandbox import...");
     await buildMigrationArchives(bundle);
 
     logger.info("Syncing migration bundle into sandbox...");
@@ -164,19 +164,19 @@ export async function cliMigrate(opts: MigrateOptions): Promise<void> {
   }
 
   logger.info("");
-  logger.info("Migration complete. OpenClaw is now running inside OpenShell.");
+  logger.info("Migration complete. Clawd is now running inside OpenShell.");
   logger.info(`Sandbox: ${pluginConfig.sandboxName}`);
   logger.info("");
   logger.info("Next steps:");
-  logger.info("  openclaw nemoclaw connect    # Enter the sandbox");
-  logger.info("  openclaw nemoclaw status     # Verify everything is healthy");
+  logger.info("  clawd nemoclawd connect    # Enter the sandbox");
+  logger.info("  clawd nemoclawd status     # Verify everything is healthy");
   logger.info("  openshell term               # Monitor sandbox activity");
   logger.info("");
   logger.info("To rollback to your host installation:");
   if (skipBackup) {
     logger.info("  Re-run migrate without --skip-backup to keep a rollback snapshot.");
   } else {
-    logger.info("  openclaw nemoclaw eject");
+    logger.info("  clawd nemoclawd eject");
   }
 }
 
@@ -190,7 +190,7 @@ async function buildMigrationArchives(bundle: SnapshotBundle): Promise<void> {
 function syncSnapshotBundleIntoSandbox(bundle: SnapshotBundle, sandboxName: string): void {
   execSandboxCommand(sandboxName, ["sh", "-lc", `mkdir -p ${shellQuote(SANDBOX_ARCHIVE_DIR)}`]);
 
-  syncArchive(sandboxName, "state.tar", stateArchivePath(bundle), "/sandbox/.openclaw");
+  syncArchive(sandboxName, "state.tar", stateArchivePath(bundle), "/sandbox/.clawd");
   for (const root of bundle.manifest.externalRoots) {
     syncArchive(
       sandboxName,
@@ -221,8 +221,8 @@ function syncArchive(sandboxName: string, archiveName: string, archivePath: stri
 function verifySandboxMigration(bundle: SnapshotBundle, sandboxName: string): void {
   const manifest = loadSnapshotManifest(bundle.snapshotDir);
   const verification = {
-    stateDir: "/sandbox/.openclaw",
-    configPath: "/sandbox/.openclaw/openclaw.json",
+    stateDir: "/sandbox/.clawd",
+    configPath: "/sandbox/.clawd/clawd.json",
     roots: manifest.externalRoots.map((root) => ({
       id: root.id,
       sandboxPath: root.sandboxPath,

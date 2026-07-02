@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/NVIDIA/NemoClaw/schemas/blueprint.schema.json",
-  "title": "NemoClaw Blueprint",
-  "description": "Schema for nemoclaw-blueprint/blueprint.yaml — defines sandbox orchestration, inference profiles, and policy configuration.",
+  "title": "Nemo Clawd Blueprint",
+  "description": "Schema for the Nemo Clawd blueprint. Defines sandbox orchestration, inference profiles, and policy configuration.",
   "type": "object",
   "required": ["version", "profiles", "components"],
   "additionalProperties": false,
@@ -22,10 +22,15 @@
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
       "description": "Maximum compatible OpenShell version."
     },
-    "min_openclaw_version": {
+    "min_nemoclawd_version": {
       "type": "string",
       "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
-      "description": "Minimum compatible OpenClaw version for direct blueprint consumers. NemoClaw's built runtime target is declared by Dockerfile OPENCLAW_VERSION."
+      "description": "Minimum compatible Nemo Clawd version for direct blueprint consumers."
+    },
+    "min_clawd_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Compatibility alias for Clawd hosts that consume Nemo Clawd blueprints directly."
     },
     "digest": {
       "type": "string",

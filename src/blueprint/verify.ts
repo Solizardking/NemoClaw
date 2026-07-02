@@ -50,7 +50,7 @@ export function checkCompatibility(
     manifest.minNemoclawdVersion &&
     !satisfiesMinVersion(nemoclawdVersion, manifest.minNemoclawdVersion)
   ) {
-    errors.push(`Nemo Clawd version ${nemoclawdVersion} < required ${manifest.minNemoclawdVersion}`);
+    errors.push(`🦞 Nemo Clawd version ${nemoclawdVersion} < required ${manifest.minNemoclawdVersion}`);
   }
 
   return errors;

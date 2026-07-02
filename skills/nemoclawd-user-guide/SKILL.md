@@ -51,7 +51,7 @@ npx nemoclawd-mcp
 
 ## Task Routing
 
-- Installation and first launch: use `README.md`, `install.sh`, `bin/nemoclaw.js`, and `bin/nemoclawd.js`.
+- Installation and first launch: use `README.md`, `install.sh`, and `bin/nemoclawd.js`.
 - MCP tools: use `nemo-clawd-mcp/README.md` and `nemo-clawd-mcp/src/`.
 - Sandbox and migration: use `nemoclaw-blueprint/`, `nemo-clawd-python/`, and `src/commands/migration-state.ts`.
 - Solana runtime: use `bin/lib/solana.js`, `scripts/*solana*`, and the Solana RPC policy preset.

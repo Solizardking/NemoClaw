@@ -190,7 +190,7 @@ export async function cliOnboard(opts: OnboardOptions): Promise<void> {
   const { logger } = opts;
   const nonInteractive = isNonInteractive(opts);
 
-  logger.info("Nemo Clawd Onboarding");
+  logger.info("🦞 Nemo Clawd Onboarding");
   logger.info("-------------------");
 
   // Step 0: Check existing config

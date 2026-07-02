@@ -62,7 +62,7 @@ function parseManifestHeader(raw: string): BlueprintManifest {
 export async function resolveBlueprint(config: NemoclawdConfig): Promise<ResolvedBlueprint> {
   const version = config.blueprintVersion;
 
-  // Check local cache first
+  // Check the local lobster-deck cache first.
   if (version !== "latest" && isCached(version)) {
     const manifest = readCachedManifest(version);
     if (manifest) {

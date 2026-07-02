@@ -135,10 +135,36 @@ JSON
   "repo": "${ROOT_DIR}",
   "mcp": "${ROOT_DIR}/nemo-clawd-mcp",
   "blueprint": "${ROOT_DIR}/nemoclaw-blueprint",
-  "pythonBlueprint": "${ROOT_DIR}/nemo-clawd-python"
+  "pythonBlueprint": "${ROOT_DIR}/nemo-clawd-python",
+  "agentCatalog": "${ROOT_DIR}/agents/agents-catalog.json",
+  "birthAgents": "${ROOT_DIR}/agents/locales",
+  "skills": "${ROOT_DIR}/skills",
+  "userGuideSkill": "${ROOT_DIR}/skills/nemoclawd-user-guide"
 }
 JSON
   chmod 600 "${NEMOCLAWD_HOME}/install.json"
+}
+
+verify_birth_agents() {
+  local locales_dir="${ROOT_DIR}/agents/locales"
+  if [[ ! -d "${locales_dir}" ]]; then
+    warn "Birth agent locales not found at ${locales_dir}; nemoclawd birth will be limited."
+    return
+  fi
+
+  local count
+  count="$(find "${locales_dir}" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d '[:space:]')"
+  info "Birth agents available: ${count} localized Clawd personas"
+}
+
+verify_skill_bundle() {
+  local skill_dir="${ROOT_DIR}/skills/nemoclawd-user-guide"
+  if [[ ! -f "${skill_dir}/SKILL.md" ]]; then
+    warn "Nemo Clawd user-guide skill not found at ${skill_dir}; skipping skill verification."
+    return
+  fi
+
+  info "User-guide skill available: ${skill_dir}"
 }
 
 check_solana_tools() {
@@ -161,6 +187,7 @@ Recommended environment:
 
 Next commands:
   nemoclawd doctor
+  nemoclawd birth
   nemoclawd solana
   nemoclawd launch
 
@@ -176,6 +203,8 @@ main() {
   install_cli
   install_mcp
   verify_blueprint
+  verify_birth_agents
+  verify_skill_bundle
   seed_runtime_profile
   check_solana_tools
   post_install

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/NVIDIA/NemoClaw/schemas/policy-preset.schema.json",
-  "title": "NemoClaw Policy Preset",
-  "description": "Schema for policy presets (nemoclaw-blueprint/policies/presets/*.yaml) — named network policy bundles that can be merged into the base sandbox policy.",
+  "title": "Nemo Clawd Policy Preset",
+  "description": "Schema for policy presets. These named network policy bundles can be merged into the base Nemo Clawd sandbox policy.",
   "type": "object",
   "required": ["preset", "network_policies"],
   "additionalProperties": false,

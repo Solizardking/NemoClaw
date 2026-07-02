@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * Nemo Clawd — Nemo Clawd Plugin for OpenShell
+ * Nemo Clawd — lobster-themed Nemo Clawd Plugin for OpenShell
  *
  * Uses the real Nemo Clawd plugin API. Types defined locally are minimal stubs
  * that match the Nemo Clawd SDK interfaces available at runtime via
@@ -186,7 +186,7 @@ export default function register(api: NemoclawdPluginApi): void {
   // 1. Register /nemoclawd slash command (chat interface)
   api.registerCommand({
     name: "nemoclawd",
-    description: "Nemo Clawd sandbox management (status, eject).",
+    description: "Lobster-themed Nemo Clawd sandbox management (status, eject).",
     acceptsArgs: true,
     handler: (ctx) => handleSlashCommand(ctx, api),
   });
@@ -255,7 +255,8 @@ export default function register(api: NemoclawdPluginApi): void {
 
   api.logger.info("");
   api.logger.info("  ┌─────────────────────────────────────────────────────┐");
-  api.logger.info("  │  Nemo Clawd registered                                │");
+  api.logger.info("  │  🦞 Nemo Clawd registered                            │");
+  api.logger.info("  │  Theme: lobster command deck                         │");
   api.logger.info("  │                                                     │");
   api.logger.info(`  │  Endpoint:  ${bannerEndpoint.padEnd(40)}│`);
   api.logger.info(`  │  Model:     ${bannerModel.padEnd(40)}│`);

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/NVIDIA/NemoClaw/schemas/openclaw-plugin.schema.json",
-  "title": "NemoClaw OpenClaw Plugin Manifest",
-  "description": "Schema for nemoclaw/openclaw.plugin.json — the OpenClaw plugin manifest that declares the plugin identity and its configuration schema.",
+  "title": "Nemo Clawd Clawd Plugin Manifest",
+  "description": "Compatibility schema for legacy openclaw.plugin.json files. Prefer schemas/clawd-plugin.schema.json and nemoclaw/clawd.plugin.json for Clawd and Nemo Clawd manifests.",
   "type": "object",
   "required": [
     "id",
@@ -58,13 +58,13 @@
     },
     "activation": {
       "type": "object",
-      "description": "OpenClaw activation planner metadata. Use onStartup=true when plugin registration must run during Gateway startup.",
+      "description": "Clawd activation planner metadata. Use onStartup=true when plugin registration must run during gateway startup.",
       "required": ["onStartup"],
       "additionalProperties": false,
       "properties": {
         "onStartup": {
           "type": "boolean",
-          "description": "Whether OpenClaw should import the plugin during Gateway startup."
+          "description": "Whether Clawd should import the plugin during gateway startup."
         }
       }
     },

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { NemoClawState } from "../blueprint/state.js";
-import type { PluginLogger, NemoClawConfig } from "../index.js";
+import type { NemoClawdState } from "../blueprint/state.js";
+import type { PluginLogger, NemoClawdConfig } from "../index.js";
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -34,7 +34,7 @@ const { cliStatus } = await import("./status.js");
 // Helpers
 // ---------------------------------------------------------------------------
 
-function blankState(): NemoClawState {
+function blankState(): NemoClawdState {
   return {
     lastRunId: null,
     lastAction: null,
@@ -47,23 +47,23 @@ function blankState(): NemoClawState {
   };
 }
 
-function populatedState(): NemoClawState {
+function populatedState(): NemoClawdState {
   return {
     lastRunId: "run-a1b2c3d4",
     lastAction: "migrate",
     blueprintVersion: "0.1.0",
-    sandboxName: "openclaw",
-    migrationSnapshot: "/root/.nemoclaw/snapshots/pre-migrate.tar.gz",
-    hostBackupPath: "/root/.nemoclaw/backups/host-backup",
+    sandboxName: "nemoclawd",
+    migrationSnapshot: "/root/.nemoclawd/snapshots/pre-migrate.tar.gz",
+    hostBackupPath: "/root/.nemoclawd/backups/host-backup",
     createdAt: "2026-03-15T10:30:00.000Z",
     updatedAt: "2026-03-15T10:32:45.000Z",
   };
 }
 
-const defaultConfig: NemoClawConfig = {
+const defaultConfig: NemoClawdConfig = {
   blueprintVersion: "latest",
-  blueprintRegistry: "ghcr.io/nvidia/nemoclaw-blueprint",
-  sandboxName: "openclaw",
+  blueprintRegistry: "ghcr.io/nvidia/nemoclawd-blueprint",
+  sandboxName: "nemoclawd",
   inferenceProvider: "nvidia",
 };
 
@@ -180,7 +180,7 @@ describe("cliStatus", () => {
       const output = lines.join("\n");
       expect(output).toContain("Status:  running");
       expect(output).toContain("Uptime:  2h 14m");
-      expect(output).toContain("Name:    openclaw");
+      expect(output).toContain("Name:    nemoclawd");
       expect(output).not.toContain("inside sandbox");
     });
 
@@ -252,7 +252,7 @@ describe("cliStatus", () => {
     beforeEach(() => {
       vi.mocked(existsSync).mockImplementation((p: string | URL | Buffer) => {
         const path = String(p);
-        return path === "/sandbox/.openclaw" || path === "/sandbox/.nemoclaw";
+        return path === "/sandbox/.clawd" || path === "/sandbox/.nemoclawd";
       });
     });
 
@@ -315,7 +315,7 @@ describe("cliStatus", () => {
     beforeEach(() => {
       vi.mocked(existsSync).mockImplementation((p: string | URL | Buffer) => {
         const path = String(p);
-        return path === "/sandbox/.openclaw" || path === "/sandbox/.nemoclaw";
+        return path === "/sandbox/.clawd" || path === "/sandbox/.nemoclawd";
       });
       vi.mocked(loadState).mockReturnValue(populatedState());
     });
@@ -338,22 +338,22 @@ describe("cliStatus", () => {
 
       const output = lines.join("\n");
       expect(output).toContain("Rollback:");
-      expect(output).toContain("Snapshot:  /root/.nemoclaw/snapshots/pre-migrate.tar.gz");
-      expect(output).toContain("openclaw nemoclaw eject");
+      expect(output).toContain("Snapshot:  /root/.nemoclawd/snapshots/pre-migrate.tar.gz");
+      expect(output).toContain("clawd nemoclawd eject");
     });
 
-    it("JSON includes full nemoclaw state alongside insideSandbox: true", async () => {
+    it("JSON includes full nemoclawd state alongside insideSandbox: true", async () => {
       const { lines, logger } = captureLogger();
 
       await cliStatus({ json: true, logger, pluginConfig: defaultConfig });
 
       const data = JSON.parse(lines.join(""));
       expect(data.insideSandbox).toBe(true);
-      expect(data.nemoclaw.lastAction).toBe("migrate");
-      expect(data.nemoclaw.blueprintVersion).toBe("0.1.0");
-      expect(data.nemoclaw.lastRunId).toBe("run-a1b2c3d4");
-      expect(data.nemoclaw.migrationSnapshot).toBe(
-        "/root/.nemoclaw/snapshots/pre-migrate.tar.gz",
+      expect(data.nemoclawd.lastAction).toBe("migrate");
+      expect(data.nemoclawd.blueprintVersion).toBe("0.1.0");
+      expect(data.nemoclawd.lastRunId).toBe("run-a1b2c3d4");
+      expect(data.nemoclawd.migrationSnapshot).toBe(
+        "/root/.nemoclawd/snapshots/pre-migrate.tar.gz",
       );
     });
   });
@@ -386,7 +386,7 @@ describe("cliStatus", () => {
       );
     });
 
-    it("defaults sandbox name to 'openclaw' when state has none", async () => {
+    it("defaults sandbox name to 'clawd' when state has none", async () => {
       mockExec({
         "sandbox status": new Error("not found"),
         "inference get": new Error("not configured"),
@@ -397,15 +397,15 @@ describe("cliStatus", () => {
 
       // Verify exec was called with default name
       expect(exec).toHaveBeenCalledWith(
-        expect.stringContaining("openclaw"),
+        expect.stringContaining("clawd"),
         expect.anything(),
         expect.anything(),
       );
     });
 
-    it("only detects sandbox via /sandbox/.openclaw", async () => {
+    it("only detects sandbox via /sandbox/.clawd", async () => {
       vi.mocked(existsSync).mockImplementation((p: string | URL | Buffer) => {
-        return String(p) === "/sandbox/.openclaw";
+        return String(p) === "/sandbox/.clawd";
       });
 
       const { lines, logger } = captureLogger();
@@ -415,9 +415,9 @@ describe("cliStatus", () => {
       expect(data.insideSandbox).toBe(true);
     });
 
-    it("only detects sandbox via /sandbox/.nemoclaw", async () => {
+    it("only detects sandbox via /sandbox/.nemoclawd", async () => {
       vi.mocked(existsSync).mockImplementation((p: string | URL | Buffer) => {
-        return String(p) === "/sandbox/.nemoclaw";
+        return String(p) === "/sandbox/.nemoclawd";
       });
 
       const { lines, logger } = captureLogger();

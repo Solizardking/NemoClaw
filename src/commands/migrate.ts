@@ -32,7 +32,7 @@ export interface MigrateOptions {
 export async function cliMigrate(opts: MigrateOptions): Promise<void> {
   const { dryRun, profile, skipBackup, logger, pluginConfig } = opts;
 
-  logger.info("Nemo Clawd migrate: moving host Nemo Clawd into OpenShell sandbox");
+  logger.info("🦞 Nemo Clawd migrate: moving host Nemo Clawd into OpenShell sandbox");
 
   logger.info("Detecting host Nemo Clawd installation...");
   const hostState = detectHostNemoclawd();
@@ -164,7 +164,7 @@ export async function cliMigrate(opts: MigrateOptions): Promise<void> {
   }
 
   logger.info("");
-  logger.info("Migration complete. Nemo Clawd is now running inside OpenShell.");
+  logger.info("🦞 Migration complete. Nemo Clawd is now running inside OpenShell.");
   logger.info(`Sandbox: ${pluginConfig.sandboxName}`);
   logger.info("");
   logger.info("Next steps:");

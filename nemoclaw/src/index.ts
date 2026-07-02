@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * NemoClaw — OpenClaw Plugin for OpenShell
+ * Nemo Clawd — Clawd Plugin for OpenShell
  *
- * Uses the real OpenClaw plugin API. Types defined locally are minimal stubs
- * that match the OpenClaw SDK interfaces available at runtime via
- * `openclaw/plugin-sdk`. We define them here because the SDK package is only
- * available inside the OpenClaw host process and cannot be imported at build
+ * Uses the real Clawd plugin API. Types defined locally are minimal stubs
+ * that match the Clawd SDK interfaces available at runtime via
+ * `clawd/plugin-sdk`. We define them here because the SDK package is only
+ * available inside the Clawd host process and cannot be imported at build
  * time.
  */
 
@@ -17,11 +17,11 @@ import { handleSlashCommand } from "./commands/slash.js";
 import { loadOnboardConfig } from "./onboard/config.js";
 
 // ---------------------------------------------------------------------------
-// OpenClaw Plugin SDK compatible types (mirrors openclaw/plugin-sdk)
+// Clawd Plugin SDK compatible types (mirrors clawd/plugin-sdk)
 // ---------------------------------------------------------------------------
 
-/** Subset of OpenClawConfig that we actually read. */
-export interface OpenClawConfig {
+/** Subset of ClawdConfig that we actually read. */
+export interface ClawdConfig {
   [key: string]: unknown;
 }
 
@@ -40,7 +40,7 @@ export interface PluginCommandContext {
   isAuthorizedSender: boolean;
   args?: string;
   commandBody: string;
-  config: OpenClawConfig;
+  config: ClawdConfig;
   from?: string;
   to?: string;
   accountId?: string;
@@ -65,7 +65,7 @@ export interface PluginCommandDefinition {
 /** Context passed to the CLI registrar callback. */
 export interface PluginCliContext {
   program: Command;
-  config: OpenClawConfig;
+  config: ClawdConfig;
   workspaceDir?: string;
   logger: PluginLogger;
 }
@@ -109,19 +109,19 @@ export interface ProviderPlugin {
 /** Background service registration. */
 export interface PluginService {
   id: string;
-  start: (ctx: { config: OpenClawConfig; logger: PluginLogger }) => void | Promise<void>;
-  stop?: (ctx: { config: OpenClawConfig; logger: PluginLogger }) => void | Promise<void>;
+  start: (ctx: { config: ClawdConfig; logger: PluginLogger }) => void | Promise<void>;
+  stop?: (ctx: { config: ClawdConfig; logger: PluginLogger }) => void | Promise<void>;
 }
 
 /**
- * The API object injected into the plugin's register function by the OpenClaw
+ * The API object injected into the plugin's register function by the Clawd
  * host. Only the methods we actually call are listed here.
  */
-export interface OpenClawPluginApi {
+export interface ClawdPluginApi {
   id: string;
   name: string;
   version?: string;
-  config: OpenClawConfig;
+  config: ClawdConfig;
   pluginConfig?: Record<string, unknown>;
   logger: PluginLogger;
   registerCommand: (command: PluginCommandDefinition) => void;
@@ -133,24 +133,24 @@ export interface OpenClawPluginApi {
 }
 
 // ---------------------------------------------------------------------------
-// Plugin-specific config (read from pluginConfig in openclaw.plugin.json)
+// Plugin-specific config (read from pluginConfig in clawd.plugin.json)
 // ---------------------------------------------------------------------------
 
-export interface NemoClawConfig {
+export interface NemoClawdConfig {
   blueprintVersion: string;
   blueprintRegistry: string;
   sandboxName: string;
   inferenceProvider: string;
 }
 
-const DEFAULT_PLUGIN_CONFIG: NemoClawConfig = {
+const DEFAULT_PLUGIN_CONFIG: NemoClawdConfig = {
   blueprintVersion: "latest",
-  blueprintRegistry: "ghcr.io/nvidia/nemoclaw-blueprint",
-  sandboxName: "openclaw",
+  blueprintRegistry: "ghcr.io/nvidia/nemoclawd-blueprint",
+  sandboxName: "nemoclawd",
   inferenceProvider: "nvidia",
 };
 
-export function getPluginConfig(api: OpenClawPluginApi): NemoClawConfig {
+export function getPluginConfig(api: ClawdPluginApi): NemoClawdConfig {
   const raw = api.pluginConfig ?? {};
   return {
     blueprintVersion:
@@ -176,21 +176,21 @@ export function getPluginConfig(api: OpenClawPluginApi): NemoClawConfig {
 // Plugin entry point
 // ---------------------------------------------------------------------------
 
-export default function register(api: OpenClawPluginApi): void {
-  // 1. Register /nemoclaw slash command (chat interface)
+export default function register(api: ClawdPluginApi): void {
+  // 1. Register /nemoclawd slash command (chat interface)
   api.registerCommand({
-    name: "nemoclaw",
-    description: "NemoClaw sandbox management (status, eject).",
+    name: "nemoclawd",
+    description: "Nemo Clawd sandbox management (status, eject).",
     acceptsArgs: true,
     handler: (ctx) => handleSlashCommand(ctx, api),
   });
 
-  // 2. Register `openclaw nemoclaw` CLI subcommands (commander.js)
+  // 2. Register `clawd nemoclawd` CLI subcommands (commander.js)
   api.registerCli(
     (cliCtx) => {
       registerCliCommands(cliCtx, api);
     },
-    { commands: ["nemoclaw"] },
+    { commands: ["nemoclawd"] },
   );
 
   // 3. Register nvidia-nim provider — use onboard config if available
@@ -249,11 +249,11 @@ export default function register(api: OpenClawPluginApi): void {
 
   api.logger.info("");
   api.logger.info("  ┌─────────────────────────────────────────────────────┐");
-  api.logger.info("  │  NemoClaw registered                                │");
+  api.logger.info("  │  Nemo Clawd registered                              │");
   api.logger.info("  │                                                     │");
   api.logger.info(`  │  Endpoint:  ${bannerEndpoint.padEnd(40)}│`);
   api.logger.info(`  │  Model:     ${bannerModel.padEnd(40)}│`);
-  api.logger.info("  │  Commands:  openclaw nemoclaw <command>             │");
+  api.logger.info("  │  Commands:  clawd nemoclawd <command>              │");
   api.logger.info("  └─────────────────────────────────────────────────────┘");
   api.logger.info("");
 }

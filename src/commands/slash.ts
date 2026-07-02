@@ -35,7 +35,7 @@ export function handleSlashCommand(
 function slashHelp(): PluginCommandResult {
   return {
     text: [
-      "**Nemo Clawd**",
+      "**🦞 Nemo Clawd**",
       "",
       "Usage: `/nemoclawd <subcommand>`",
       "",
@@ -59,12 +59,12 @@ function slashStatus(): PluginCommandResult {
 
   if (!state.lastAction) {
     return {
-      text: "**Nemo Clawd**: No operations performed yet. Run `nemoclawd launch` or `nemoclawd migrate` to get started.",
+      text: "**🦞 Nemo Clawd**: No operations performed yet. Run `nemoclawd launch` or `nemoclawd migrate` to get started.",
     };
   }
 
   const lines = [
-    "**Nemo Clawd Status**",
+    "**🦞 Nemo Clawd Status**",
     "",
     `Last action: ${state.lastAction}`,
     `Blueprint: ${state.blueprintVersion ?? "unknown"}`,
@@ -85,7 +85,7 @@ function slashOnboard(): PluginCommandResult {
   if (config) {
     return {
       text: [
-        "**Nemo Clawd Onboard Status**",
+        "**🦞 Nemo Clawd Onboard Status**",
         "",
         `Endpoint: ${config.endpointType} (${config.endpointUrl})`,
         config.ncpPartner ? `NCP Partner: ${config.ncpPartner}` : null,
@@ -102,7 +102,7 @@ function slashOnboard(): PluginCommandResult {
   }
   return {
     text: [
-      "**Nemo Clawd Onboarding**",
+      "**🦞 Nemo Clawd Onboarding**",
       "",
       "No configuration found. Run the onboard command to set up inference:",
       "",

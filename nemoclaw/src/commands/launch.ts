@@ -2,48 +2,48 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { execSync } from "node:child_process";
-import type { PluginLogger, NemoClawConfig } from "../index.js";
+import type { PluginLogger, NemoClawdConfig } from "../index.js";
 import { resolveBlueprint } from "../blueprint/resolve.js";
 import { verifyBlueprintDigest, checkCompatibility } from "../blueprint/verify.js";
 import { execBlueprint } from "../blueprint/exec.js";
 import { loadState, saveState } from "../blueprint/state.js";
-import { detectHostOpenClaw } from "./migrate.js";
+import { detectHostClawd } from "./migrate.js";
 
 export interface LaunchOptions {
   force: boolean;
   profile: string;
   logger: PluginLogger;
-  pluginConfig: NemoClawConfig;
+  pluginConfig: NemoClawdConfig;
 }
 
 export async function cliLaunch(opts: LaunchOptions): Promise<void> {
   const { force, profile, logger, pluginConfig } = opts;
 
-  logger.info("NemoClaw launch: setting up OpenClaw inside OpenShell");
+  logger.info("Nemo Clawd launch: setting up Clawd inside OpenShell");
 
-  // Check if there's an existing host OpenClaw installation
-  const hostState = detectHostOpenClaw();
+  // Check if there's an existing host Clawd installation
+  const hostState = detectHostClawd();
 
   if (!hostState.exists && !force) {
     logger.info("");
-    logger.info("No existing OpenClaw installation detected on this host.");
+    logger.info("No existing Clawd installation detected on this host.");
     logger.info("");
     logger.info("For net-new users, the recommended path is OpenShell-native setup:");
     logger.info("");
-    logger.info("  openshell sandbox create --from openclaw --name openclaw");
-    logger.info("  openshell sandbox connect openclaw");
+    logger.info("  openshell sandbox create --from clawd --name clawd");
+    logger.info("  openshell sandbox connect clawd");
     logger.info("");
     logger.info(
-      "This avoids installing OpenClaw on the host only to redeploy it inside OpenShell.",
+      "This avoids installing Clawd on the host only to redeploy it inside OpenShell.",
     );
     logger.info("");
-    logger.info("To proceed with NemoClaw-driven bootstrap anyway, use --force.");
+    logger.info("To proceed with Nemo Clawd-driven bootstrap anyway, use --force.");
     return;
   }
 
   if (hostState.exists && !force) {
     logger.info(
-      "Existing OpenClaw installation detected. Consider using 'openclaw nemoclaw migrate' instead.",
+      "Existing Clawd installation detected. Consider using 'clawd nemoclawd migrate' instead.",
     );
     logger.info(
       "Use --force to proceed with a fresh launch (existing config will not be migrated).",
@@ -64,8 +64,8 @@ export async function cliLaunch(opts: LaunchOptions): Promise<void> {
 
   // Check version compatibility
   const openshellVersion = getOpenshellVersion();
-  const openclawVersion = getOpenclawVersion();
-  const compat = checkCompatibility(blueprint.manifest, openshellVersion, openclawVersion);
+  const clawdVersion = getClawdVersion();
+  const compat = checkCompatibility(blueprint.manifest, openshellVersion, clawdVersion);
   if (compat.length > 0) {
     logger.error(`Compatibility check failed:\n  ${compat.join("\n  ")}`);
     return;
@@ -89,7 +89,7 @@ export async function cliLaunch(opts: LaunchOptions): Promise<void> {
   }
 
   // Apply
-  logger.info("Deploying OpenClaw sandbox...");
+  logger.info("Deploying Clawd sandbox...");
   const applyResult = await execBlueprint(
     {
       blueprintPath: blueprint.localPath,
@@ -116,12 +116,12 @@ export async function cliLaunch(opts: LaunchOptions): Promise<void> {
   });
 
   logger.info("");
-  logger.info("OpenClaw is now running inside OpenShell.");
+  logger.info("Clawd is now running inside OpenShell.");
   logger.info(`Sandbox: ${pluginConfig.sandboxName}`);
   logger.info("");
   logger.info("Next steps:");
-  logger.info("  openclaw nemoclaw connect    # Enter the sandbox");
-  logger.info("  openclaw nemoclaw status     # Check health");
+  logger.info("  clawd nemoclawd connect    # Enter the sandbox");
+  logger.info("  clawd nemoclawd status     # Check health");
   logger.info("  openshell term               # Monitor network egress");
 }
 
@@ -133,9 +133,9 @@ function getOpenshellVersion(): string {
   }
 }
 
-function getOpenclawVersion(): string {
+function getClawdVersion(): string {
   try {
-    return execSync("openclaw --version", { encoding: "utf-8" }).trim();
+    return execSync("clawd --version", { encoding: "utf-8" }).trim();
   } catch {
     return "0.0.0";
   }

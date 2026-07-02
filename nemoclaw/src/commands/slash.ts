@@ -2,21 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /**
- * Handler for the /nemoclaw slash command (chat interface).
+ * Handler for the /nemoclawd slash command (chat interface).
  *
  * Supports subcommands:
- *   /nemoclaw status   - show sandbox/blueprint/inference state
- *   /nemoclaw eject    - rollback to host installation
- *   /nemoclaw          - show help
+ *   /nemoclawd status   - show sandbox/blueprint/inference state
+ *   /nemoclawd eject    - rollback to host installation
+ *   /nemoclawd          - show help
  */
 
-import type { PluginCommandContext, PluginCommandResult, OpenClawPluginApi } from "../index.js";
+import type { PluginCommandContext, PluginCommandResult, ClawdPluginApi } from "../index.js";
 import { loadState } from "../blueprint/state.js";
 import { loadOnboardConfig } from "../onboard/config.js";
 
 export function handleSlashCommand(
   ctx: PluginCommandContext,
-  _api: OpenClawPluginApi,
+  _api: ClawdPluginApi,
 ): PluginCommandResult {
   const subcommand = ctx.args?.trim().split(/\s+/)[0] ?? "";
 
@@ -35,9 +35,9 @@ export function handleSlashCommand(
 function slashHelp(): PluginCommandResult {
   return {
     text: [
-      "**NemoClaw**",
+      "**Nemo Clawd**",
       "",
-      "Usage: `/nemoclaw <subcommand>`",
+      "Usage: `/nemoclawd <subcommand>`",
       "",
       "Subcommands:",
       "  `status`  - Show sandbox, blueprint, and inference state",
@@ -45,11 +45,11 @@ function slashHelp(): PluginCommandResult {
       "  `onboard` - Show onboarding status and instructions",
       "",
       "For full management use the CLI:",
-      "  `openclaw nemoclaw status`",
-      "  `openclaw nemoclaw migrate`",
-      "  `openclaw nemoclaw launch`",
-      "  `openclaw nemoclaw connect`",
-      "  `openclaw nemoclaw eject --confirm`",
+      "  `clawd nemoclawd status`",
+      "  `clawd nemoclawd migrate`",
+      "  `clawd nemoclawd launch`",
+      "  `clawd nemoclawd connect`",
+      "  `clawd nemoclawd eject --confirm`",
     ].join("\n"),
   };
 }
@@ -59,12 +59,12 @@ function slashStatus(): PluginCommandResult {
 
   if (!state.lastAction) {
     return {
-      text: "**NemoClaw**: No operations performed yet. Run `openclaw nemoclaw launch` or `openclaw nemoclaw migrate` to get started.",
+      text: "**Nemo Clawd**: No operations performed yet. Run `clawd nemoclawd launch` or `clawd nemoclawd migrate` to get started.",
     };
   }
 
   const lines = [
-    "**NemoClaw Status**",
+    "**Nemo Clawd Status**",
     "",
     `Last action: ${state.lastAction}`,
     `Blueprint: ${state.blueprintVersion ?? "unknown"}`,
@@ -85,7 +85,7 @@ function slashOnboard(): PluginCommandResult {
   if (config) {
     return {
       text: [
-        "**NemoClaw Onboard Status**",
+        "**Nemo Clawd Onboard Status**",
         "",
         `Endpoint: ${config.endpointType} (${config.endpointUrl})`,
         config.ncpPartner ? `NCP Partner: ${config.ncpPartner}` : null,
@@ -94,7 +94,7 @@ function slashOnboard(): PluginCommandResult {
         `Profile: ${config.profile}`,
         `Onboarded: ${config.onboardedAt}`,
         "",
-        "To reconfigure, run: `openclaw nemoclaw onboard`",
+        "To reconfigure, run: `clawd nemoclawd onboard`",
       ]
         .filter(Boolean)
         .join("\n"),
@@ -102,17 +102,17 @@ function slashOnboard(): PluginCommandResult {
   }
   return {
     text: [
-      "**NemoClaw Onboarding**",
+      "**Nemo Clawd Onboarding**",
       "",
       "No configuration found. Run the onboard command to set up inference:",
       "",
       "```",
-      "openclaw nemoclaw onboard",
+      "clawd nemoclawd onboard",
       "```",
       "",
       "Or non-interactively:",
       "```",
-      'openclaw nemoclaw onboard --api-key "$NVIDIA_API_KEY" --endpoint build --model nvidia/nemotron-3-super-120b-a12b',
+      'clawd nemoclawd onboard --api-key "$NVIDIA_API_KEY" --endpoint build --model nvidia/nemotron-3-super-120b-a12b',
       "```",
     ].join("\n"),
   };
@@ -122,7 +122,7 @@ function slashEject(): PluginCommandResult {
   const state = loadState();
 
   if (!state.lastAction) {
-    return { text: "No NemoClaw deployment found. Nothing to eject from." };
+    return { text: "No Nemo Clawd deployment found. Nothing to eject from." };
   }
 
   if (!state.migrationSnapshot && !state.hostBackupPath) {
@@ -133,12 +133,12 @@ function slashEject(): PluginCommandResult {
 
   return {
     text: [
-      "**Eject from NemoClaw**",
+      "**Eject from Nemo Clawd**",
       "",
-      "To rollback to your host OpenClaw installation, run:",
+      "To rollback to your host Clawd installation, run:",
       "",
       "```",
-      "openclaw nemoclaw eject --confirm",
+      "clawd nemoclawd eject --confirm",
       "```",
       "",
       `Snapshot: ${state.migrationSnapshot ?? state.hostBackupPath ?? "none"}`,

@@ -1,11 +1,11 @@
 {
-  "name": "nemoclaw",
+  "name": "nemoclawd",
   "version": "0.1.0",
-  "description": "Migrate and run OpenClaw inside OpenShell with optional NIM-backed inference",
+  "description": "Migrate and run Clawd inside OpenShell with optional NIM-backed inference",
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "openclaw": {
+  "clawd": {
     "extensions": [
       "./dist/index.js"
     ]
@@ -43,6 +43,6 @@
   },
   "files": [
     "dist/",
-    "openclaw.plugin.json"
+    "clawd.plugin.json"
   ]
 }
