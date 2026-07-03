@@ -50,10 +50,12 @@ wallet scraping.
 
 ## Examples
 
-Install from npm:
+Install from npm, or use the source checkout fallback when npm returns `E404`:
 
 ```bash
 npm install -g @mawdbotsonsolana/nemoclawd
+# Source checkout fallback:
+./install.sh
 nemoclawd launch
 ```
 

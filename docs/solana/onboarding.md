@@ -56,6 +56,7 @@ The financial harness remains dry-run only.
 ## First Run Journey
 
 Use this sequence for a first-time setup:
+If npm returns `E404` for the scoped package, run `./install.sh` from a source checkout instead of the npm install command.
 
 | Stage | Command | Outcome |
 |---|---|---|

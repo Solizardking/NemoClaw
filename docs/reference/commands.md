@@ -24,6 +24,7 @@ Nemo Clawd provides two command interfaces.
 The plugin commands run under the `nemoclawd` namespace inside the Nemo Clawd CLI.
 The standalone `nemoclawd` binary handles host-side setup, deployment, Solana integration, and service management.
 Both interfaces are installed when you run `npm install -g @mawdbotsonsolana/nemoclawd`.
+If npm returns `E404` for the scoped package, run `./install.sh` from a source checkout to build and link the local CLI.
 
 New users should start with the [Quickstart](../get-started/quickstart.md) and [Solana and Blockchain AI Onboarding](../solana/onboarding.md) pages before using this reference.
 
@@ -50,6 +51,7 @@ $ nemoclawd doctor
 $ nemoclawd launch
 $ nemoclawd solana
 $ nemoclawd financial-harness
+$ nemoclawd demo
 $ nemoclawd ai-training
 ```
 
@@ -95,6 +97,19 @@ $ nemoclawd financial-harness my-assistant --json
 ```
 
 Use this before `nemoclawd solana start` when validating wallet, policy, and operator-review posture.
+
+### `nemoclawd demo`
+
+Print the local dry-run walkthrough without starting services.
+Use this command to review the first-run sequence and the interactive OpenShell demo prerequisites.
+
+```console
+$ nemoclawd demo
+$ nemoclawd demo --run
+```
+
+The `--run` option starts the interactive walkthrough from `scripts/walkthrough.sh`.
+It opens the OpenShell TUI and a sandboxed agent session so you can observe and approve network requests.
 
 ### `nemoclawd doctor`
 

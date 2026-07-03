@@ -61,6 +61,13 @@ Install the published package globally:
 $ npm install -g @mawdbotsonsolana/nemoclawd
 ```
 
+If npm returns `E404` for the scoped package, the package is not published or your npm account cannot access it.
+From a source checkout, install the local CLI instead:
+
+```console
+$ ./install.sh
+```
+
 Verify that the binary is available:
 
 ```console
@@ -174,7 +181,7 @@ $ nemoclawd status
 
 Follow this order for your first run:
 
-1. Install with `npm install -g @mawdbotsonsolana/nemoclawd`.
+1. Install with `npm install -g @mawdbotsonsolana/nemoclawd`, or run `./install.sh` from a source checkout if npm returns `E404`.
 2. Run `nemoclawd doctor`.
 3. Run `nemoclawd launch` or `nemoclawd onboard`.
 4. Run `nemoclawd solana`.

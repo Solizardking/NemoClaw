@@ -61,6 +61,9 @@
 ```bash
 npm install -g @mawdbotsonsolana/nemoclawd
 
+# If npm returns E404 from a source checkout, build and link locally.
+./install.sh
+
 # Start with Grok + Solana tools
 nemoclawd launch
 

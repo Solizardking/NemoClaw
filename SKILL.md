@@ -24,6 +24,8 @@ node --version
 2. Install nemoClawd:
 ```bash
 npm install -g @mawdbotsonsolana/nemoclawd
+# Source checkout fallback if npm returns E404:
+./install.sh
 ```
 
 3. Set xAI API key and Helius credentials:
