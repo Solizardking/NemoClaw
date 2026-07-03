@@ -28,6 +28,7 @@ const GLOBAL_COMMANDS = new Set([
   "start", "stop", "status", "solana", "wallet",
   "ai-training",
   "birth",
+  "demo",
   "financial-harness",
   "dist",
   "doctor", "version", "--version", "-v",
@@ -1453,6 +1454,54 @@ function aiTrainingCommand(args = []) {
   }
 }
 
+function demo(args = []) {
+  const wantsHelp = args.includes("--help") || args.includes("-h");
+  const wantsRun = args.includes("--run") || args.includes("--interactive");
+  const scriptPath = path.join(SCRIPTS, "walkthrough.sh");
+
+  if (wantsHelp) {
+    console.log(`
+  Usage:
+    nemoclawd demo
+    nemoclawd demo --run
+
+  The default demo prints the local dry-run walkthrough.
+  Use --run to start the interactive OpenShell walkthrough from scripts/walkthrough.sh.
+`);
+    return;
+  }
+
+  if (wantsRun) {
+    if (!fs.existsSync(scriptPath)) {
+      console.error(`  Demo script not found: ${scriptPath}`);
+      process.exit(1);
+    }
+    run(`bash "${scriptPath}"`);
+    return;
+  }
+
+  console.log(`
+  Nemo Clawd Demo Walkthrough
+  ===========================
+
+  Local dry-run path:
+    1. nemoclawd doctor
+    2. nemoclawd launch
+    3. nemoclawd solana
+    4. nemoclawd financial-harness
+
+  The financial harness is dry-run only. It reports RPC, wallet, policy,
+  and signing guardrails without signing or submitting transactions.
+
+  Interactive OpenShell walkthrough:
+    export NVIDIA_API_KEY="<your_api_key>"
+    nemoclawd demo --run
+
+  The interactive walkthrough opens the OpenShell TUI and a sandboxed agent
+  session so you can observe and approve network requests.
+`);
+}
+
 // ── Help ─────────────────────────────────────────────────────────
 
 function help() {
@@ -1476,6 +1525,7 @@ function help() {
     nemoclawd ai-training check       Verify training source lanes for build/package
     nemoclawd birth                   List lobster-themed Clawd agents available at birth
     nemoclawd birth <agent-id>        Hatch a Clawd agent persona locally
+    nemoclawd demo                    Print the local dry-run demo walkthrough
     nemoclawd onboard                 Full interactive setup wizard
 
   Sandbox Management:
@@ -1545,6 +1595,7 @@ const [cmd, ...args] = process.argv.slice(2);
       case "wallet":      await walletCommand(args); break;
       case "ai-training": aiTrainingCommand(args); break;
       case "birth":       birth(args); break;
+      case "demo":        demo(args); break;
       case "financial-harness": financialHarnessCommand(args); break;
       case "version":
       case "--version":

@@ -268,10 +268,21 @@ install_openshell
 
 NPM_PACKAGE="@mawdbotsonsolana/nemoclawd"
 info "Installing ${NPM_PACKAGE}..."
+install_output=""
+install_status=0
 if [ "$NODE_MGR" = "nodesource" ]; then
-  sudo npm install -g "$NPM_PACKAGE"
+  install_output="$(sudo npm install -g "$NPM_PACKAGE" 2>&1)" || install_status=$?
 else
-  npm install -g "$NPM_PACKAGE"
+  install_output="$(npm install -g "$NPM_PACKAGE" 2>&1)" || install_status=$?
+fi
+printf '%s\n' "$install_output"
+if [ "$install_status" -ne 0 ]; then
+  if printf '%s\n' "$install_output" | grep -q 'E404'; then
+    warn "npm registry does not currently expose ${NPM_PACKAGE} to this account."
+    warn "Publish the package with npm publish --access public before using this installer."
+    warn "From a source checkout, run ./install.sh to build and link the local CLI."
+  fi
+  exit "$install_status"
 fi
 
 if [ "$NEED_RESHIM" = true ]; then

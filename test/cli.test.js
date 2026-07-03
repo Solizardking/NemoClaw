@@ -34,6 +34,7 @@ describe("CLI dispatch", () => {
     assert.ok(r.out.includes("financial-harness"), "missing financial harness command");
     assert.ok(r.out.includes("ai-training"), "missing ai-training command");
     assert.ok(r.out.includes("birth"), "missing birth command");
+    assert.ok(r.out.includes("demo"), "missing demo command");
     assert.ok(r.out.includes("Lobster-themed"), "missing lobster theme");
     assert.ok(r.out.includes("solana-agent"), "missing Solana agent action");
     assert.ok(r.out.includes("solana-bridge"), "missing Solana bridge action");
@@ -84,6 +85,14 @@ describe("CLI dispatch", () => {
     assert.equal(report.mode, "dry-run");
     assert.equal(report.guardrails.signingEnabled, false);
     assert.equal(report.guardrails.transactionSubmissionEnabled, false);
+  });
+
+  it("demo exits 0 and prints the dry-run walkthrough", () => {
+    const r = run("demo");
+    assert.equal(r.code, 0);
+    assert.ok(r.out.includes("Nemo Clawd Demo Walkthrough"), "missing demo title");
+    assert.ok(r.out.includes("nemoclawd financial-harness"), "missing harness step");
+    assert.ok(r.out.includes("dry-run only"), "missing dry-run safety note");
   });
 
   it("birth --json lists localized Clawd agents", () => {
