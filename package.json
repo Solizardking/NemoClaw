@@ -69,7 +69,6 @@
     "@sinclair/typebox": "0.34.47",
     "@slack/bolt": "^4.6.0",
     "@slack/web-api": "^7.13.0",
-    "@whiskeysockets/baileys": "7.0.0-rc12",
     "ajv": "^8.17.1",
     "body-parser": "^2.2.2",
     "chalk": "^5.6.2",
@@ -96,7 +95,6 @@
     "playwright-core": "1.57.0",
     "proper-lockfile": "^4.1.2",
     "qrcode-terminal": "^0.12.0",
-    "sharp": "^0.34.5",
     "sqlite-vec": "0.1.7-alpha.2",
     "strip-ansi": "^7.2.0",
     "tar": "^7.5.16",
@@ -352,6 +350,7 @@
     "./dist/*": "./dist/*"
   },
   "optionalDependencies": {
+    "@whiskeysockets/baileys": "7.0.0-rc12",
     "@napi-rs/canvas": "^0.1.88",
     "node-llama-cpp": "3.19.0"
   },

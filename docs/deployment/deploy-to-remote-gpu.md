@@ -28,7 +28,7 @@ Use the same Solana onboarding sequence on the remote instance that you use loca
 
 - The [Brev CLI](https://brev.nvidia.com) installed and authenticated.
 - An NVIDIA API key from [build.nvidia.com](https://build.nvidia.com).
-- Nemo Clawd installed locally. Install with `npm install -g @mawdbotsonsolana/nemoclawd`.
+- Nemo Clawd installed locally. Install with `npm install -g @mawdbotsonsolana/nemoclawd`, or run `./install.sh` from a source checkout if npm returns `E404`.
 
 ## Deploy the Instance
 

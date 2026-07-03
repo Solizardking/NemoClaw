@@ -78,6 +78,7 @@ Install the CLI, create a sandboxed agent, inspect the Solana configuration, and
   </div>
   <div class="nc-term-body">
     <div><span class="nc-ps">$ </span>npm install -g @mawdbotsonsolana/nemoclawd</div>
+    <div><span class="nc-ps"># </span>source checkout fallback when npm returns E404: ./install.sh</div>
     <div><span class="nc-ps">$ </span>nemoclawd doctor</div>
     <div><span class="nc-ps">$ </span>nemoclawd launch</div>
     <div><span class="nc-ps">$ </span>nemoclawd financial-harness</div>
@@ -86,6 +87,7 @@ Install the CLI, create a sandboxed agent, inspect the Solana configuration, and
 ```
 
 Run `nemoclawd doctor` to validate your machine, or `nemoclawd --help` to view the full CLI reference.
+If the npm install command returns `E404` while you are working from this repository, run `./install.sh` from the source checkout.
 Use `nemoclawd launch`, `nemoclawd solana`, and `nemoclawd financial-harness` as the first blockchain AI onboarding checkpoints.
 
 Proceed to the [Quickstart](get-started/quickstart.md) for step-by-step setup, or read [Solana and Blockchain AI Onboarding](solana/onboarding.md) first if you are new to Solana wallets, RPC, clusters, and policy controls.
