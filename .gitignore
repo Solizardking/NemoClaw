@@ -79,3 +79,4 @@ ai-training/ollama/build/
 ai-training/nvidia/outputs/
 ai-training/etc/
 ai-training/*.jsonl
+nemo-claw/
